@@ -4,58 +4,58 @@ overview: "Подготовить три взаимосвязанных арте
 todos:
   - id: prd
     content: "Создать docs/PRD.md по шаблону prd: executive summary, personas, user stories + AC для всех сценариев, non-goals, risks, roadmap"
-    status: pending
+    status: completed
   - id: spec-arch
     content: Создать spec/spec-architecture-referi-system.md — общая архитектура, модули, bounded contexts
-    status: pending
+    status: completed
   - id: spec-db
     content: Создать spec/spec-schema-database.md — Prisma schema, сущности, индексы, aud-лог
-    status: pending
+    status: completed
   - id: spec-app-fsm
     content: Создать spec/spec-process-application-lifecycle.md — машина состояний заявки, guards, инварианты
-    status: pending
+    status: completed
   - id: spec-sla
     content: Создать spec/spec-process-referrer-sla.md — таймеры, санкции, лимиты и 3 попытки на вакансию
-    status: pending
+    status: completed
   - id: spec-pay
     content: Создать spec/spec-data-payments-escrow.md — интерфейс PaymentProvider, эскроу-потоки, вебхуки, идемпотентность
-    status: pending
+    status: completed
   - id: spec-api
     content: Создать spec/spec-design-api.md — tRPC роутеры, REST вебхуки, rate limits, auth
-    status: pending
+    status: completed
   - id: spec-gh
     content: Создать spec/spec-tool-github-auth.md — OAuth, age-check, платная регистрация
-    status: pending
+    status: completed
   - id: spec-tg
     content: Создать spec/spec-tool-telegram-bot.md — привязка аккаунтов, жалобы, нотификации модераторам, webhook
-    status: pending
+    status: completed
   - id: roadmap
     content: Создать docs/ROADMAP.md — фазы Phase 0..7, фича-флаги, критерии готовности
-    status: pending
+    status: completed
   - id: phase0
     content: "Phase 0 (код): поднять Next.js + TS + Prisma + Postgres + Docker Compose, CI линт/тест"
-    status: pending
+    status: completed
   - id: phase1
     content: "Phase 1: Auth + регистрация — GitHub OAuth, проверка age, платный путь за $500 эквивалент"
-    status: pending
+    status: completed
   - id: phase2
     content: "Phase 2: профили + вакансии (CRUD, фильтры: специальность, грейд, зп, формат, query); форма отклика с контактами, био ≤1000, cover ≤300"
-    status: pending
+    status: completed
   - id: phase3
     content: "Phase 3: отклики + state machine + лимиты; запрет показа имён/контактов реферальщика до подтверждения; сценарий seekerCancelRequested с 3-дневным SLA"
-    status: pending
+    status: completed
   - id: phase4
     content: "Phase 4: платежи + эскроу (PaymentProvider абстракция + ЮКасса), платные отклики, подписка Соискатель PRO, выплата реферальщику при offerAccepted"
-    status: pending
+    status: completed
   - id: phase5
     content: "Phase 5: SLA таймеры (BullMQ), авто-санкции, фриз вакансий, бан реферальщиков, глобальный пул попыток с 60-дневной регенерацией, авто-удаление вакансии при успехе, каскадный возврат при ручном удалении вакансии"
-    status: pending
+    status: completed
   - id: phase6
     content: "Phase 6: споры + модерация, админ-панель, интеграция Telegram-бота (жалобы, привязка, нотификации модераторам)"
-    status: pending
+    status: completed
   - id: phase7
     content: "Phase 7: транзакционный email, полировка UI, e2e-тесты Playwright, продакшн-развёртывание"
-    status: pending
+    status: completed
 isProject: false
 ---
 

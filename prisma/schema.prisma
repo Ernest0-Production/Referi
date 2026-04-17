@@ -1,0 +1,430 @@
+// Referi — Prisma Schema v1.0
+// Source of truth: spec/spec-schema-database.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// IDENTITY CONTEXT
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  SEEKER
+  REFERRER
+  MODERATOR
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  displayName String
+  roles       UserRole[]
+
+  githubProfile       GitHubProfile?
+  seekerSubscription  SeekerSubscription?
+  seekerApplications  Application[]            @relation("SeekerApplications")
+  vacancies           Vacancy[]                @relation("ReferrerVacancies")
+  referrerSanctions   ReferrerSanction[]
+  attemptLedger       ReferrerAttemptLedger[]
+  telegramLink        TelegramLink?
+  moderatorCases      ModeratorCase[]          @relation("ModeratorCases")
+  abuseReportsFrom    AbuseReport[]            @relation("ReporterAbuseReports")
+
+  @@map("users")
+}
+
+model GitHubProfile {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+
+  githubId         Int      @unique
+  githubLogin      String
+  githubCreatedAt  DateTime
+  accessToken      String   // Зашифрован AES-256
+  paidRegistration Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("github_profiles")
+}
+
+model SeekerSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status                  SubscriptionStatus
+  currentPeriodStart      DateTime
+  currentPeriodEnd        DateTime
+  yookassaPaymentMethodId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("seeker_subscriptions")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+}
+
+// ─────────────────────────────────────────────
+// VACANCY CONTEXT
+// ─────────────────────────────────────────────
+
+enum VacancyStatus {
+  ACTIVE
+  FROZEN
+  BLOCKED
+  DELETED
+  CLOSED
+}
+
+enum Specialty {
+  FRONTEND
+  BACKEND
+  FULLSTACK
+  MOBILE
+  DEVOPS
+  QA
+  DATA
+  ML_AI
+  SECURITY
+  OTHER
+}
+
+enum Grade {
+  JUNIOR
+  MIDDLE
+  SENIOR
+  LEAD
+  PRINCIPAL
+}
+
+enum WorkFormat {
+  OFFICE
+  HYBRID
+  REMOTE
+}
+
+model Vacancy {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referrerId String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  title             String     @db.VarChar(200)
+  companyName       String     @db.VarChar(200)
+  specialty         Specialty
+  grade             Grade
+  workFormat        WorkFormat
+  salaryFromKopecks BigInt?
+  salaryToKopecks   BigInt?
+  description       String     @db.VarChar(3000)
+  rewardKopecks     BigInt     @default(0)
+
+  status       VacancyStatus @default(ACTIVE)
+  frozenUntil  DateTime?
+  blockedUntil DateTime?
+  deletedAt    DateTime?
+
+  firstApplicationAt DateTime?
+
+  referrer     User          @relation("ReferrerVacancies", fields: [referrerId], references: [id])
+  applications Application[]
+  abuseReports AbuseReport[]
+
+  @@index([status, specialty, grade, workFormat])
+  @@index([referrerId])
+  @@map("vacancies")
+}
+
+model ReferrerAttemptLedger {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referrerId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  event         AttemptEvent
+  applicationId String?  @db.Uuid
+  regeneratesAt DateTime?
+
+  referrer User @relation(fields: [referrerId], references: [id])
+
+  @@index([referrerId, event])
+  @@map("referrer_attempt_ledger")
+}
+
+enum AttemptEvent {
+  CONSUMED
+  REGENERATED
+  RETURNED
+}
+
+// ─────────────────────────────────────────────
+// APPLICATION CONTEXT
+// ─────────────────────────────────────────────
+
+enum ApplicationStatus {
+  SUBMITTED
+  AWAITING_PAYMENT
+  AWAITING_RESUME_HANDOFF
+  SEEKER_CANCEL_REQUESTED
+  AWAITING_COMPANY_DECISION
+  OFFER_ACCEPTED
+  REJECTED_BY_REFERRER
+  REJECTED_BY_COMPANY
+  CANCELLED
+  DISPUTED
+  REFUNDED_BY_SLA
+  REFUNDED_BY_CANCEL_ACK
+  REFUNDED_BY_CANCEL_AUTO
+  REFUNDED_BY_VACANCY_DELETED
+  REFUNDED_BY_MODERATOR
+}
+
+model Application {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seekerId  String   @db.Uuid
+  vacancyId String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status ApplicationStatus @default(SUBMITTED)
+
+  paymentDeadline         DateTime?
+  resumeHandoffDeadline   DateTime?
+  cancelAckDeadline       DateTime?
+  companyDecisionDeadline DateTime?
+
+  paidApplicationTokenId String? @db.Uuid
+
+  seeker        User                @relation("SeekerApplications", fields: [seekerId], references: [id])
+  vacancy       Vacancy             @relation(fields: [vacancyId], references: [id])
+  content       ApplicationContent?
+  escrowTx      EscrowTransaction?
+  moderatorCase ModeratorCase?
+  auditLogs     AuditLog[]
+
+  @@unique([seekerId, vacancyId])
+  @@index([vacancyId, status])
+  @@index([seekerId, status])
+  @@map("applications")
+}
+
+model ApplicationContent {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId String @unique @db.Uuid
+
+  contactInfo String  @db.VarChar(500)
+  bio         String  @db.VarChar(1000)
+  coverLetter String? @db.VarChar(300)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("application_contents")
+}
+
+// ─────────────────────────────────────────────
+// PAYMENT CONTEXT
+// ─────────────────────────────────────────────
+
+enum EscrowStatus {
+  HELD
+  CAPTURED
+  REFUNDED
+}
+
+model EscrowTransaction {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId String   @unique @db.Uuid
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  amountKopecks     BigInt
+  commissionKopecks BigInt
+  netPayoutKopecks  BigInt
+
+  status EscrowStatus @default(HELD)
+
+  yookassaPaymentId String? @unique
+  yookassaRefundId  String? @unique
+  yookassaPayoutId  String? @unique
+
+  heldAt     DateTime?
+  capturedAt DateTime?
+  refundedAt DateTime?
+
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@map("escrow_transactions")
+}
+
+model PaidApplicationToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seekerId  String   @db.Uuid
+  vacancyId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  amountKopecks     BigInt
+  yookassaPaymentId String?  @unique
+  expiresAt         DateTime
+  usedAt            DateTime?
+  refundedAt        DateTime?
+
+  @@index([seekerId, vacancyId])
+  @@map("paid_application_tokens")
+}
+
+model RegistrationPayment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  amountKopecks     BigInt
+  yookassaPaymentId String?  @unique
+  paidAt            DateTime?
+
+  @@map("registration_payments")
+}
+
+// ─────────────────────────────────────────────
+// MODERATION CONTEXT
+// ─────────────────────────────────────────────
+
+enum ReferrerSanctionType {
+  RESUME_HANDOFF_BAN
+  REACTION_FREEZE
+}
+
+model ReferrerSanction {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referrerId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  sanctionType  ReferrerSanctionType
+  reason        String               @db.VarChar(500)
+  expiresAt     DateTime
+  applicationId String?              @db.Uuid
+
+  referrer User @relation(fields: [referrerId], references: [id])
+
+  @@index([referrerId, expiresAt])
+  @@map("referrer_sanctions")
+}
+
+enum ModeratorCaseStatus {
+  OPEN
+  RESOLVED_FOR_REFERRER
+  RESOLVED_FOR_SEEKER
+}
+
+model ModeratorCase {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId String   @unique @db.Uuid
+  moderatorId   String?  @db.Uuid
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  status     ModeratorCaseStatus @default(OPEN)
+  notes      String?             @db.VarChar(2000)
+  resolvedAt DateTime?
+
+  application Application @relation(fields: [applicationId], references: [id])
+  moderator   User?        @relation("ModeratorCases", fields: [moderatorId], references: [id])
+
+  @@map("moderator_cases")
+}
+
+enum AbuseReportReason {
+  FAKE_VACANCY
+  INAPPROPRIATE_BEHAVIOR
+  FRAUD
+  OTHER
+}
+
+model AbuseReport {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterId String   @db.Uuid
+  vacancyId  String?  @db.Uuid
+  createdAt  DateTime @default(now())
+
+  reason     AbuseReportReason
+  comment    String?           @db.VarChar(500)
+  resolvedAt DateTime?
+  resolution String?           @db.VarChar(500)
+
+  reporter User     @relation("ReporterAbuseReports", fields: [reporterId], references: [id])
+  vacancy  Vacancy? @relation(fields: [vacancyId], references: [id])
+
+  @@map("abuse_reports")
+}
+
+// ─────────────────────────────────────────────
+// TELEGRAM CONTEXT
+// ─────────────────────────────────────────────
+
+model TelegramLink {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+
+  telegramUserId   BigInt @unique
+  telegramUsername String?
+  chatId           BigInt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("telegram_links")
+}
+
+model TelegramLinkToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  token     String   @unique
+  expiresAt DateTime
+
+  @@index([token])
+  @@map("telegram_link_tokens")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT CONTEXT
+// ─────────────────────────────────────────────
+
+enum AuditActor {
+  SYSTEM
+  SEEKER
+  REFERRER
+  MODERATOR
+  ADMIN
+}
+
+model AuditLog {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId String   @db.Uuid
+  createdAt     DateTime @default(now())
+
+  fromStatus ApplicationStatus?
+  toStatus   ApplicationStatus
+  actor      AuditActor
+  actorId    String?   @db.Uuid
+  metadata   Json?
+
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId, createdAt])
+  @@map("audit_logs")
+}
