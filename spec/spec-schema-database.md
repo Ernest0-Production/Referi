@@ -37,6 +37,10 @@ tags: schema, data, infrastructure
 | `AttemptEvent`      | Тип события в журнале попыток реферальщика                     |
 | `AuditActor`        | Кто произвёл действие (system / seeker / referrer / moderator) |
 
+### 2.1 Защищённая оплата по заявке (`EscrowTransaction`)
+
+`EscrowTransaction` — локальное **зеркало** состояния платежа и безопасной сделки ЮKassa по заявке. Referi не ведёт отдельный банковский эскроу-счёт: удержание и расчёты выполняет провайдер. Поля `yookassaPaymentId`, `yookassaRefundId`, `yookassaPayoutId` — ссылочные идентификаторы API. При появлении в схеме идентификатора сделки Safe deal (например `yookassaDealId`) он описывается в этом разделе и в Prisma рядом с платёжными полями.
+
 ---
 
 ## 3. Requirements, Constraints & Guidelines
@@ -244,7 +248,7 @@ enum AttemptEvent {
 enum ApplicationStatus {
   SUBMITTED                  // Соискатель откликнулся
   AWAITING_PAYMENT           // Реферальщик подтвердил намерение; ждём оплату
-  AWAITING_RESUME_HANDOFF    // Деньги в эскроу; ждём передачи резюме
+  AWAITING_RESUME_HANDOFF    // Оплата заказчика удерживается у ЮKassa (сделка); ждём передачи резюме
   SEEKER_CANCEL_REQUESTED    // Соискатель запросил отмену; ждём подтверждения рефальщика (3 дня)
   AWAITING_COMPANY_DECISION  // Резюме передано; ждём решения компании
   OFFER_ACCEPTED             // Соискатель принял оффер
@@ -312,13 +316,13 @@ model ApplicationContent {
 }
 
 // ─────────────────────────────────────────────
-// PAYMENT CONTEXT
+// PAYMENT CONTEXT (зеркало сделки / платежа ЮKassa по заявке)
 // ─────────────────────────────────────────────
 
 enum EscrowStatus {
-  HELD        // Деньги захолдированы
-  CAPTURED    // Выплачено реферальщику
-  REFUNDED    // Возвращено соискателю
+  HELD        // Средства удерживаются у провайдера (оплата заказчика в сделке)
+  CAPTURED    // Выплачено исполнителю (реферальщику) по правилам сделки
+  REFUNDED    // Возвращено заказчику (соискателю)
 }
 
 model EscrowTransaction {
@@ -328,15 +332,15 @@ model EscrowTransaction {
   updatedAt     DateTime @updatedAt
 
   amountKopecks       BigInt      // Сумма вознаграждения; неизменяема после создания
-  commissionKopecks   BigInt      // Комиссия сервиса (рассчитана при создании)
+  commissionKopecks   BigInt      // Комиссия маркетплейса (рассчитана при создании)
   netPayoutKopecks    BigInt      // amountKopecks - commissionKopecks
 
   status              EscrowStatus @default(HELD)
 
-  // Идентификаторы в ЮКасса
-  yookassaPaymentId   String?  @unique  // ID платежа (hold)
-  yookassaRefundId    String?  @unique  // ID возврата
-  yookassaPayoutId    String?  @unique  // ID выплаты реферальщику
+  // Идентификаторы в ЮKassa (платёж / возврат / выплата исполнителю в Safe deal)
+  yookassaPaymentId   String?  @unique  // ID платежа заказчика
+  yookassaRefundId    String?  @unique  // ID возврата заказчику
+  yookassaPayoutId    String?  @unique  // ID выплаты исполнителю
 
   heldAt      DateTime?    // Время захолдирования
   capturedAt  DateTime?    // Время выплаты

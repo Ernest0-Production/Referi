@@ -143,20 +143,20 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 
 ---
 
-## Phase 4 — Payments & Escrow
+## Phase 4 — Payments & YooKassa Safe deal
 
-**Цель**: реальные платежи через ЮКасса; подписки и разовые токены работают.
+**Цель**: реальные платежи через ЮKassa; заявки с вознаграждением — **безопасная сделка** (удержание у провайдера, выплата исполнителю, возврат заказчику); подписки и разовые токены — обычные платежи.
 
 ### Deliverables
 
 | Задача                                    | Флаг    | Описание                                               |
 | ----------------------------------------- | ------- | ------------------------------------------------------ |
-| `YookassaPaymentProvider`                 | `[PAY]` | Реализация `PaymentProvider` интерфейса под ЮКасса API |
-| `payments.createEscrow` mutation          | `[PAY]` | Создание платежа с холдом; возврат `confirmationUrl`   |
-| Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация HMAC; обработка событий                    |
+| `YookassaPaymentProvider`                 | `[PAY]` | Реализация `PaymentProvider`; целевой объём — API Safe deal + Payments |
+| `payments.createEscrow` mutation          | `[PAY]` | Старт оплаты заказчика по заявке; `confirmationUrl` (имя процедуры без изменений) |
+| Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация HMAC; обработка событий платежа/сделки     |
 | `paymentWorker`                           | `[PAY]` | BullMQ обработчик webhook-событий; идемпотентность     |
-| `capturePayment` при offerAccepted        | `[PAY]` | capture + payout реферальщику                          |
-| `refundPayment` при всех refund-переходах | `[PAY]` | SLA, cancel, vacancy deleted, moderator                |
+| Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)   |
+| `refundPayment` при всех refund-переходах | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator |
 | `payments.addPayoutCard`                  | `[PAY]` | Добавление карты реферальщика для выплат               |
 | `payments.buyApplicationToken`            | `[PAY]` | Разовый токен отклика (199 ₽)                          |
 | `PaidApplicationToken` использование      | `[PAY]` | При submit с токеном — лимит не проверяется            |

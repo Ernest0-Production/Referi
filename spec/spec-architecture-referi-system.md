@@ -34,7 +34,7 @@ tags: architecture, infrastructure, design, app
 | **Moderator**   | Сотрудник Referi, разрешающий споры                                   |
 | **Application** | Заявка соискателя на конкретную вакансию                              |
 | **Vacancy**     | Объявление о вакансии, созданное реферальщиком                        |
-| **Escrow**      | Механизм удержания денег на счёте Referi до выполнения условий сделки |
+| **Escrow**      | Защищённая оплата по заявке: удержание средств у **ЮKassa** (безопасная сделка), синхронизируемое с состоянием заявки |
 | **SLA**         | Service Level Agreement — обязательный срок выполнения действия       |
 | **Attempt**     | Единица из глобального пула попыток реферальщика (макс. 3)            |
 | **BullMQ Job**  | Фоновая задача с отложенным запуском для SLA-таймеров                 |
@@ -289,8 +289,8 @@ slaWorker.process(job)
 - **EXT-001**: GitHub REST API v3 — OAuth аутентификация + чтение `user.created_at` для age-check.
 
 ### Third-Party Services
-- **SVC-001**: ЮКасса Payments API — авторизация платежей, холдирование, возвраты. SLA ответа API ≤ 3 с.
-- **SVC-002**: ЮКасса Payouts API — выплаты на банковские карты физлицам.
+- **SVC-001**: ЮKassa **безопасная сделка (Safe deal)** — сделки между заказчиком и исполнителем, удержание, [возвраты](https://yookassa.ru/developers/solutions-for-platforms/safe-deal/integration/refunds), выплата исполнителю; обычные платежи — через Payments API. SLA ответа API ≤ 3 с.
+- **SVC-002**: ЮKassa Payouts API — выплаты на карты и поддерживаемые способы в составе сделки и отдельные сценарии.
 - **SVC-003**: Telegram Bot API — отправка сообщений, получение команд от модераторов, приём жалоб.
 - **SVC-004**: SMTP-провайдер (Mailgun / SendPulse) — транзакционные email-уведомления.
 
@@ -305,7 +305,7 @@ slaWorker.process(job)
 
 ### Compliance Dependencies
 - **COM-001**: ФЗ «О персональных данных» (152-ФЗ) — данные пользователей (контакты) должны храниться на серверах в РФ.
-- **COM-002**: Правила платёжных систем — Referi не является платёжным агентом; необходимо юридическое оформление эскроу-механизма.
+- **COM-002**: Referi выступает как маркетплейс; денежный поток по заявкам идёт через договор с ЮKassa (Safe deal и связанные продукты). Юридическое и бухгалтерское сопровождение — с учётом условий подключения и оферты провайдера.
 
 ---
 
@@ -353,7 +353,7 @@ export async function confirmReferralIntent(
 // server/commands/deleteVacancy.ts
 // Должен выполняться в транзакции:
 // 1. Получить все активные заявки по вакансии (FOR UPDATE)
-// 2. Для каждой: если есть холд в escrow → инициировать refund
+// 2. Для каждой: если есть активное удержание по заявке → инициировать refund в ЮKassa
 // 3. Перевести все заявки в refundedByVacancyDeleted
 // 4. НЕ уменьшать attempt_ledger (ручное удаление — не наказание)
 // 5. Обновить статус вакансии на DELETED
@@ -377,7 +377,7 @@ export async function confirmReferralIntent(
 - [spec-schema-database.md](spec-schema-database.md) — схема БД
 - [spec-process-application-lifecycle.md](spec-process-application-lifecycle.md) — машина состояний заявки
 - [spec-process-referrer-sla.md](spec-process-referrer-sla.md) — SLA и санкции
-- [spec-data-payments-escrow.md](spec-data-payments-escrow.md) — платежи и эскроу
+- [spec-data-payments-escrow.md](spec-data-payments-escrow.md) — платежи и безопасная сделка ЮKassa
 - [spec-design-api.md](spec-design-api.md) — API контракты
 - [spec-tool-github-auth.md](spec-tool-github-auth.md) — GitHub OAuth
 - [spec-tool-telegram-bot.md](spec-tool-telegram-bot.md) — Telegram-бот

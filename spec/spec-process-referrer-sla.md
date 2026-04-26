@@ -286,7 +286,7 @@ State before:
   Application A1: status = AWAITING_RESUME_HANDOFF
 
 vacancyDeletedCascade():
-  1. Refund escrow for A1
+  1. Возврат заказчику по защищённому платежу (ЮKassa) для A1
   2. A1.status = REFUNDED_BY_VACANCY_DELETED
   3. ReferrerAttemptLedger.create({ event: RETURNED, appId: A1 })
   4. Update CONSUMED entry: regeneratesAt = past (или пометить как returned)

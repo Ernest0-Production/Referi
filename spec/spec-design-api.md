@@ -147,10 +147,10 @@ type VacancyListItem = {
 
 | Процедура                      | Тип      | Auth   | Входные данные      | Описание                                                                         |
 | ------------------------------ | -------- | ------ | ------------------- | -------------------------------------------------------------------------------- |
-| `payments.createEscrow`        | mutation | isAuth | `{ applicationId }` | Создать платёж эскроу; возвращает `{ confirmationUrl }`                          |
+| `payments.createEscrow`        | mutation | isAuth | `{ applicationId }` | Инициировать оплату заказчика по заявке в **безопасной сделке** ЮKassa; идентификатор процедуры в API без переименования; возвращает `{ confirmationUrl }` |
 | `payments.buyApplicationToken` | mutation | isAuth | `{ vacancyId }`     | Купить разовый токен отклика; возвращает `{ confirmationUrl }`                   |
-| `payments.addPayoutCard`       | mutation | isAuth | —                   | Добавить карту для выплат (ЮКасса hosted form); возвращает `{ confirmationUrl }` |
-| `payments.escrowStatus`        | query    | isAuth | `{ applicationId }` | Статус эскроу-транзакции                                                         |
+| `payments.addPayoutCard`       | mutation | isAuth | —                   | Добавить карту для выплат (ЮKassa hosted form); возвращает `{ confirmationUrl }` |
+| `payments.escrowStatus`        | query    | isAuth | `{ applicationId }` | Статус зеркальной записи платежа/сделки (`EscrowTransaction`) по заявке          |
 
 ### 4.6 Router: `subscriptions`
 
@@ -183,7 +183,7 @@ type VacancyListItem = {
 
 | Путь                      | Метод    | Описание                             |
 | ------------------------- | -------- | ------------------------------------ |
-| `/api/webhooks/yookassa`  | POST     | Входящие события ЮКасса              |
+| `/api/webhooks/yookassa`  | POST     | Входящие события ЮKassa (платежи, сделки) |
 | `/api/webhooks/telegram`  | POST     | Входящие обновления Telegram Bot API |
 | `/api/auth/[...nextauth]` | GET/POST | Auth.js handler                      |
 
@@ -207,7 +207,7 @@ Header: X-Telegram-Bot-Api-Secret-Token: {TELEGRAM_WEBHOOK_SECRET}
 | Authenticated mutations (общее)    | 20 req / мин / userId                         |
 | `applications.submit`              | 5 req / мин / userId                          |
 | `reports.submitAbuseReport`        | 3 req / ч / userId                            |
-| Вебхуки ЮКасса                     | Без ограничений (белый список IP ЮКасса)      |
+| Вебхуки ЮKassa                     | Без ограничений (белый список IP ЮKassa)      |
 | Вебхуки Telegram                   | Без ограничений (верификация по secret token) |
 
 Rate limits реализуются через Edge middleware с Redis как хранилищем счётчиков.

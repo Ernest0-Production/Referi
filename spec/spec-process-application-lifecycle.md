@@ -20,7 +20,7 @@ tags: process, design, app
 - Каждый переход атомарен (выполняется в транзакции БД).
 - Каждый переход создаёт запись в `AuditLog`.
 - Неразрешённый переход приводит к исключению `BusinessError`.
-- Деньги (эскроу) всегда обрабатываются в рамках того же перехода состояния (идемпотентно).
+- Средства по защищённой оплате (зеркало сделки ЮKassa в `EscrowTransaction`) всегда обрабатываются в рамках того же перехода состояния (идемпотентно).
 
 ---
 
@@ -99,9 +99,9 @@ handoff               cancellation
    │  both confirm      CANCEL_ACK[T]  CANCEL_AUTO[T]
    │  company rejected
    │
-   ├─→ OFFER_ACCEPTED → [escrow payout → vacancy deleted]
+   ├─→ OFFER_ACCEPTED → [выплата исполнителю / закрытие сделки → vacancy deleted]
    │
-   └─→ REJECTED_BY_COMPANY [T] → [escrow refund]
+   └─→ REJECTED_BY_COMPANY [T] → [возврат заказчику]
        (оба подтвердили)
 
 DISPUTED
@@ -140,6 +140,8 @@ DISPUTED
 
 \* `seekerReportsRejection`: если реферальщик уже нажал «подтвердить отказ» — `REJECTED_BY_COMPANY`; иначе флаг `seekerReportedRejection = true` и ждём реферальщика.
 
+Имя `escrowHoldSucceeded` — устоявшийся идентификатор перехода; по смыслу это подтверждение успешной оплаты заказчика в **безопасной сделке** ЮKassa (событие после webhook).
+
 ### 4.3 Guards (предусловия)
 
 | ID      | Описание                                                                                                                                                                                           |
@@ -172,12 +174,12 @@ DISPUTED
 | `seekerRequestCancel`          | Уведомить реферальщика; запланировать cancelAck SLA-таймер                                             |
 | `refundedByCancelAck / Auto`   | Инициировать возврат; освободить слот активного отклика                                                |
 | `referrerConfirmResumeHandoff` | Отменить SLA-таймер передачи резюме; запланировать SLA-таймер решения компании                         |
-| `seekerAcceptsOffer`           | Инициировать `capture` эскроу → выплату реферальщику; авто-удаление вакансии                           |
+| `seekerAcceptsOffer`           | Инициировать закрытие сделки в пользу исполнителя (`capture` → выплата); авто-удаление вакансии                           |
 | `rejectedByCompany`            | Инициировать возврат; освободить слот                                                                  |
 | `disputed`                     | Создать `ModeratorCase`; уведомить модераторов через Telegram-бот                                      |
-| `moderatorResolveForReferrer`  | Инициировать `capture` → выплату; закрыть `ModeratorCase`                                              |
+| `moderatorResolveForReferrer`  | Инициировать закрытие в пользу исполнителя (`capture` → выплату); закрыть `ModeratorCase`                                              |
 | `moderatorResolveForSeeker`    | Инициировать возврат; закрыть `ModeratorCase`                                                          |
-| `vacancyDeletedCascade`        | Для заявок с эскроу — инициировать возврат; вернуть попытки через `RETURNED` в ledger                  |
+| `vacancyDeletedCascade`        | Для заявок с удержанием по сделке — инициировать возврат заказчику; вернуть попытки через `RETURNED` в ledger                  |
 
 ### 4.5 Инварианты (всегда истинны)
 

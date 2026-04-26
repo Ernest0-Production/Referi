@@ -128,7 +128,7 @@ initiateRegistrationPayment: protectedProcedure
       idempotencyKey: `registration:${ctx.user.id}:1`,
       amountKopecks: BigInt(BUSINESS_RULES.REGISTRATION_FEE_KOP),
       description: 'Регистрационный сбор Referi',
-      capture: false,  // false = capture immediately (регистрационный платёж — не эскроу)
+      capture: false,  // регистрационный платёж — обычный платёж, не заявка Safe deal
       returnUrl: `${process.env.NEXT_PUBLIC_URL}/registration/age-gate/success`,
       metadata: { userId: ctx.user.id, type: 'registration' },
     });
