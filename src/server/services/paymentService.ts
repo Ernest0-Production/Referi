@@ -50,11 +50,7 @@ export interface PayoutResult {
   status: "pending" | "succeeded";
 }
 
-export type PaymentStatus =
-  | "pending"
-  | "waiting_for_capture"
-  | "succeeded"
-  | "canceled";
+export type PaymentStatus = "pending" | "waiting_for_capture" | "succeeded" | "canceled";
 
 export interface PaymentProvider {
   createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult>;
@@ -71,9 +67,7 @@ export interface PaymentProvider {
 const mockStorage = new Map<string, { status: PaymentStatus }>();
 
 export class MockPaymentProvider implements PaymentProvider {
-  async createPayment(
-    options: CreatePaymentOptions,
-  ): Promise<CreatePaymentResult> {
+  async createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult> {
     const paymentId = `mock_${options.idempotencyKey}`;
     mockStorage.set(paymentId, { status: "waiting_for_capture" });
     return {
@@ -153,9 +147,7 @@ export class YookassaPaymentProvider implements PaymentProvider {
     return res.json() as Promise<T>;
   }
 
-  async createPayment(
-    options: CreatePaymentOptions,
-  ): Promise<CreatePaymentResult> {
+  async createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult> {
     const response = await this.request<{
       id: string;
       confirmation: { confirmation_url: string };
@@ -243,15 +235,11 @@ export class YookassaPaymentProvider implements PaymentProvider {
   }
 
   async getPaymentStatus(paymentId: string): Promise<PaymentStatus> {
-    const response = await this.request<{ status: string }>(
-      `/payments/${paymentId}`,
-      "GET",
-    );
+    const response = await this.request<{ status: string }>(`/payments/${paymentId}`, "GET");
     return response.status as PaymentStatus;
   }
 }
 
-// Factory — returns real or mock based on feature flag
 export function createPaymentProvider(): PaymentProvider {
   if (process.env.FEATURE_REAL_PAYMENTS === "true") {
     return new YookassaPaymentProvider();

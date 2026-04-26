@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, moderatorProcedure, protectedProcedure } from "../trpc";
+import type { Prisma } from "@prisma/client";
+
 import { telegramService } from "@/server/services/telegramService";
 import { paymentProvider } from "@/server/services/paymentService";
-import { calculateCommission } from "@/shared/utils/money";
+import { schedulePayoutReferrer } from "@/server/workers/paymentWorker";
 
 export const moderationRouter = router({
   openCases: moderatorProcedure.query(async ({ ctx }) => {
@@ -70,18 +72,21 @@ export const moderationRouter = router({
         });
       }
 
-      // Capture payment if escrow exists
       if (app.escrowTx?.yookassaPaymentId) {
-        const { netPayout } = calculateCommission(app.escrowTx.amountKopecks);
         await paymentProvider.capturePayment({
           idempotencyKey: `capture-moderator:${app.id}`,
           paymentId: app.escrowTx.yookassaPaymentId,
           amountKopecks: app.escrowTx.amountKopecks,
         });
-        // TODO: initiate payout to referrer
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
+        if (app.escrowTx?.yookassaPaymentId) {
+          await tx.escrowTransaction.update({
+            where: { id: app.escrowTx.id },
+            data: { capturedAt: new Date(), status: "CAPTURED" },
+          });
+        }
         await tx.application.update({
           where: { id: app.id },
           data: { status: "OFFER_ACCEPTED" },
@@ -106,6 +111,14 @@ export const moderationRouter = router({
           },
         });
       });
+
+      if (app.escrowTx?.yookassaPaymentId) {
+        void schedulePayoutReferrer(
+          app.id,
+          app.escrowTx.amountKopecks,
+          `payout-moderator-referrer:${app.id}`,
+        );
+      }
 
       return { status: "RESOLVED_FOR_REFERRER" as const };
     }),
@@ -145,7 +158,7 @@ export const moderationRouter = router({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.application.update({
           where: { id: app.id },
           data: { status: "REFUNDED_BY_MODERATOR" },
@@ -253,12 +266,7 @@ export const reportsRouter = router({
     .input(
       z.object({
         vacancyId: z.string().uuid().optional(),
-        reason: z.enum([
-          "FAKE_VACANCY",
-          "INAPPROPRIATE_BEHAVIOR",
-          "FRAUD",
-          "OTHER",
-        ]),
+        reason: z.enum(["FAKE_VACANCY", "INAPPROPRIATE_BEHAVIOR", "FRAUD", "OTHER"]),
         comment: z.string().max(500).optional(),
       }),
     )

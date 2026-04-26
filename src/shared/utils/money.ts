@@ -8,9 +8,7 @@ export function calculateCommission(amountKopecks: bigint): {
   commission: bigint;
   netPayout: bigint;
 } {
-  const RATE = BigInt(
-    Math.round(BUSINESS_RULES.PLATFORM_COMMISSION_RATE * 10_000),
-  );
+  const RATE = BigInt(Math.round(BUSINESS_RULES.PLATFORM_COMMISSION_RATE * 10_000));
   const commission = (amountKopecks * RATE) / BigInt(10_000);
   const netPayout = amountKopecks - commission;
   return { commission, netPayout };
@@ -34,9 +32,7 @@ export function formatRubles(kopecks: bigint): string {
  * Convert BigInt kopecks to string for JSON serialization.
  * Use in tRPC router outputs.
  */
-export function kopecksToString(
-  kopecks: bigint | null | undefined,
-): string | null {
+export function kopecksToString(kopecks: bigint | null | undefined): string | null {
   if (kopecks == null) return null;
   return kopecks.toString();
 }

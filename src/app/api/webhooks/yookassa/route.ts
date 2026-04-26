@@ -1,6 +1,9 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { calculateCommission } from "@/shared/utils/money";
-import { paymentProvider } from "@/server/services/paymentService";
+import {
+  applyEscrowPaymentHeld,
+  applyRegistrationPaymentSucceeded,
+} from "@/server/services/yookassaWebhookHandlers";
 
 interface YookassaWebhookEvent {
   type: string;
@@ -12,18 +15,18 @@ interface YookassaWebhookEvent {
   };
 }
 
-function verifyYookassaSignature(
-  _body: string,
-  _authHeader: string | null,
-): boolean {
-  // TODO: implement HMAC-SHA256 verification in production
-  // For now, verify via Basic auth shop_id:secret_key
+/**
+ * YooKassa уведомления: проверка по Basic Auth (shopId:secretKey) — штатный способ
+ * в HTTP-уведомлениях. IP-фильтрация в кабинете YooKassa — дополнительный слой.
+ */
+function verifyYookassaSignature(_body: string, authHeader: string | null): boolean {
   if (process.env.FEATURE_REAL_PAYMENTS !== "true") return true;
 
   const shopId = process.env.YOOKASSA_SHOP_ID ?? "";
   const secretKey = process.env.YOOKASSA_SECRET_KEY ?? "";
+  if (!shopId || !secretKey) return false;
   const expected = `Basic ${Buffer.from(`${shopId}:${secretKey}`).toString("base64")}`;
-  return _authHeader === expected;
+  return authHeader === expected;
 }
 
 export async function POST(request: Request) {
@@ -52,10 +55,7 @@ async function processWebhookEvent(event: YookassaWebhookEvent) {
     const { type, object } = event;
     const paymentId = object.id;
 
-    if (
-      type === "notification" &&
-      event.event === "payment.waiting_for_capture"
-    ) {
+    if (type === "notification" && event.event === "payment.waiting_for_capture") {
       // Escrow hold succeeded
       await handlePaymentHeld(paymentId);
     } else if (type === "notification" && event.event === "payment.canceled") {
@@ -71,43 +71,7 @@ async function processWebhookEvent(event: YookassaWebhookEvent) {
 }
 
 async function handlePaymentHeld(yookassaPaymentId: string) {
-  const escrow = await prisma.escrowTransaction.findFirst({
-    where: { yookassaPaymentId },
-  });
-  if (!escrow || escrow.status !== "HELD") return;
-
-  const application = await prisma.application.findUnique({
-    where: { id: escrow.applicationId },
-  });
-  if (!application || application.status !== "AWAITING_PAYMENT") return;
-
-  const { BUSINESS_RULES } = await import("@/shared/constants/businessRules");
-
-  await prisma.$transaction(async (tx) => {
-    await tx.escrowTransaction.update({
-      where: { id: escrow.id },
-      data: { heldAt: new Date() },
-    });
-    await tx.application.update({
-      where: { id: escrow.applicationId },
-      data: {
-        status: "AWAITING_RESUME_HANDOFF",
-        paymentDeadline: null,
-        resumeHandoffDeadline: new Date(
-          Date.now() + BUSINESS_RULES.SLA_RESUME_HANDOFF_MS,
-        ),
-      },
-    });
-    await tx.auditLog.create({
-      data: {
-        applicationId: escrow.applicationId,
-        fromStatus: "AWAITING_PAYMENT",
-        toStatus: "AWAITING_RESUME_HANDOFF",
-        actor: "SYSTEM",
-        metadata: { yookassaPaymentId },
-      },
-    });
-  });
+  await applyEscrowPaymentHeld(yookassaPaymentId);
 }
 
 async function handlePaymentCanceled(yookassaPaymentId: string) {
@@ -121,7 +85,7 @@ async function handlePaymentCanceled(yookassaPaymentId: string) {
   });
   if (!application || application.status !== "AWAITING_PAYMENT") return;
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: escrow.applicationId },
       data: { status: "CANCELLED", paymentDeadline: null },
@@ -139,19 +103,5 @@ async function handlePaymentCanceled(yookassaPaymentId: string) {
 }
 
 async function handleRegistrationPaymentSucceeded(yookassaPaymentId: string) {
-  const regPayment = await prisma.registrationPayment.findFirst({
-    where: { yookassaPaymentId },
-  });
-  if (!regPayment || regPayment.paidAt) return;
-
-  await prisma.$transaction([
-    prisma.registrationPayment.update({
-      where: { id: regPayment.id },
-      data: { paidAt: new Date() },
-    }),
-    prisma.gitHubProfile.update({
-      where: { userId: regPayment.userId },
-      data: { paidRegistration: true },
-    }),
-  ]);
+  await applyRegistrationPaymentSucceeded(yookassaPaymentId);
 }

@@ -1,7 +1,6 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { createApplicationRepository } from "@/server/repositories/applicationRepository";
-import { createAuditLogRepository } from "@/server/repositories/auditLogRepository";
-import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { scheduleReactionSLA } from "@/server/workers/slaWorker";
 
 export class BusinessError extends Error {
   constructor(
@@ -22,12 +21,8 @@ interface SubmitApplicationInput {
   paidTokenId?: string;
 }
 
-export async function submitApplication(
-  db: PrismaClient,
-  input: SubmitApplicationInput,
-) {
+export async function submitApplication(db: PrismaClient, input: SubmitApplicationInput) {
   const appRepo = createApplicationRepository(db);
-  const auditRepo = createAuditLogRepository(db);
 
   // Guard G1: seeker must be authenticated — handled by tRPC middleware
   // Guard G2: active application limit
@@ -43,10 +38,7 @@ export async function submitApplication(
   }
 
   // Guard G3: no existing active application for this vacancy
-  const existing = await appRepo.findActiveBySeekerAndVacancy(
-    input.seekerId,
-    input.vacancyId,
-  );
+  const existing = await appRepo.findActiveBySeekerAndVacancy(input.seekerId, input.vacancyId);
   if (existing) {
     throw new BusinessError("DUPLICATE_APPLICATION");
   }
@@ -59,7 +51,9 @@ export async function submitApplication(
     throw new BusinessError("VACANCY_NOT_ACTIVE");
   }
 
-  const application = await db.$transaction(async (tx) => {
+  const isFirstApplicationOnVacancy = !vacancy.firstApplicationAt;
+
+  const application = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     // Create application + content
     const app = await tx.application.create({
       data: {
@@ -96,6 +90,10 @@ export async function submitApplication(
 
     return app;
   });
+
+  if (isFirstApplicationOnVacancy) {
+    void scheduleReactionSLA(input.vacancyId);
+  }
 
   return application;
 }

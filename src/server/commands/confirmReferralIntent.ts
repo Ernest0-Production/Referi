@@ -1,8 +1,13 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { createApplicationRepository } from "@/server/repositories/applicationRepository";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
 import { BusinessError } from "./submitApplication";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import {
+  scheduleAttemptRegeneration,
+  schedulePaymentDeadline,
+  scheduleResumeHandoffSLA,
+} from "@/server/workers/slaWorker";
 
 export async function confirmReferralIntent(
   db: PrismaClient,
@@ -49,20 +54,12 @@ export async function confirmReferralIntent(
     throw new BusinessError("REFERRER_BANNED");
   }
 
-  const paymentDeadline = new Date(
-    Date.now() + BUSINESS_RULES.SLA_PAYMENT_DEADLINE_MS,
-  );
+  const paymentDeadline = new Date(Date.now() + BUSINESS_RULES.SLA_PAYMENT_DEADLINE_MS);
+  const isFreeReferral = application.vacancy.rewardKopecks === BigInt(0);
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     // Consume attempt
-    const { ledgerEntryId, regeneratesAt } = await attemptRepo.consume(
-      referrerId,
-      applicationId,
-    );
-
-    // If rewardKopecks = 0, skip payment step and go directly to AWAITING_RESUME_HANDOFF
-    const rewardKopecks = application.vacancy.rewardKopecks;
-    const isFreeReferral = rewardKopecks === BigInt(0);
+    const { ledgerEntryId, regeneratesAt } = await attemptRepo.consume(referrerId, applicationId);
 
     const resumeHandoffDeadline = isFreeReferral
       ? new Date(Date.now() + BUSINESS_RULES.SLA_RESUME_HANDOFF_MS)
@@ -81,9 +78,7 @@ export async function confirmReferralIntent(
       data: {
         applicationId,
         fromStatus: "SUBMITTED",
-        toStatus: isFreeReferral
-          ? "AWAITING_RESUME_HANDOFF"
-          : "AWAITING_PAYMENT",
+        toStatus: isFreeReferral ? "AWAITING_RESUME_HANDOFF" : "AWAITING_PAYMENT",
         actor: "REFERRER",
         actorId: referrerId,
       },
@@ -91,6 +86,13 @@ export async function confirmReferralIntent(
 
     return { updatedApp, ledgerEntryId, regeneratesAt };
   });
+
+  void scheduleAttemptRegeneration(result.ledgerEntryId, referrerId, applicationId);
+  if (isFreeReferral) {
+    void scheduleResumeHandoffSLA(applicationId);
+  } else {
+    void schedulePaymentDeadline(applicationId);
+  }
 
   return result.updatedApp;
 }

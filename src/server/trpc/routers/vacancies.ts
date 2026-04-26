@@ -2,6 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
+import { cancelSLAJob } from "@/server/workers/slaWorker";
+import { scheduleRefundSeeker } from "@/server/workers/paymentWorker";
 import type { Prisma } from "@prisma/client";
 
 const specialtyEnum = z.enum([
@@ -58,68 +60,57 @@ function serializeVacancy<
 }
 
 export const vacanciesRouter = router({
-  list: publicProcedure
-    .input(vacancyListSchema)
-    .query(async ({ ctx, input }) => {
-      const {
-        specialty,
-        grade,
-        workFormat,
-        salaryFrom,
-        salaryTo,
-        query,
-        page,
-        limit,
-      } = input;
+  list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
+    const { specialty, grade, workFormat, salaryFrom, salaryTo, query, page, limit } = input;
 
-      const where: Prisma.VacancyWhereInput = {
-        status: "ACTIVE",
-        ...(specialty?.length && { specialty: { in: specialty } }),
-        ...(grade?.length && { grade: { in: grade } }),
-        ...(workFormat?.length && { workFormat: { in: workFormat } }),
-        ...(salaryFrom && {
-          salaryToKopecks: { gte: BigInt(salaryFrom * 100) },
-        }),
-        ...(salaryTo && { salaryFromKopecks: { lte: BigInt(salaryTo * 100) } }),
-        ...(query && {
-          OR: [
-            { title: { contains: query, mode: "insensitive" } },
-            { description: { contains: query, mode: "insensitive" } },
-            { companyName: { contains: query, mode: "insensitive" } },
-          ],
-        }),
-      };
+    const where: Prisma.VacancyWhereInput = {
+      status: "ACTIVE",
+      ...(specialty?.length && { specialty: { in: specialty } }),
+      ...(grade?.length && { grade: { in: grade } }),
+      ...(workFormat?.length && { workFormat: { in: workFormat } }),
+      ...(salaryFrom && {
+        salaryToKopecks: { gte: BigInt(salaryFrom * 100) },
+      }),
+      ...(salaryTo && { salaryFromKopecks: { lte: BigInt(salaryTo * 100) } }),
+      ...(query && {
+        OR: [
+          { title: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+          { companyName: { contains: query, mode: "insensitive" } },
+        ],
+      }),
+    };
 
-      const [items, total] = await Promise.all([
-        ctx.db.vacancy.findMany({
-          where,
-          orderBy: { createdAt: "desc" },
-          skip: (page - 1) * limit,
-          take: limit,
-          select: {
-            id: true,
-            title: true,
-            companyName: true,
-            specialty: true,
-            grade: true,
-            workFormat: true,
-            salaryFromKopecks: true,
-            salaryToKopecks: true,
-            rewardKopecks: true,
-            description: true,
-            createdAt: true,
-          },
-        }),
-        ctx.db.vacancy.count({ where }),
-      ]);
+    const [items, total] = await Promise.all([
+      ctx.db.vacancy.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          companyName: true,
+          specialty: true,
+          grade: true,
+          workFormat: true,
+          salaryFromKopecks: true,
+          salaryToKopecks: true,
+          rewardKopecks: true,
+          description: true,
+          createdAt: true,
+        },
+      }),
+      ctx.db.vacancy.count({ where }),
+    ]);
 
-      return {
-        items: items.map(serializeVacancy),
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-      };
-    }),
+    return {
+      items: items.map(serializeVacancy),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }),
 
   getById: publicProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -146,63 +137,59 @@ export const vacanciesRouter = router({
       return serializeVacancy(vacancy);
     }),
 
-  create: protectedProcedure
-    .input(createVacancySchema)
-    .mutation(async ({ ctx, input }) => {
-      const { userId } = ctx;
+  create: protectedProcedure.input(createVacancySchema).mutation(async ({ ctx, input }) => {
+    const { userId } = ctx;
 
-      // Guard: referrer must have REFERRER role
-      const user = await ctx.db.user.findUnique({
-        where: { id: userId },
-        select: { roles: true },
+    // Guard: referrer must have REFERRER role
+    const user = await ctx.db.user.findUnique({
+      where: { id: userId },
+      select: { roles: true },
+    });
+    if (!user?.roles.includes("REFERRER")) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Only users with REFERRER role can create vacancies",
       });
-      if (!user?.roles.includes("REFERRER")) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only users with REFERRER role can create vacancies",
-        });
-      }
+    }
 
-      // Guard: no more than 1 active vacancy
-      const existing = await ctx.db.vacancy.findFirst({
-        where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
+    // Guard: no more than 1 active vacancy
+    const existing = await ctx.db.vacancy.findFirst({
+      where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
+    });
+    if (existing) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "ACTIVE_VACANCY_EXISTS",
       });
-      if (existing) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "ACTIVE_VACANCY_EXISTS",
-        });
-      }
+    }
 
-      // Guard: must have available attempts
-      const attemptRepo = createReferrerAttemptRepository(ctx.db);
-      const attempts = await attemptRepo.getAvailableAttempts(userId);
-      if (attempts === 0) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "NO_ATTEMPTS_LEFT",
-        });
-      }
-
-      const vacancy = await ctx.db.vacancy.create({
-        data: {
-          referrerId: userId,
-          title: input.title,
-          companyName: input.companyName,
-          specialty: input.specialty,
-          grade: input.grade,
-          workFormat: input.workFormat,
-          salaryFromKopecks: input.salaryFrom
-            ? BigInt(input.salaryFrom * 100)
-            : null,
-          salaryToKopecks: input.salaryTo ? BigInt(input.salaryTo * 100) : null,
-          description: input.description,
-          rewardKopecks: BigInt(input.rewardKopecks),
-        },
+    // Guard: must have available attempts
+    const attemptRepo = createReferrerAttemptRepository(ctx.db);
+    const attempts = await attemptRepo.getAvailableAttempts(userId);
+    if (attempts === 0) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "NO_ATTEMPTS_LEFT",
       });
+    }
 
-      return serializeVacancy(vacancy);
-    }),
+    const vacancy = await ctx.db.vacancy.create({
+      data: {
+        referrerId: userId,
+        title: input.title,
+        companyName: input.companyName,
+        specialty: input.specialty,
+        grade: input.grade,
+        workFormat: input.workFormat,
+        salaryFromKopecks: input.salaryFrom ? BigInt(input.salaryFrom * 100) : null,
+        salaryToKopecks: input.salaryTo ? BigInt(input.salaryTo * 100) : null,
+        description: input.description,
+        rewardKopecks: BigInt(input.rewardKopecks),
+      },
+    });
+
+    return serializeVacancy(vacancy);
+  }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -230,8 +217,7 @@ export const vacanciesRouter = router({
       });
 
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
-      if (vacancy.referrerId !== userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (vacancy.referrerId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
 
       // Guard: cannot delete if there is an open dispute
       const hasOpenDispute = await ctx.db.application.findFirst({
@@ -247,7 +233,7 @@ export const vacanciesRouter = router({
       const attemptRepo = createReferrerAttemptRepository(ctx.db);
 
       // Cascade: cancel all active applications, return attempts, trigger refunds
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const app of vacancy.applications) {
           await tx.application.update({
             where: { id: app.id },
@@ -262,7 +248,6 @@ export const vacanciesRouter = router({
               metadata: { reason: "vacancy_deleted_by_referrer" },
             },
           });
-          // TODO Phase 4: trigger actual refund via PaymentProvider if escrowTx exists
         }
 
         await tx.vacancy.update({
@@ -270,6 +255,21 @@ export const vacanciesRouter = router({
           data: { status: "DELETED", deletedAt: new Date() },
         });
       });
+
+      for (const app of vacancy.applications) {
+        const aid = app.id;
+        void cancelSLAJob(`payment-deadline:${aid}`);
+        void cancelSLAJob(`resume-handoff-sla:${aid}`);
+        void cancelSLAJob(`cancel-ack-sla:${aid}`);
+        void cancelSLAJob(`company-decision-sla:${aid}`);
+        if (app.escrowTx?.yookassaPaymentId) {
+          void scheduleRefundSeeker(
+            aid,
+            app.escrowTx.amountKopecks,
+            `refund-vacancy-deleted:${aid}`,
+          );
+        }
+      }
 
       // Return attempts for each active application that had consumed one
       for (const app of vacancy.applications) {
@@ -297,8 +297,7 @@ export const vacanciesRouter = router({
         where: { id: input.vacancyId },
       });
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
-      if (vacancy.referrerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
 
       const applications = await ctx.db.application.findMany({
         where: { vacancyId: input.vacancyId },

@@ -19,9 +19,7 @@ export function createReferrerAttemptRepository(db: PrismaClient) {
     referrerId: string,
     applicationId: string,
   ): Promise<{ ledgerEntryId: string; regeneratesAt: Date }> {
-    const regeneratesAt = new Date(
-      Date.now() + BUSINESS_RULES.ATTEMPT_REGENERATION_MS,
-    );
+    const regeneratesAt = new Date(Date.now() + BUSINESS_RULES.ATTEMPT_REGENERATION_MS);
     const entry = await db.referrerAttemptLedger.create({
       data: {
         referrerId,
@@ -33,10 +31,7 @@ export function createReferrerAttemptRepository(db: PrismaClient) {
     return { ledgerEntryId: entry.id, regeneratesAt };
   }
 
-  async function returnAttempt(
-    referrerId: string,
-    applicationId: string,
-  ): Promise<void> {
+  async function returnAttempt(referrerId: string, applicationId: string): Promise<void> {
     // Find the CONSUMED entry for this application and mark it as returned
     // by creating a RETURNED entry (and updating the CONSUMED entry's regeneratesAt to past)
     const consumed = await db.referrerAttemptLedger.findFirst({
@@ -59,10 +54,7 @@ export function createReferrerAttemptRepository(db: PrismaClient) {
     ]);
   }
 
-  async function regenerate(
-    referrerId: string,
-    applicationId: string,
-  ): Promise<void> {
+  async function regenerate(referrerId: string, applicationId: string): Promise<void> {
     await db.referrerAttemptLedger.create({
       data: {
         referrerId,
@@ -75,6 +67,4 @@ export function createReferrerAttemptRepository(db: PrismaClient) {
   return { getAvailableAttempts, consume, returnAttempt, regenerate };
 }
 
-export type ReferrerAttemptRepository = ReturnType<
-  typeof createReferrerAttemptRepository
->;
+export type ReferrerAttemptRepository = ReturnType<typeof createReferrerAttemptRepository>;

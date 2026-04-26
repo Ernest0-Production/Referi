@@ -21,11 +21,7 @@ export const telegramMessages = {
     `/resolve_referrer ${data.caseId}\n` +
     `/resolve_seeker ${data.caseId}`,
 
-  newAbuseReport: (data: {
-    reportId: string;
-    reason: string;
-    vacancyTitle?: string;
-  }) =>
+  newAbuseReport: (data: { reportId: string; reason: string; vacancyTitle?: string }) =>
     `<b>🚨 Жалоба #${data.reportId}</b>\n` +
     `Причина: ${escHtml(data.reason)}\n` +
     (data.vacancyTitle ? `Вакансия: <i>${escHtml(data.vacancyTitle)}</i>` : ""),
@@ -53,8 +49,7 @@ export const telegramMessages = {
     `Средства поступят на вашу карту в ближайшее время.`,
 
   attemptRegenerated: (data: { availableAttempts: number }) =>
-    `<b>🔄 Попытка восстановлена</b>\n` +
-    `Доступно попыток: <b>${data.availableAttempts}</b>`,
+    `<b>🔄 Попытка восстановлена</b>\n` + `Доступно попыток: <b>${data.availableAttempts}</b>`,
 
   cancelRequested: (data: { vacancyTitle: string; deadline: string }) =>
     `<b>❌ Запрос отмены заявки</b>\n` +
@@ -67,13 +62,9 @@ export const telegramMessages = {
     `Вы будете получать уведомления здесь.`,
 
   linkTokenExpired: () =>
-    `<b>❌ Токен устарел</b>\n` +
-    `Запросите новую ссылку для привязки на сайте Referi.`,
+    `<b>❌ Токен устарел</b>\n` + `Запросите новую ссылку для привязки на сайте Referi.`,
 };
 
 function escHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

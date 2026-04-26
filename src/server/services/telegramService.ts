@@ -26,9 +26,7 @@ class TelegramServiceImpl implements TelegramService {
 
   async sendMessage(options: SendMessageOptions): Promise<void> {
     if (!this.token) {
-      console.warn(
-        "[Telegram] TELEGRAM_BOT_TOKEN not set; skipping sendMessage",
-      );
+      console.warn("[Telegram] TELEGRAM_BOT_TOKEN not set; skipping sendMessage");
       return;
     }
 
@@ -54,10 +52,7 @@ class TelegramServiceImpl implements TelegramService {
     }
   }
 
-  async answerCallbackQuery(
-    callbackQueryId: string,
-    text?: string,
-  ): Promise<void> {
+  async answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
     if (!this.token) return;
     try {
       await fetch(`${this.apiUrl}/answerCallbackQuery`, {
@@ -72,9 +67,7 @@ class TelegramServiceImpl implements TelegramService {
 
   async setWebhook(url: string, secretToken: string): Promise<void> {
     if (!this.token) {
-      console.warn(
-        "[Telegram] TELEGRAM_BOT_TOKEN not set; skipping setWebhook",
-      );
+      console.warn("[Telegram] TELEGRAM_BOT_TOKEN not set; skipping setWebhook");
       return;
     }
     try {

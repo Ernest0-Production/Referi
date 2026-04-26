@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
@@ -10,15 +8,11 @@ services:
       POSTGRES_PASSWORD: referi_dev_password
       POSTGRES_DB: referi
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U referi",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U referi"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,20 +22,44 @@ services:
     container_name: referi_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test:
-        [
-          "CMD",
-          "redis-cli",
-          "ping",
-        ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    build: .
+    container_name: referi_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://referi:referi_dev_password@db:5432/referi
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+      ENABLE_BULLMQ_WORKERS: "true"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   postgres_data:

@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Referi
 
-## Getting Started
+Next.js-приложение: Prisma (PostgreSQL), Redis/BullMQ, Auth.js, tRPC.
 
-First, run the development server:
+## Требования
+
+- Node.js 20+ (как в `Dockerfile`; для локального запуска без Docker подойдёт актуальный LTS)
+- Docker — для PostgreSQL и Redis локально или для полного стека
+
+## Окружение
+
+Скопируйте `.env.example` в `.env` и заполните переменные под свою машину. Комментарии внутри `.env.example` описывают назначение полей.
+
+## Запуск
+
+### Вариант A: только БД и Redis в Docker, приложение на хосте
 
 ```bash
+cp .env.example .env
+docker compose up -d db redis
+npm ci
+npm run db:migrate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Приложение: [http://localhost:3000](http://localhost:3000). В `.env` используйте `DATABASE_URL` и `REDIS_URL` на `localhost` (по умолчанию Postgres на **5433**, Redis на **6380** — смотрите `docker-compose.yml`, чтобы не конфликтовать с уже занятыми 5432/6379).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Вариант B: приложение вместе с БД и Redis (`docker compose`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env
+docker compose up --build
+```
 
-## Learn More
+После первого подъёма с пустой БД примените миграции:
+`docker compose exec app npx prisma migrate deploy`
 
-To learn more about Next.js, take a look at the following resources:
+Сервис `app` читает `.env`; в compose уже заданы `DATABASE_URL` и `REDIS_URL` для контейнеров. Для воркеров BullMQ в образе задано `ENABLE_BULLMQ_WORKERS=true` (см. `src/instrumentation.ts`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Полезные команды
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Команда                              | Назначение                      |
+| ------------------------------------ | ------------------------------- |
+| `npm run dev`                        | Режим разработки Next.js        |
+| `npm run build` / `npm start`        | Продакшен-сборка и запуск       |
+| `npm run lint` / `npm run typecheck` | ESLint и проверка типов         |
+| `npm test`                           | Vitest                          |
+| `npm run test:e2e`                   | Playwright                      |
+| `npm run db:migrate`                 | Миграции Prisma (`migrate dev`) |
+| `npm run db:seed`                    | Сид данных                      |
+| `npm run db:studio`                  | Prisma Studio                   |
 
-## Deploy on Vercel
+## Документация по проекту
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `AGENTS.md` — соглашения и факты о стеке для ассистентов и разработчиков
+- `spec/spec-architecture-referi-system.md` — архитектура системы
+- `docs/ROADMAP.md` — дорожная карта (может отставать от кода)

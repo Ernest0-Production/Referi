@@ -4,11 +4,14 @@
  */
 
 import { Queue, Worker, type Job } from "bullmq";
+import type { Prisma } from "@prisma/client"
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { paymentProvider } from "@/server/services/paymentService";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
+import { telegramService } from "@/server/services/telegramService";
+import { telegramMessages } from "@/shared/telegram/messages";
 
 export type SLAJobType =
   | "reaction-sla"
@@ -27,18 +30,25 @@ export interface SLAJobData {
   ledgerEntryId?: string;
 }
 
-export const slaQueue = new Queue<SLAJobData>("sla", {
-  connection: redis,
-  defaultJobOptions: {
-    removeOnComplete: { count: 100 },
-    removeOnFail: { count: 50 },
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-  },
-});
+let _slaQueue: Queue<SLAJobData> | null = null;
+
+function getSlaQueue() {
+  if (!_slaQueue) {
+    _slaQueue = new Queue<SLAJobData>("sla", {
+      connection: redis,
+      defaultJobOptions: {
+        removeOnComplete: { count: 100 },
+        removeOnFail: { count: 50 },
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+      },
+    });
+  }
+  return _slaQueue;
+}
 
 export async function scheduleReactionSLA(vacancyId: string) {
-  await slaQueue.add(
+  await getSlaQueue().add(
     "sla-job",
     { type: "reaction-sla", vacancyId },
     {
@@ -49,7 +59,7 @@ export async function scheduleReactionSLA(vacancyId: string) {
 }
 
 export async function schedulePaymentDeadline(applicationId: string) {
-  await slaQueue.add(
+  await getSlaQueue().add(
     "sla-job",
     { type: "payment-deadline", applicationId },
     {
@@ -60,7 +70,7 @@ export async function schedulePaymentDeadline(applicationId: string) {
 }
 
 export async function scheduleResumeHandoffSLA(applicationId: string) {
-  await slaQueue.add(
+  await getSlaQueue().add(
     "sla-job",
     { type: "resume-handoff-sla", applicationId },
     {
@@ -71,7 +81,7 @@ export async function scheduleResumeHandoffSLA(applicationId: string) {
 }
 
 export async function scheduleCancelAckSLA(applicationId: string) {
-  await slaQueue.add(
+  await getSlaQueue().add(
     "sla-job",
     { type: "cancel-ack-sla", applicationId },
     {
@@ -81,12 +91,23 @@ export async function scheduleCancelAckSLA(applicationId: string) {
   );
 }
 
+export async function scheduleCompanyDecisionSLA(applicationId: string) {
+  await getSlaQueue().add(
+    "sla-job",
+    { type: "company-decision-sla", applicationId },
+    {
+      jobId: `company-decision-sla:${applicationId}`,
+      delay: BUSINESS_RULES.SLA_COMPANY_DECISION_MS,
+    },
+  );
+}
+
 export async function scheduleAttemptRegeneration(
   ledgerEntryId: string,
   referrerId: string,
   applicationId: string,
 ) {
-  await slaQueue.add(
+  await getSlaQueue().add(
     "sla-job",
     { type: "attempt-regen", ledgerEntryId, referrerId, applicationId },
     {
@@ -97,7 +118,7 @@ export async function scheduleAttemptRegeneration(
 }
 
 export async function cancelSLAJob(jobId: string) {
-  const job = await slaQueue.getJob(jobId);
+  const job = await getSlaQueue().getJob(jobId);
   if (job) await job.remove();
 }
 
@@ -106,8 +127,7 @@ export async function cancelSLAJob(jobId: string) {
 // ─────────────────────────────────────────────
 
 async function processSLAJob(job: Job<SLAJobData>) {
-  const { type, applicationId, vacancyId, referrerId, ledgerEntryId } =
-    job.data;
+  const { type, applicationId, vacancyId, referrerId, ledgerEntryId } = job.data;
 
   switch (type) {
     case "reaction-sla":
@@ -122,13 +142,12 @@ async function processSLAJob(job: Job<SLAJobData>) {
     case "cancel-ack-sla":
       if (applicationId) await handleCancelAckSLA(applicationId);
       break;
+    case "company-decision-sla":
+      if (applicationId) await handleCompanyDecisionSLA(applicationId);
+      break;
     case "attempt-regen":
       if (referrerId && applicationId && ledgerEntryId) {
-        await handleAttemptRegeneration(
-          referrerId,
-          applicationId,
-          ledgerEntryId,
-        );
+        await handleAttemptRegeneration(referrerId, applicationId, ledgerEntryId);
       }
       break;
     case "vacancy-unfreeze":
@@ -163,9 +182,7 @@ async function handleReactionSLA(vacancyId: string) {
 
   if (reactedCount > 0) return; // Referrer already reacted
 
-  const frozenUntil = new Date(
-    Date.now() + BUSINESS_RULES.SANCTION_REACTION_FREEZE_MS,
-  );
+  const frozenUntil = new Date(Date.now() + BUSINESS_RULES.SANCTION_REACTION_FREEZE_MS);
 
   await prisma.vacancy.update({
     where: { id: vacancyId },
@@ -173,7 +190,7 @@ async function handleReactionSLA(vacancyId: string) {
   });
 
   // Schedule unfreeze
-  await slaQueue.add(
+  await getSlaQueue().add(
     "sla-job",
     { type: "vacancy-unfreeze", vacancyId },
     {
@@ -189,7 +206,7 @@ async function handlePaymentDeadline(applicationId: string) {
   });
   if (!app || app.status !== "AWAITING_PAYMENT") return;
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: { status: "CANCELLED", paymentDeadline: null },
@@ -230,11 +247,9 @@ async function handleResumeHandoffSLA(applicationId: string) {
     }
   }
 
-  const banExpiresAt = new Date(
-    Date.now() + BUSINESS_RULES.SANCTION_RESUME_BAN_MS,
-  );
+  const banExpiresAt = new Date(Date.now() + BUSINESS_RULES.SANCTION_RESUME_BAN_MS);
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: { status: "REFUNDED_BY_SLA", resumeHandoffDeadline: null },
@@ -266,6 +281,60 @@ async function handleResumeHandoffSLA(applicationId: string) {
   });
 }
 
+async function handleCompanyDecisionSLA(applicationId: string) {
+  const app = await prisma.application.findUnique({
+    where: { id: applicationId },
+    include: {
+      vacancy: { select: { id: true, title: true, referrerId: true } },
+    },
+  });
+  if (!app || app.status !== "AWAITING_COMPANY_DECISION") return;
+
+  const existingCase = await prisma.moderatorCase.findUnique({
+    where: { applicationId },
+  });
+  if (existingCase) return;
+
+  const moderatorCase = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.application.update({
+      where: { id: applicationId },
+      data: { status: "DISPUTED", companyDecisionDeadline: null },
+    });
+    const mc = await tx.moderatorCase.create({
+      data: { applicationId },
+    });
+    await tx.auditLog.create({
+      data: {
+        applicationId,
+        fromStatus: "AWAITING_COMPANY_DECISION",
+        toStatus: "DISPUTED",
+        actor: "SYSTEM",
+        metadata: { reason: "company_decision_sla_expired" },
+      },
+    });
+    return mc;
+  });
+
+  void (async () => {
+    try {
+      const ref = await prisma.user.findUnique({
+        where: { id: app.vacancy.referrerId },
+        select: { displayName: true },
+      });
+      await telegramService.sendMessage({
+        chatId: process.env.TELEGRAM_MODERATOR_CHAT_ID ?? "",
+        text: telegramMessages.newDispute({
+          caseId: moderatorCase.id,
+          appId: applicationId,
+          referrerName: ref?.displayName ?? app.vacancy.referrerId,
+        }),
+      });
+    } catch (e) {
+      console.error("[SLA] company-decision: telegram failed", e);
+    }
+  })();
+}
+
 async function handleCancelAckSLA(applicationId: string) {
   const app = await prisma.application.findUnique({
     where: { id: applicationId },
@@ -287,7 +356,7 @@ async function handleCancelAckSLA(applicationId: string) {
     }
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: { status: "REFUNDED_BY_CANCEL_AUTO", cancelAckDeadline: null },

@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import { prisma } from "@/lib/prisma";
 import { encryptToken } from "@/lib/crypto";
-import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { isGitHubAccountOldEnough } from "@/shared/utils/ageCheck";
 import type { UserRole } from "@prisma/client";
 
 interface GitHubProfile {
@@ -83,11 +83,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         encryptedAccessToken,
       });
 
-      // Age-check
-      const accountAgeMs = Date.now() - githubCreatedAt.getTime();
-      const minAgeMs =
-        BUSINESS_RULES.GITHUB_ACCOUNT_MIN_AGE_DAYS * 24 * 60 * 60 * 1000;
-      const isOldEnough = accountAgeMs >= minAgeMs;
+      const isOldEnough = isGitHubAccountOldEnough(githubCreatedAt);
 
       if (!isOldEnough) {
         const dbProfile = await prisma.gitHubProfile.findUnique({

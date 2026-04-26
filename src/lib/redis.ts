@@ -9,6 +9,7 @@ export const redis =
   new IORedis(process.env.REDIS_URL ?? "redis://localhost:6379", {
     maxRetriesPerRequest: null, // Required for BullMQ
     enableReadyCheck: false,
+    lazyConnect: true,
   });
 
 if (process.env.NODE_ENV !== "production") {

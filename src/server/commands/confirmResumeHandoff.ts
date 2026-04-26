@@ -1,7 +1,8 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { createApplicationRepository } from "@/server/repositories/applicationRepository";
 import { BusinessError } from "./submitApplication";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { cancelSLAJob, scheduleCompanyDecisionSLA } from "@/server/workers/slaWorker";
 
 export async function confirmResumeHandoff(
   db: PrismaClient,
@@ -12,16 +13,13 @@ export async function confirmResumeHandoff(
   const application = await appRepo.findByIdForUpdate(applicationId);
 
   if (!application) throw new BusinessError("APPLICATION_NOT_FOUND");
-  if (application.vacancy.referrerId !== referrerId)
-    throw new BusinessError("FORBIDDEN");
+  if (application.vacancy.referrerId !== referrerId) throw new BusinessError("FORBIDDEN");
   if (application.status !== "AWAITING_RESUME_HANDOFF")
     throw new BusinessError("APPLICATION_WRONG_STATUS");
 
-  const companyDecisionDeadline = new Date(
-    Date.now() + BUSINESS_RULES.SLA_COMPANY_DECISION_MS,
-  );
+  const companyDecisionDeadline = new Date(Date.now() + BUSINESS_RULES.SLA_COMPANY_DECISION_MS);
 
-  await db.$transaction(async (tx) => {
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: {
@@ -40,6 +38,9 @@ export async function confirmResumeHandoff(
       },
     });
   });
+
+  void cancelSLAJob(`resume-handoff-sla:${applicationId}`);
+  void scheduleCompanyDecisionSLA(applicationId);
 
   return {
     status: "AWAITING_COMPANY_DECISION" as const,

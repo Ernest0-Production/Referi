@@ -1,19 +1,14 @@
 import type { PrismaClient, ApplicationStatus } from "@prisma/client";
-import {
-  ACTIVE_STATUSES,
-  REFERRER_ACTIVE_REVIEW_STATUSES,
-} from "@/shared/types/applicationStatus";
+import { ACTIVE_STATUSES, REFERRER_ACTIVE_REVIEW_STATUSES } from "@/shared/types/applicationStatus";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 
 export function createApplicationRepository(db: PrismaClient) {
   async function findByIdForUpdate(id: string) {
-    // Prisma doesn't support SELECT FOR UPDATE natively; use raw query if needed
-    // For now, use findUnique — atomic updates are handled at the command level
     return db.application.findUnique({
       where: { id },
       include: {
         vacancy: {
-          select: { referrerId: true, rewardKopecks: true, id: true },
+          select: { referrerId: true, rewardKopecks: true, id: true, title: true },
         },
         content: true,
         escrowTx: true,
@@ -25,10 +20,7 @@ export function createApplicationRepository(db: PrismaClient) {
     return db.application.update({ where: { id }, data: { status } });
   }
 
-  async function countActiveBySeeker(
-    seekerId: string,
-    excludeSubscription = false,
-  ): Promise<number> {
+  async function countActiveBySeeker(seekerId: string): Promise<number> {
     return db.application.count({
       where: { seekerId, status: { in: ACTIVE_STATUSES } },
     });
@@ -44,9 +36,7 @@ export function createApplicationRepository(db: PrismaClient) {
     return BUSINESS_RULES.FREE_ACTIVE_APPLICATIONS;
   }
 
-  async function countActiveReviewsByReferrer(
-    referrerId: string,
-  ): Promise<number> {
+  async function countActiveReviewsByReferrer(referrerId: string): Promise<number> {
     return db.application.count({
       where: {
         vacancy: { referrerId },
@@ -55,10 +45,7 @@ export function createApplicationRepository(db: PrismaClient) {
     });
   }
 
-  async function findActiveBySeekerAndVacancy(
-    seekerId: string,
-    vacancyId: string,
-  ) {
+  async function findActiveBySeekerAndVacancy(seekerId: string, vacancyId: string) {
     return db.application.findFirst({
       where: {
         seekerId,
@@ -78,6 +65,4 @@ export function createApplicationRepository(db: PrismaClient) {
   };
 }
 
-export type ApplicationRepository = ReturnType<
-  typeof createApplicationRepository
->;
+export type ApplicationRepository = ReturnType<typeof createApplicationRepository>;

@@ -28,6 +28,9 @@ model User {
   displayName String
   roles       UserRole[]
 
+  /// Номер кошелька YooMoney / id сохранённого способа выплаты (ЮKassa); для dev можно не задавать
+  yookassaPayoutDestination String?
+
   githubProfile       GitHubProfile?
   seekerSubscription  SeekerSubscription?
   seekerApplications  Application[]            @relation("SeekerApplications")

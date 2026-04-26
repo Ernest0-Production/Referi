@@ -325,13 +325,13 @@ export const FEATURE_FLAGS = {
 
 | Фаза                          | Статус    |
 | ----------------------------- | --------- |
-| Phase 0 — Foundation          | ⬜ pending |
-| Phase 1 — Auth                | ⬜ pending |
-| Phase 2 — Vacancies           | ⬜ pending |
-| Phase 3 — Application FSM     | ⬜ pending |
-| Phase 4 — Payments            | ⬜ pending |
-| Phase 5 — SLA & Automation    | ⬜ pending |
-| Phase 6 — Moderation          | ⬜ pending |
-| Phase 7 — Polish & Production | ⬜ pending |
+| Phase 0 — Foundation          | ✅ done    |
+| Phase 1 — Auth                | ✅ done    |
+| Phase 2 — Vacancies           | ✅ done    |
+| Phase 3 — Application FSM     | ✅ done    |
+| Phase 4 — Payments            | ✅ done    |
+| Phase 5 — SLA & Automation    | ✅ done    |
+| Phase 6 — Moderation          | ✅ done    |
+| Phase 7 — Polish & Production | ✅ done    |
 
 *Статусы обновляются по мере прохождения Definition of Done каждой фазы.*

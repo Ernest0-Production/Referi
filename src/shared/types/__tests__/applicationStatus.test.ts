@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  isTerminal,
-  isActive,
-  TERMINAL_STATUSES,
-  ACTIVE_STATUSES,
-} from "../applicationStatus";
+import { isTerminal, isActive, TERMINAL_STATUSES, ACTIVE_STATUSES } from "../applicationStatus";
 import type { ApplicationStatus } from "@prisma/client";
 
 const ALL_STATUSES: ApplicationStatus[] = [
@@ -30,10 +25,7 @@ describe("ApplicationStatus helpers", () => {
     for (const status of ALL_STATUSES) {
       const inTerminal = TERMINAL_STATUSES.includes(status);
       const inActive = ACTIVE_STATUSES.includes(status);
-      expect(
-        inTerminal || inActive,
-        `Status ${status} should be in one list`,
-      ).toBe(true);
+      expect(inTerminal || inActive, `Status ${status} should be in one list`).toBe(true);
     }
   });
 
@@ -41,10 +33,7 @@ describe("ApplicationStatus helpers", () => {
     for (const status of ALL_STATUSES) {
       const inTerminal = TERMINAL_STATUSES.includes(status);
       const inActive = ACTIVE_STATUSES.includes(status);
-      expect(
-        inTerminal && inActive,
-        `Status ${status} should not be in both lists`,
-      ).toBe(false);
+      expect(inTerminal && inActive, `Status ${status} should not be in both lists`).toBe(false);
     }
   });
 

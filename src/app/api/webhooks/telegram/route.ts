@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { telegramMessages } from "@/shared/telegram/messages";
 import { telegramService } from "@/server/services/telegramService";
@@ -52,13 +53,7 @@ async function processTelegramUpdate(update: TelegramUpdate) {
       const token = parts[1];
 
       if (token) {
-        // Link flow: /start {token}
-        await handleLinkAccount(
-          chatId,
-          telegramUserId,
-          message.from?.username,
-          token,
-        );
+        await handleLinkAccount(chatId, telegramUserId, message.from?.username, token);
       } else {
         await telegramService.sendMessage({
           chatId,
@@ -68,6 +63,17 @@ async function processTelegramUpdate(update: TelegramUpdate) {
             "Команды:\n" +
             "/help — список команд\n" +
             "/status — статус ваших заявок",
+        });
+      }
+    } else if (text.startsWith("/link ")) {
+      // Explicit /link {token} command as alternative to deep-link /start
+      const token = text.slice("/link ".length).trim();
+      if (token) {
+        await handleLinkAccount(chatId, telegramUserId, message.from?.username, token);
+      } else {
+        await telegramService.sendMessage({
+          chatId,
+          text: "Укажите токен: /link <code>TOKEN</code>",
         });
       }
     } else if (text === "/help") {
@@ -81,11 +87,8 @@ async function processTelegramUpdate(update: TelegramUpdate) {
       });
     } else if (text === "/status") {
       await handleStatusCommand(chatId, telegramUserId);
-    } else if (
-      text.startsWith("/resolve_referrer ") ||
-      text.startsWith("/resolve_seeker ")
-    ) {
-      await handleModeratorCommand(chatId, telegramUserId, text);
+    } else if (text.startsWith("/resolve_referrer ") || text.startsWith("/resolve_seeker ")) {
+      await handleModeratorCommand(chatId, telegramUserId);
     }
   } catch (err) {
     console.error("[Telegram] Update processing error:", err);
@@ -111,7 +114,7 @@ async function handleLinkAccount(
   }
 
   // Create or update TelegramLink
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.telegramLink.upsert({
       where: { userId: linkToken.userId },
       create: {
@@ -175,8 +178,7 @@ async function handleStatusCommand(chatId: number, telegramUserId: number) {
   }
 
   const lines = activeApps.map(
-    (app) =>
-      `• <b>${app.vacancy.title}</b> (${app.vacancy.companyName}) — <i>${app.status}</i>`,
+    (app) => `• <b>${app.vacancy.title}</b> (${app.vacancy.companyName}) — <i>${app.status}</i>`,
   );
 
   await telegramService.sendMessage({
@@ -185,21 +187,14 @@ async function handleStatusCommand(chatId: number, telegramUserId: number) {
   });
 }
 
-async function handleModeratorCommand(
-  chatId: number,
-  telegramUserId: number,
-  text: string,
-) {
+async function handleModeratorCommand(chatId: number, telegramUserId: number) {
   // Verify this user is a moderator
   const link = await prisma.telegramLink.findFirst({
     where: { telegramUserId: BigInt(telegramUserId) },
     include: { user: { select: { roles: true } } },
   });
 
-  if (
-    !link?.user.roles.includes("MODERATOR") &&
-    !link?.user.roles.includes("ADMIN")
-  ) {
+  if (!link?.user.roles.includes("MODERATOR") && !link?.user.roles.includes("ADMIN")) {
     await telegramService.sendMessage({
       chatId,
       text: "Недостаточно прав.",

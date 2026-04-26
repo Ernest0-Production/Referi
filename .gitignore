@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+playwright-report/
+test-results/
+blob-report/
 
 # next.js
 /.next/
@@ -20,9 +23,13 @@
 # production
 /build
 
+# generated (codegen, custom prisma output, etc.)
+/src/generated/
+
 # misc
 .DS_Store
 *.pem
+.eslintcache
 
 # debug
 npm-debug.log*
@@ -34,7 +41,6 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
-# .env.example is intentionally NOT ignored
 
 # vercel
 .vercel
@@ -43,5 +49,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/src/generated/prisma
-.cursor/hooks/state/continual-learning.json
+.cursor/hooks/

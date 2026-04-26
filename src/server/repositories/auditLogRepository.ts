@@ -1,8 +1,4 @@
-import type {
-  PrismaClient,
-  ApplicationStatus,
-  AuditActor,
-} from "@prisma/client";
+import type { PrismaClient, ApplicationStatus, AuditActor } from "@prisma/client";
 
 interface AppendOptions {
   applicationId: string;
@@ -22,9 +18,7 @@ export function createAuditLogRepository(db: PrismaClient) {
         toStatus: opts.toStatus,
         actor: opts.actor,
         actorId: opts.actorId,
-        metadata: opts.metadata as Parameters<
-          typeof db.auditLog.create
-        >[0]["data"]["metadata"],
+        metadata: opts.metadata as Parameters<typeof db.auditLog.create>[0]["data"]["metadata"],
       },
     });
   }

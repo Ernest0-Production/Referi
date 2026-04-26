@@ -6,9 +6,7 @@ export async function createTRPCContext(opts: FetchCreateContextFnOptions) {
   const session = await auth();
 
   const ip =
-    opts.req.headers.get("x-forwarded-for") ??
-    opts.req.headers.get("x-real-ip") ??
-    "unknown";
+    opts.req.headers.get("x-forwarded-for") ?? opts.req.headers.get("x-real-ip") ?? "unknown";
 
   return {
     db: prisma,

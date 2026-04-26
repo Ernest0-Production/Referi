@@ -1,7 +1,8 @@
 /**
  * Email notification service — transactional emails (Phase 7).
- * Abstracted to support Mailgun, SendPulse, or any SMTP provider.
  */
+
+import nodemailer from "nodemailer";
 
 export interface SendEmailOptions {
   to: string;
@@ -14,18 +15,48 @@ export interface EmailService {
   send(options: SendEmailOptions): Promise<void>;
 }
 
+function buildTransporter() {
+  const host = process.env.SMTP_HOST;
+  if (!host) return null;
+  const port = Number(process.env.SMTP_PORT ?? "465");
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: user && pass ? { user, pass } : undefined,
+  });
+}
+
 class SmtpEmailService implements EmailService {
   async send(options: SendEmailOptions): Promise<void> {
     if (process.env.FEATURE_EMAIL !== "true") {
-      console.log(
-        `[Email] Skipped (FEATURE_EMAIL=false): "${options.subject}" → ${options.to}`,
-      );
+      console.log(`[Email] Skipped (FEATURE_EMAIL=false): "${options.subject}" → ${options.to}`);
       return;
     }
 
-    // TODO: integrate with Nodemailer + SMTP credentials
-    // For now, log in development
-    console.log(`[Email] Sending "${options.subject}" to ${options.to}`);
+    const from = process.env.SMTP_FROM;
+    if (!from) {
+      console.warn("[Email] FEATURE_EMAIL=true but SMTP_FROM is not set; logging only");
+      console.log(`[Email] Would send "${options.subject}" to ${options.to}`);
+      return;
+    }
+
+    const transporter = buildTransporter();
+    if (!transporter) {
+      console.warn("[Email] FEATURE_EMAIL=true but SMTP_HOST is not set; logging only");
+      console.log(`[Email] Would send "${options.subject}" to ${options.to}`);
+      return;
+    }
+
+    await transporter.sendMail({
+      from,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    });
   }
 }
 
@@ -65,11 +96,7 @@ export const emailTemplates = {
     `,
   }),
 
-  refundIssued: (data: {
-    seekerName: string;
-    amountRub: string;
-    reason: string;
-  }) => ({
+  refundIssued: (data: { seekerName: string; amountRub: string; reason: string }) => ({
     subject: "Возврат средств выполнен",
     html: `
       <h2>Возврат средств</h2>

@@ -1,15 +1,16 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc";
-import {
-  submitApplication,
-  BusinessError,
-} from "@/server/commands/submitApplication";
+import type { Prisma } from "@prisma/client";
+
+import { submitApplication, BusinessError } from "@/server/commands/submitApplication";
 import { confirmReferralIntent } from "@/server/commands/confirmReferralIntent";
 import { confirmResumeHandoff } from "@/server/commands/confirmResumeHandoff";
 import { acceptOffer } from "@/server/commands/acceptOffer";
 import { seekerRequestCancel } from "@/server/commands/seekerRequestCancel";
 import { ACTIVE_STATUSES } from "@/shared/types/applicationStatus";
+import { cancelSLAJob } from "@/server/workers/slaWorker";
+import { scheduleRefundSeeker } from "@/server/workers/paymentWorker";
 
 function handleBusinessError(err: unknown): never {
   if (err instanceof BusinessError) {
@@ -50,8 +51,7 @@ export const applicationsRouter = router({
         where: { id: input.applicationId },
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (app.seekerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (app.seekerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
       if (!["SUBMITTED", "AWAITING_PAYMENT"].includes(app.status)) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -59,7 +59,7 @@ export const applicationsRouter = router({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.application.update({
           where: { id: input.applicationId },
           data: { status: "CANCELLED" },
@@ -82,11 +82,7 @@ export const applicationsRouter = router({
     .input(z.object({ applicationId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await seekerRequestCancel(
-          ctx.db,
-          input.applicationId,
-          ctx.userId,
-        );
+        return await seekerRequestCancel(ctx.db, input.applicationId, ctx.userId);
       } catch (err) {
         handleBusinessError(err);
       }
@@ -96,11 +92,7 @@ export const applicationsRouter = router({
     .input(z.object({ applicationId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await confirmReferralIntent(
-          ctx.db,
-          input.applicationId,
-          ctx.userId,
-        );
+        return await confirmReferralIntent(ctx.db, input.applicationId, ctx.userId);
       } catch (err) {
         handleBusinessError(err);
       }
@@ -114,8 +106,7 @@ export const applicationsRouter = router({
         include: { vacancy: { select: { referrerId: true } } },
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (app.vacancy.referrerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (app.vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
       if (app.status !== "SUBMITTED") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -123,7 +114,7 @@ export const applicationsRouter = router({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.application.update({
           where: { id: input.applicationId },
           data: { status: "REJECTED_BY_REFERRER" },
@@ -146,11 +137,7 @@ export const applicationsRouter = router({
     .input(z.object({ applicationId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await confirmResumeHandoff(
-          ctx.db,
-          input.applicationId,
-          ctx.userId,
-        );
+        return await confirmResumeHandoff(ctx.db, input.applicationId, ctx.userId);
       } catch (err) {
         handleBusinessError(err);
       }
@@ -161,11 +148,13 @@ export const applicationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const app = await ctx.db.application.findUnique({
         where: { id: input.applicationId },
-        include: { vacancy: { select: { referrerId: true } } },
+        include: {
+          vacancy: { select: { referrerId: true } },
+          escrowTx: true,
+        },
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (app.vacancy.referrerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (app.vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
       if (app.status !== "SEEKER_CANCEL_REQUESTED") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -173,7 +162,7 @@ export const applicationsRouter = router({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.application.update({
           where: { id: input.applicationId },
           data: { status: "REFUNDED_BY_CANCEL_ACK", cancelAckDeadline: null },
@@ -189,7 +178,14 @@ export const applicationsRouter = router({
         });
       });
 
-      // TODO Phase 4: trigger refund via PaymentProvider
+      void cancelSLAJob(`cancel-ack-sla:${input.applicationId}`);
+      if (app.escrowTx?.yookassaPaymentId) {
+        void scheduleRefundSeeker(
+          input.applicationId,
+          app.escrowTx.amountKopecks,
+          `refund-cancel-ack:${input.applicationId}`,
+        );
+      }
 
       return { status: "REFUNDED_BY_CANCEL_ACK" as const };
     }),
@@ -211,8 +207,7 @@ export const applicationsRouter = router({
         where: { id: input.applicationId },
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (app.seekerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (app.seekerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
       if (app.status !== "AWAITING_COMPANY_DECISION") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -240,11 +235,13 @@ export const applicationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const app = await ctx.db.application.findUnique({
         where: { id: input.applicationId },
-        include: { vacancy: { select: { referrerId: true } } },
+        include: {
+          vacancy: { select: { referrerId: true } },
+          escrowTx: true,
+        },
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (app.vacancy.referrerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (app.vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
       if (app.status !== "AWAITING_COMPANY_DECISION") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -252,7 +249,7 @@ export const applicationsRouter = router({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.application.update({
           where: { id: input.applicationId },
           data: {
@@ -271,7 +268,14 @@ export const applicationsRouter = router({
         });
       });
 
-      // TODO Phase 4: trigger refund if escrow exists
+      void cancelSLAJob(`company-decision-sla:${input.applicationId}`);
+      if (app.escrowTx?.yookassaPaymentId) {
+        void scheduleRefundSeeker(
+          input.applicationId,
+          app.escrowTx.amountKopecks,
+          `refund-rejected-company:${input.applicationId}`,
+        );
+      }
 
       return { status: "REJECTED_BY_COMPANY" as const };
     }),
@@ -284,8 +288,7 @@ export const applicationsRouter = router({
         include: { vacancy: { select: { referrerId: true } } },
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (app.vacancy.referrerId !== ctx.userId)
-        throw new TRPCError({ code: "FORBIDDEN" });
+      if (app.vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
       if (app.status !== "AWAITING_COMPANY_DECISION") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -293,7 +296,7 @@ export const applicationsRouter = router({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.application.update({
           where: { id: input.applicationId },
           data: { status: "DISPUTED", companyDecisionDeadline: null },
@@ -312,7 +315,36 @@ export const applicationsRouter = router({
         });
       });
 
-      // TODO Phase 6: notify moderators via Telegram
+      void cancelSLAJob(`company-decision-sla:${input.applicationId}`);
+
+      // Notify moderators via Telegram (fire-and-forget)
+      void (async () => {
+        try {
+          const { telegramService } = await import("@/server/services/telegramService");
+          const { telegramMessages } = await import("@/shared/telegram/messages");
+          const referrer = await ctx.db.user.findUnique({
+            where: { id: ctx.userId },
+            select: { displayName: true },
+          });
+          const moderatorCase = await ctx.db.moderatorCase.findFirst({
+            where: { applicationId: input.applicationId },
+            select: { id: true },
+            orderBy: { createdAt: "desc" },
+          });
+          if (moderatorCase) {
+            await telegramService.sendMessage({
+              chatId: process.env.TELEGRAM_MODERATOR_CHAT_ID ?? "",
+              text: telegramMessages.newDispute({
+                caseId: moderatorCase.id,
+                appId: input.applicationId,
+                referrerName: referrer?.displayName ?? ctx.userId,
+              }),
+            });
+          }
+        } catch (err) {
+          console.error("[Telegram] Failed to notify moderators of dispute:", err);
+        }
+      })();
 
       return { status: "DISPUTED" as const };
     }),
@@ -393,9 +425,7 @@ export const applicationsRouter = router({
         content: isSeeker
           ? app.content
           : {
-              contactInfo: showContactInfo
-                ? app.content?.contactInfo
-                : undefined,
+              contactInfo: showContactInfo ? app.content?.contactInfo : undefined,
               bio: app.content?.bio,
               coverLetter: app.content?.coverLetter,
             },
@@ -415,11 +445,13 @@ export const applicationsRouter = router({
       const isSeeker = app.seekerId === ctx.userId;
       const isReferrer = app.vacancy.referrerId === ctx.userId;
 
-      const isModerator = await ctx.db.user
-        .findUnique({ where: { id: ctx.userId }, select: { roles: true } })
-        .then(
-          (u) => u?.roles.includes("MODERATOR") || u?.roles.includes("ADMIN"),
-        );
+      const viewer = await ctx.db.user.findUnique({
+        where: { id: ctx.userId },
+        select: { roles: true },
+      });
+      const isModerator = Boolean(
+        viewer && (viewer.roles.includes("MODERATOR") || viewer.roles.includes("ADMIN")),
+      );
 
       if (!isSeeker && !isReferrer && !isModerator) {
         throw new TRPCError({ code: "FORBIDDEN" });

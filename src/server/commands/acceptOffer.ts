@@ -1,12 +1,10 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { createApplicationRepository } from "@/server/repositories/applicationRepository";
 import { BusinessError } from "./submitApplication";
+import { cancelSLAJob } from "@/server/workers/slaWorker";
+import { scheduleOfferAcceptedPayout } from "@/server/workers/paymentWorker";
 
-export async function acceptOffer(
-  db: PrismaClient,
-  applicationId: string,
-  seekerId: string,
-) {
+export async function acceptOffer(db: PrismaClient, applicationId: string, seekerId: string) {
   const appRepo = createApplicationRepository(db);
   const application = await appRepo.findByIdForUpdate(applicationId);
 
@@ -15,7 +13,9 @@ export async function acceptOffer(
   if (application.status !== "AWAITING_COMPANY_DECISION")
     throw new BusinessError("APPLICATION_WRONG_STATUS");
 
-  await db.$transaction(async (tx) => {
+  const hadEscrowPayment = Boolean(application.escrowTx?.yookassaPaymentId);
+
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: {
@@ -41,7 +41,10 @@ export async function acceptOffer(
     });
   });
 
-  // TODO Phase 4: trigger escrow capture + payout via PaymentProvider
+  void cancelSLAJob(`company-decision-sla:${applicationId}`);
+  if (hadEscrowPayment) {
+    void scheduleOfferAcceptedPayout(applicationId);
+  }
 
   return { status: "OFFER_ACCEPTED" as const };
 }

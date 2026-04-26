@@ -1,7 +1,8 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { createApplicationRepository } from "@/server/repositories/applicationRepository";
 import { BusinessError } from "./submitApplication";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { cancelSLAJob, scheduleCancelAckSLA } from "@/server/workers/slaWorker";
 
 export async function seekerRequestCancel(
   db: PrismaClient,
@@ -16,11 +17,9 @@ export async function seekerRequestCancel(
   if (application.status !== "AWAITING_RESUME_HANDOFF")
     throw new BusinessError("APPLICATION_WRONG_STATUS");
 
-  const cancelAckDeadline = new Date(
-    Date.now() + BUSINESS_RULES.SLA_CANCEL_ACK_MS,
-  );
+  const cancelAckDeadline = new Date(Date.now() + BUSINESS_RULES.SLA_CANCEL_ACK_MS);
 
-  await db.$transaction(async (tx) => {
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: {
@@ -39,7 +38,24 @@ export async function seekerRequestCancel(
     });
   });
 
-  // TODO Phase 6: notify referrer via Telegram/email
+  void cancelSLAJob(`resume-handoff-sla:${applicationId}`);
+  void scheduleCancelAckSLA(applicationId);
+
+  if (process.env.FEATURE_TELEGRAM === "true") {
+    const title = application.vacancy.title;
+    const rid = application.vacancy.referrerId;
+    const deadline = cancelAckDeadline.toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+    void (async () => {
+      const { telegramService } = await import("@/server/services/telegramService");
+      const { telegramMessages } = await import("@/shared/telegram/messages");
+      const link = await db.telegramLink.findUnique({ where: { userId: rid } });
+      if (!link) return;
+      await telegramService.sendMessage({
+        chatId: link.chatId.toString(),
+        text: telegramMessages.cancelRequested({ vacancyTitle: title, deadline }),
+      });
+    })();
+  }
 
   return { status: "SEEKER_CANCEL_REQUESTED" as const, cancelAckDeadline };
 }
