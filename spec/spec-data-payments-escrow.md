@@ -73,7 +73,7 @@ tags: data, infrastructure, process
 Абстракция сохраняет знакомые операции приложения; при миграции на Safe deal тела запросов к ЮKassa переходят на [эндпоинты сделок и связанных платежей](https://yookassa.ru/developers/solutions-for-platforms/safe-deal/integration/payments), а `capturePayment` / `createPayout` отображаются на закрытие сделки и выплату исполнителю.
 
 ```typescript
-// server/services/paymentService.ts
+// src/server/services/paymentService.ts
 
 export interface CreatePaymentOptions {
   idempotencyKey: string;
@@ -165,42 +165,41 @@ export interface PaymentProvider {
 
 Сопоставление с состояниями заявки Referi:
 
+**Сценарий A: успешный оффер**
+
+```mermaid
+flowchart TD
+  cp[Seeker: createPayment] --> y1[YooKassa, удержание]
+  y1 --> wh[Webhook, жизненный цикл]
+  wh --> e1[EscrowTransaction HELD]
+  e1 --> a1[Application AWAITING_RESUME_HANDOFF]
+  a1 --> o[Seeker: seekerAcceptsOffer]
+  o --> c[capture + createPayout]
+  c --> y2[YooKassa, закрытие сделки]
+  y2 --> e2[EscrowTransaction CAPTURED]
+  e2 --> a2[Application OFFER_ACCEPTED]
+  a2 --> v[Vacancy DELETED]
 ```
-Сценарий A: Успешный оффер
 
-  Seeker → createPayment(...)
-    └──→ ЮKassa: оплата заказчика в рамках сделки (удержание у провайдера)
-    └──→ webhook: подтверждение успешной авторизации / ожидание закрытия сделки
-    └──→ EscrowTransaction { status: HELD, yookassaPaymentId }
-    └──→ Application: AWAITING_RESUME_HANDOFF
+**Сценарий B: возврат (SLA, cancel, модератор)**
 
-  Seeker подтвердил принятие оффера
-    └──→ seekerAcceptsOffer()
-    └──→ capturePayment(...) затем createPayout(netPayout, ...)
-          └──→ ЮKassa: закрытие сделки — вознаграждение исполнителю; комиссия маркетплейса по правилам договора
-    └──→ EscrowTransaction { status: CAPTURED }
-    └──→ Application: OFFER_ACCEPTED
-    └──→ Vacancy: DELETED
+```mermaid
+flowchart TD
+  r1[Событие возврата] --> r2[refundPayment]
+  r2 --> y3[YooKassa, возврат в Safe deal]
+  y3 --> e3[EscrowTransaction REFUNDED]
+  e3 --> a3[Application REFUNDED*]
+```
 
-Сценарий B: Возврат (SLA, cancel, модератор)
+**Сценарий C: бесплатный реферал, amount 0**
 
-  Событие возврата:
-    └──→ refundPayment(paymentId, amount)
-          └──→ ЮKassa: возврат заказчику в сценарии Safe deal
-    └──→ EscrowTransaction { status: REFUNDED }
-    └──→ Application: соответствующий REFUNDED_* статус
-
-Сценарий C: Бесплатный реферал (amount = 0)
-
-  referrerConfirmIntent() → Application: AWAITING_PAYMENT
-    └──→ System auto: escrowHoldSucceeded() без реального платежа
-    └──→ EscrowTransaction НЕ создаётся
-    └──→ Application: AWAITING_RESUME_HANDOFF
-
-  При OFFER_ACCEPTED:
-    └──→ EscrowTransaction отсутствует → capture/payout пропускается
-    └──→ Application: OFFER_ACCEPTED
-    └──→ Vacancy: DELETED
+```mermaid
+flowchart TD
+  c1[referrerConfirmIntent, AWAITING_PAYMENT] --> c2[escrowHoldSucceeded без реального платежа]
+  c2 --> c3[EscrowTransaction не создаётся]
+  c3 --> c4[Application AWAITING_RESUME_HANDOFF]
+  c4 -->|при accept offer| c5[Без capture и payout]
+  c5 --> c6[Application OFFER_ACCEPTED, Vacancy DELETED]
 ```
 
 ### 4.3 Webhook-события ЮKassa
@@ -266,7 +265,7 @@ export function calculateCommission(amountKopecks: bigint): {
 ### 4.6 Polling fallback при задержке webhook
 
 ```typescript
-// server/workers/paymentWorker.ts
+// src/server/workers/paymentWorker.ts
 
 async function schedulePaymentPolling(applicationId: string, paymentId: string) {
   await paymentPollingQueue.add('poll-payment', { applicationId, paymentId }, {
@@ -363,8 +362,8 @@ async function cancelPollingJob(paymentId: string) {
 
 ## 10. Validation Criteria
 
-1. `server/services/paymentService.ts` экспортирует интерфейс `PaymentProvider` и реализацию под ЮKassa.
-2. `server/services/paymentService.ts` экспортирует `MockPaymentProvider` для тестов.
+1. `src/server/services/paymentService.ts` экспортирует интерфейс `PaymentProvider` и реализацию под ЮKassa.
+2. `src/server/services/paymentService.ts` экспортирует `MockPaymentProvider` для тестов.
 3. Ни один файл вне платёжного сервиса не импортирует SDK ЮKassa напрямую.
 4. Все вызовы `createPayment`, `capturePayment`, `refundPayment`, `createPayout` содержат `idempotencyKey`.
 5. `calculateCommission` покрыт unit-тестами.

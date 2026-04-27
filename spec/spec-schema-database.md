@@ -8,17 +8,17 @@ tags: schema, data, infrastructure
 
 # Introduction
 
-Данная спецификация описывает полную схему базы данных Referi: все таблицы (модели Prisma), поля, типы, ограничения, индексы и правила валидации. Файл `prisma/schema.prisma` должен строго соответствовать этой спецификации.
+Данная спецификация описывает полную схему базы данных Referi: все таблицы (модели Prisma), поля, типы, ограничения, индексы и правила валидации. **Канонический синтаксис схемы** — файл [`prisma/schema.prisma`](../prisma/schema.prisma); строка подключения и путь миграций задаются в [`prisma.config.ts`](../prisma.config.ts) (Prisma 7). Изменения схемы сначала фиксируются здесь и в `schema.prisma`, затем миграция.
 
 ## 1. Purpose & Scope
 
-**Назначение**: служить единым источником истины для схемы БД. Любое изменение схемы требует сначала обновления этого документа.
+**Назначение**: человекочитаемый контракт и чеклист сущностей; при расхождениях с `prisma/schema.prisma` приоритет у файла схемы, этот документ обновляется в той же задаче.
 
 **Аудитория**: инженеры, AI-агенты, генерирующие миграции и репозитории.
 
 **Допущения**:
 - СУБД: PostgreSQL 16.
-- ORM: Prisma 6+.
+- ORM: Prisma 7 (`prisma` CLI, `@prisma/client`, driver adapter `pg` при необходимости).
 - Все денежные суммы хранятся в копейках (`BigInt`). Значение 0 допустимо (бесплатный реферал).
 - UUID v4 используется как первичный ключ для всех таблиц.
 - `createdAt` / `updatedAt` проставляются автоматически через `@default(now())` и `@updatedAt`.
@@ -72,7 +72,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // URL: prisma.config.ts → datasource.url (Prisma 7)
 }
 
 // ─────────────────────────────────────────────
@@ -92,8 +92,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   displayName String
-  // Роль выбирается при регистрации; пользователь может иметь обе роли
   roles       UserRole[]
+
+  yookassaPayoutDestination String?
 
   githubProfile       GitHubProfile?
   seekerSubscription  SeekerSubscription?
@@ -471,6 +472,18 @@ model TelegramLink {
   @@map("telegram_links")
 }
 
+model TelegramLinkToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  token     String   @unique
+  expiresAt DateTime
+
+  @@index([token])
+  @@map("telegram_link_tokens")
+}
+
 // ─────────────────────────────────────────────
 // AUDIT CONTEXT
 // ─────────────────────────────────────────────
@@ -488,7 +501,7 @@ model AuditLog {
   applicationId String   @db.Uuid
   createdAt     DateTime @default(now())
 
-  fromStatus  ApplicationStatus?  // NULL для первой записи
+  fromStatus  ApplicationStatus?
   toStatus    ApplicationStatus
   actor       AuditActor
   actorId     String?   @db.Uuid  // NULL для SYSTEM
@@ -538,7 +551,7 @@ model AuditLog {
 ## 8. Dependencies & External Integrations
 
 - **INF-001**: PostgreSQL 16 с расширением `pgcrypto` (для `gen_random_uuid()`).
-- **PLT-001**: Prisma 6+ — версия 5 не поддерживает некоторые синтаксические конструкции схемы.
+- **PLT-001**: Prisma 7 — схема в `prisma/schema.prisma`, конфиг в `prisma.config.ts`.
 
 ---
 
@@ -547,7 +560,7 @@ model AuditLog {
 ### Подсчёт активных откликов соискателя
 
 ```typescript
-// server/repositories/applicationRepository.ts
+// src/server/repositories/applicationRepository.ts
 
 const ACTIVE_STATUSES: ApplicationStatus[] = [
   'SUBMITTED',
@@ -568,8 +581,8 @@ async function countActiveApplicationsBySeeker(seekerId: string): Promise<number
 ### Получение доступного пула попыток реферальщика
 
 ```typescript
-// server/repositories/referrerAttemptRepository.ts
-const MAX_ATTEMPTS = 3; // из businessRules.ts
+// src/server/repositories/referrerAttemptRepository.ts
+const MAX_ATTEMPTS = 3; // из src/shared/constants/businessRules.ts
 
 async function getAvailableAttempts(referrerId: string): Promise<number> {
   const consumed = await prisma.referrerAttemptLedger.count({

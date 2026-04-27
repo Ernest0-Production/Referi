@@ -31,64 +31,65 @@ tags: design, architecture, app
 | **Mutation**   | tRPC процедура для записи/изменения данных (POST-семантика)         |
 | **Middleware** | tRPC middleware для проверки прав (isAuth, isReferrer, isModerator) |
 | **Zod schema** | TypeScript-схема валидации входных данных                           |
-| **ctx**        | tRPC context: `{ session, db, ip }`                                 |
+| **ctx**        | Базовый context: `{ session, db, ip }`; после `protectedProcedure` — ещё `userId: string` |
 
 ---
 
 ## 3. Requirements, Constraints & Guidelines
 
 - **REQ-001**: Каждая процедура валидирует input через Zod-схему.
-- **REQ-002**: Авторизационные проверки реализуются через tRPC middleware, не внутри процедур.
+- **REQ-002**: Проверка сессии и ролей модератора — через tRPC middleware (`protectedProcedure`, `moderatorProcedure` в `src/server/trpc/trpc.ts`). Доменные guard-ы (владелец вакансии, статус заявки) остаются в процедурах или в `src/server/commands/*`.
 - **REQ-003**: Все денежные поля в ответах API (kopecks) сериализуются как строки (`string`) из-за ограничений JSON и BigInt.
 - **REQ-004**: Процедуры чтения (`query`) не должны менять состояние системы.
 - **REQ-005**: REST-вебхуки (`/api/webhooks/*`) не используют tRPC; обрабатываются напрямую в Next.js Route Handlers.
 - **SEC-001**: tRPC context проверяет наличие валидной сессии Auth.js для всех non-public процедур.
-- **SEC-002**: Rate limits применяются на уровне Edge middleware или reverse proxy.
+- **SEC-002**: Rate limits (опционально): Redis sliding-window в [`src/lib/rateLimiter.ts`](../src/lib/rateLimiter.ts), вызов из [`src/app/api/trpc/[trpc]/route.ts`](../src/app/api/trpc/%5Btrpc%5D/route.ts) при `FEATURE_RATE_LIMITING=true`.
 - **GUD-001**: Названия процедур в camelCase; формат `{resource}.{action}` (например: `vacancies.list`, `applications.submit`).
 
 ---
 
 ## 4. Interfaces & Data Contracts
 
-### 4.1 tRPC Middleware
+### 4.1 tRPC context и middleware
+
+Файлы: [`src/server/trpc/context.ts`](../src/server/trpc/context.ts) (создание context), [`src/server/trpc/trpc.ts`](../src/server/trpc/trpc.ts) (`protectedProcedure`, `moderatorProcedure`, superjson).
 
 ```typescript
-// server/trpc/context.ts
-export type Context = {
-  session: Session | null;
-  db: PrismaClient;
-  ip: string;
-};
+// src/server/trpc/context.ts
+export async function createTRPCContext(opts: FetchCreateContextFnOptions) {
+  const session = await auth();
+  const ip =
+    opts.req.headers.get("x-forwarded-for") ?? opts.req.headers.get("x-real-ip") ?? "unknown";
+  return { db: prisma, ip, session };
+}
+export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
-// server/trpc/middleware.ts
-const isAuth = t.middleware(({ ctx, next }) => {
-  if (!ctx.session?.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
-  return next({ ctx: { ...ctx, user: ctx.session.user } });
+// src/server/trpc/trpc.ts — фрагмент
+const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
+  if (!ctx.session?.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
+  return next({ ctx: { ...ctx, session: ctx.session, userId: ctx.session.user.id } });
 });
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 
-const isReferrerOfVacancy = (vacancyId: string) =>
-  t.middleware(async ({ ctx, next }) => {
-    const vacancy = await ctx.db.vacancy.findUnique({ where: { id: vacancyId } });
-    if (!vacancy || vacancy.referrerId !== ctx.session!.user.id)
-      throw new TRPCError({ code: 'FORBIDDEN' });
-    return next();
-  });
-
-const isModerator = t.middleware(({ ctx, next }) => {
-  if (!ctx.session?.user.roles.includes('MODERATOR'))
-    throw new TRPCError({ code: 'FORBIDDEN' });
-  return next();
+const enforceUserIsModerator = t.middleware(async ({ ctx, next }) => {
+  // … загрузка roles из БД …
+  if (!user?.roles.includes("MODERATOR") && !user?.roles.includes("ADMIN"))
+    throw new TRPCError({ code: "FORBIDDEN" });
+  return next({ ctx: { ...ctx, session: ctx.session, userId: ctx.session.user.id } });
 });
+export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 ```
+
+Отдельного файла `middleware.ts` нет; проверка прав реферальщика по `vacancyId` выполняется внутри соответствующих процедур.
 
 ### 4.2 Router: `auth`
 
 | Процедура                          | Тип      | Auth   | Входные данные                             | Описание                                      |
 | ---------------------------------- | -------- | ------ | ------------------------------------------ | --------------------------------------------- |
-| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + роли + лимиты          |
-| `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo, bio, roles }` | Обновить профиль                              |
-| `auth.checkRegistrationStatus`     | query    | public | `{ githubId }`                             | Нужна ли платная регистрация                  |
-| `auth.initiateRegistrationPayment` | mutation | isAuth | —                                          | Создать платёж за регистрацию (если < 1 года) |
+| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + роли + GitHub + подписка + `availableAttempts` |
+| `auth.updateProfile`               | mutation | isAuth | `{ displayName }`                          | Обновить отображаемое имя                     |
+| `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                               | Создать платёж за регистрацию (молодой GitHub); `confirmationUrl` |
+| `auth.generateTelegramLinkToken`   | mutation | isAuth | —                                          | Одноразовый токен привязки Telegram; `deepLink`, `expiresAt` |
 
 ### 4.3 Router: `vacancies`
 
@@ -123,7 +124,7 @@ type VacancyListItem = {
 
 | Процедура                        | Тип      | Auth   | Входные данные                                  | Описание                                                            |
 | -------------------------------- | -------- | ------ | ----------------------------------------------- | ------------------------------------------------------------------- |
-| `applications.submit`            | mutation | isAuth | `{ vacancyId, contactInfo, bio, coverLetter? }` | Откликнуться; guard: лимиты, статус вакансии                        |
+| `applications.submit`            | mutation | isAuth | `{ vacancyId, contactInfo, bio, coverLetter?, paidTokenId? }` | Откликнуться; guard: лимиты, статус вакансии                        |
 | `applications.cancel`            | mutation | isAuth | `{ applicationId }`                             | Отозвать отклик (SUBMITTED / AWAITING_PAYMENT)                      |
 | `applications.requestCancel`     | mutation | isAuth | `{ applicationId }`                             | Запросить отмену (AWAITING_RESUME_HANDOFF)                          |
 | `applications.myList`            | query    | isAuth | `{ status? }`                                   | Мои заявки как соискателя                                           |
@@ -145,20 +146,20 @@ type VacancyListItem = {
 
 ### 4.5 Router: `payments`
 
-| Процедура                      | Тип      | Auth   | Входные данные      | Описание                                                                         |
-| ------------------------------ | -------- | ------ | ------------------- | -------------------------------------------------------------------------------- |
-| `payments.createEscrow`        | mutation | isAuth | `{ applicationId }` | Инициировать оплату заказчика по заявке в **безопасной сделке** ЮKassa; идентификатор процедуры в API без переименования; возвращает `{ confirmationUrl }` |
-| `payments.buyApplicationToken` | mutation | isAuth | `{ vacancyId }`     | Купить разовый токен отклика; возвращает `{ confirmationUrl }`                   |
-| `payments.addPayoutCard`       | mutation | isAuth | —                   | Добавить карту для выплат (ЮKassa hosted form); возвращает `{ confirmationUrl }` |
-| `payments.escrowStatus`        | query    | isAuth | `{ applicationId }` | Статус зеркальной записи платежа/сделки (`EscrowTransaction`) по заявке          |
+| Процедура                 | Тип      | Auth   | Входные данные      | Описание                                                                                                                     |
+| ------------------------- | -------- | ------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `payments.initiateEscrow` | mutation | isAuth | `{ applicationId }` | Инициировать оплату соискателя по заявке (`AWAITING_PAYMENT`); возвращает `{ confirmationUrl?, paymentId?, amountKopecks? }` |
+| `payments.escrowStatus`   | query    | isAuth | `{ applicationId }` | Зеркало `EscrowTransaction` для участников заявки (`paymentId`, суммы, даты)                                                 |
+
+Отдельных tRPC-процедур для покупки разового токена отклика и привязки карты выплат в текущей кодовой базе нет (токен передаётся опционально в `applications.submit` как `paidTokenId`, выплаты реферальщику — через воркер после `capture`).
 
 ### 4.6 Router: `subscriptions`
 
-| Процедура                         | Тип      | Auth   | Входные данные | Описание                           |
-| --------------------------------- | -------- | ------ | -------------- | ---------------------------------- |
-| `subscriptions.getMySubscription` | query    | isAuth | —              | Текущая подписка соискателя        |
-| `subscriptions.subscribe`         | mutation | isAuth | —              | Оформить подписку «Соискатель PRO» |
-| `subscriptions.cancel`            | mutation | isAuth | —              | Отменить подписку                  |
+| Процедура                   | Тип      | Auth   | Входные данные | Описание                                            |
+| --------------------------- | -------- | ------ | -------------- | --------------------------------------------------- |
+| `subscriptions.me`          | query    | isAuth | —              | Текущая подписка соискателя (период, статус)        |
+| `subscriptions.initiatePro` | mutation | isAuth | —              | Оплата подписки «Соискатель PRO»; `confirmationUrl` |
+| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить активную подписку                          |
 
 ### 4.7 Router: `moderation` (только MODERATOR / ADMIN)
 
@@ -169,9 +170,8 @@ type VacancyListItem = {
 | `moderation.resolveForReferrer` | mutation | isModerator | `{ caseId, notes? }`                   | Решение в пользу реферальщика |
 | `moderation.resolveForSeeker`   | mutation | isModerator | `{ caseId, notes? }`                   | Решение в пользу соискателя   |
 | `moderation.abuseReports`       | query    | isModerator | `{ status? }`                          | Список жалоб                  |
-| `moderation.resolveAbuseReport` | mutation | isModerator | `{ reportId, resolution, blockUser? }` | Разрешить жалобу              |
-| `moderation.blockUser`          | mutation | isModerator | `{ userId, reason, expiresAt }`        | Заблокировать пользователя    |
-| `moderation.blockVacancy`       | mutation | isModerator | `{ vacancyId, reason }`                | Заблокировать вакансию        |
+| `moderation.resolveAbuseReport` | mutation | isModerator | `{ reportId, resolution, blockUser?, blockVacancy? }` | Разрешить жалобу; при `blockVacancy: true` и привязанной вакансии — статус вакансии `BLOCKED` |
+| `moderation.blockUser`          | mutation | isModerator | `{ userId, reason, expiresAt }`        | Санкция на реферальщика (`ReferrerSanction`) |
 
 ### 4.8 Router: `reports` (жалобы, публичный)
 
@@ -201,16 +201,20 @@ Header: X-Telegram-Bot-Api-Secret-Token: {TELEGRAM_WEBHOOK_SECRET}
 
 ### 4.10 Rate Limits
 
-| Группа запросов                    | Лимит                                         |
-| ---------------------------------- | --------------------------------------------- |
-| Публичные queries (лента вакансий) | 60 req / мин / IP                             |
-| Authenticated mutations (общее)    | 20 req / мин / userId                         |
-| `applications.submit`              | 5 req / мин / userId                          |
-| `reports.submitAbuseReport`        | 3 req / ч / userId                            |
-| Вебхуки ЮKassa                     | Без ограничений (белый список IP ЮKassa)      |
-| Вебхуки Telegram                   | Без ограничений (верификация по secret token) |
+Включение: **`FEATURE_RATE_LIMITING=true`**. Реализация: Redis в [`src/lib/rateLimiter.ts`](../src/lib/rateLimiter.ts), проверка в [`src/app/api/trpc/[trpc]/route.ts`](../src/app/api/trpc/%5Btrpc%5D/route.ts) (Node runtime, не Edge).
 
-Rate limits реализуются через Edge middleware с Redis как хранилищем счётчиков.
+| Ключ в коде (`RATE_LIMIT_RULES`) | Условие             | Лимит (текущая реализация)     |
+| -------------------------------- | ------------------- | ------------------------------ |
+| `publicApi`                      | Нет сессии          | 60 запросов / 60 с / IP        |
+| `authedApi`                      | Есть `session.user` | 120 запросов / 60 с / `userId` |
+
+При превышении — **HTTP 429**, JSON `{ error, retryAfter }`, заголовки `Retry-After`, `X-RateLimit-Remaining`.
+
+Отдельных лимитов на `applications.submit` и `reports.submitAbuseReport` в коде нет.
+
+| Вебхуки          | Политика                                                                            |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| ЮKassa, Telegram | Не проходят через общий tRPC rate-limit handler; защита — Basic Auth / secret token |
 
 ---
 
@@ -220,7 +224,7 @@ Rate limits реализуются через Edge middleware с Redis как х
 - **AC-002**: Given авторизованный пользователь вызывает `applications.confirmIntent` по чужой вакансии, When запрос отправлен, Then tRPC возвращает `FORBIDDEN`.
 - **AC-003**: Given `vacancies.list` вызван с `specialty: 'BACKEND'`, When в БД есть 5 BACKEND вакансий и 3 FRONTEND, Then возвращаются только 5.
 - **AC-004**: Given `vacancies.getById` для активной вакансии, When возвращён ответ, Then в нём отсутствуют поля `referrerName`, `referrerContact`, `referrerId`.
-- **AC-005**: Given пользователь превысил rate limit `applications.submit` (5 req/мин), When отправляет 6-й запрос, Then возвращается HTTP 429.
+- **AC-005**: Given включён `FEATURE_RATE_LIMITING`, авторизованный пользователь исчерпал лимит `authedApi` (120 запросов за 60 с к `/api/trpc`), When отправляет следующий запрос, Then HTTP 429 и заголовок `Retry-After`.
 - **AC-006**: Given `applications.getById` для реферальщика и статус заявки `SUBMITTED`, When запрос выполнен, Then поле `contactInfo` присутствует в ответе.
 - **AC-007**: Given `applications.getById` для реферальщика и статус `REJECTED_BY_REFERRER` (терминальный), When запрос выполнен, Then `contactInfo` отсутствует или пустое.
 - **AC-008**: Given поле `rewardKopecks = 50000n`, When `vacancies.getById` сериализует ответ, Then поле `rewardKopecks` в JSON = строка `"50000"`.
@@ -242,7 +246,7 @@ Rate limits реализуются через Edge middleware с Redis как х
 
 **BigInt → string в JSON**: JSON.stringify не поддерживает BigInt. Используется кастомный serializer или `superjson` через tRPC transformer.
 
-**Разделение роутеров по доменам**: `vacancies`, `applications`, `payments`, `subscriptions`, `moderation` — каждый в отдельном файле, соответствует bounded contexts.
+**Разделение роутеров по доменам**: `vacancies`, `applications`, `payments`, `subscriptions`, `moderation`, `reports` — в [`src/server/trpc/root.ts`](../src/server/trpc/root.ts); `reports` — отдельный роутер для жалоб.
 
 ---
 
@@ -259,36 +263,23 @@ Rate limits реализуются через Edge middleware с Redis как х
 ### Пример: создание вакансии с guard-ами
 
 ```typescript
-// server/trpc/routers/vacancies.ts (фрагмент)
+// src/server/trpc/routers/vacancies.ts (фрагмент)
 
 export const vacanciesRouter = router({
   create: protectedProcedure
     .input(createVacancySchema)
     .mutation(async ({ ctx, input }) => {
-      // Guard: не более 1 активной вакансии
+      const userId = ctx.userId;
       const existing = await ctx.db.vacancy.findFirst({
-        where: {
-          referrerId: ctx.user.id,
-          status: { in: ['ACTIVE', 'FROZEN'] },
-        },
+        where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
       });
       if (existing) {
         throw new TRPCError({
-          code: 'PRECONDITION_FAILED',
-          message: 'ACTIVE_VACANCY_EXISTS',
+          code: "PRECONDITION_FAILED",
+          message: "ACTIVE_VACANCY_EXISTS",
         });
       }
-
-      // Guard: попытки > 0
-      const attempts = await getAvailableAttempts(ctx.user.id);
-      if (attempts === 0) {
-        throw new TRPCError({
-          code: 'PRECONDITION_FAILED',
-          message: 'NO_ATTEMPTS_LEFT',
-        });
-      }
-
-      return vacancyRepository.create({ ...input, referrerId: ctx.user.id });
+      // … NO_ATTEMPTS_LEFT, создание записи …
     }),
 });
 ```
@@ -296,13 +287,14 @@ export const vacanciesRouter = router({
 ### Edge Case: BigInt сериализация
 
 ```typescript
-// lib/trpc.ts — superjson transformer
-import superjson from 'superjson';
+// src/server/trpc/trpc.ts — superjson transformer
+import superjson from "superjson";
 
-export const t = initTRPC.context<Context>().create({
+const t = initTRPC.context<Context>().create({
   transformer: superjson,
+  // …
 });
-// Клиент также должен использовать superjson transformer
+// Клиент tRPC также использует superjson transformer
 ```
 
 ---

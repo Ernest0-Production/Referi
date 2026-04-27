@@ -8,7 +8,7 @@ tags: process, design, app
 
 # Introduction
 
-Данная спецификация описывает все SLA-таймеры платформы Referi, механизм санкций для реферальщиков, систему лимитов и глобальный пул попыток реферальщика с 60-дневной регенерацией. Является источником истины для реализации `server/workers/slaWorker.ts` и `server/workers/attemptRegenerationWorker.ts`.
+Данная спецификация описывает все SLA-таймеры платформы Referi, механизм санкций для реферальщиков, систему лимитов и глобальный пул попыток реферальщика с 60-дневной регенерацией. Является источником истины для реализации [`src/server/workers/slaWorker.ts`](../src/server/workers/slaWorker.ts) (включая регенерацию попыток и связанные delayed jobs).
 
 ## 1. Purpose & Scope
 
@@ -20,7 +20,7 @@ tags: process, design, app
 - Все тайм-ауты отсчитываются от момента перехода в соответствующее состояние.
 - BullMQ используется для отложенных задач (delayed jobs).
 - `jobId` каждой задачи уникален и детерминирован (`{type}:{applicationId}`).
-- Конфигурационные константы находятся в `shared/constants/businessRules.ts`.
+- Конфигурационные константы находятся в `src/shared/constants/businessRules.ts`.
 
 ---
 
@@ -40,7 +40,7 @@ tags: process, design, app
 
 ## 3. Requirements, Constraints & Guidelines
 
-- **REQ-001**: Все конфигурационные значения SLA и санкций хранятся в `shared/constants/businessRules.ts` и не захардкожены в коде воркеров.
+- **REQ-001**: Все конфигурационные значения SLA и санкций хранятся в `src/shared/constants/businessRules.ts` и подключаются в воркерах через `BUSINESS_RULES` (без дублирования чисел в коде).
 - **REQ-002**: Каждый BullMQ job имеет уникальный `jobId`. При повторном планировании того же job с тем же `jobId` — идемпотентно (не дублируется).
 - **REQ-003**: SLA-воркер перед выполнением действия обязан проверить актуальный статус заявки в БД. Если статус изменился — воркер завершает работу без действий (noop).
 - **REQ-004**: Фриз вакансии происходит только если у неё есть хотя бы один отклик в статусе `SUBMITTED` и реферальщик не взял ни одного за SLA-период.
@@ -57,7 +57,7 @@ tags: process, design, app
 ### 4.1 Конфигурация бизнес-правил
 
 ```typescript
-// shared/constants/businessRules.ts
+// src/shared/constants/businessRules.ts
 
 export const BUSINESS_RULES = {
   // SLA (в миллисекундах)
@@ -105,45 +105,27 @@ export const BUSINESS_RULES = {
 
 ### 4.3 Механика фриза вакансии (reaction-sla)
 
-```
-Событие: первый отклик создан для вакансии V
-  │
-  ├── Установить Vacancy.firstApplicationAt = now()
-  └── BullMQ.add('reaction-sla:{vacancyId}', delay: SLA_REFERRER_REACTION_MS)
-
-По срабатыванию таймера:
-  │
-  ├── Загрузить вакансию V из БД
-  ├── Если V.status != ACTIVE → noop (вакансия уже удалена/заморожена/закрыта)
-  ├── Подсчитать заявки V, которые НЕ в статусе SUBMITTED или терминальном
-  │     count = COUNT(application WHERE vacancyId = V AND status NOT IN (SUBMITTED, CANCELLED, REJECTED_BY_REFERRER))
-  ├── Если count > 0 → noop (реферальщик уже среагировал)
-  └── Если count = 0 → заморозить вакансию:
-        Vacancy.status = FROZEN
-        Vacancy.frozenUntil = now() + SANCTION_REACTION_FREEZE_MS
-        BullMQ.add('vacancy-unfreeze:{vacancyId}', delay: SANCTION_REACTION_FREEZE_MS)
-        notify(referrerId, 'vacancy_frozen', { vacancyId, frozenUntil })
+```mermaid
+flowchart TB
+  e1[Первый отклик на вакансии V] --> a1[firstApplicationAt, BullMQ reaction-sla]
+  a1 --> t1[По срабатыванию таймера]
+  t1 --> l[Загрузить V]
+  l --> c1{V.status ACTIVE?}
+  c1 -->|Нет| n1[noop]
+  c1 -->|Да| cnt[Подсчитать заявки не SUBMITTED и не терминальные]
+  cnt --> c2{Реферер среагировал?}
+  c2 -->|Да| n1[noop]
+  c2 -->|Нет, count 0| fz[FROZEN, frozenUntil, unfreeze, notify]
 ```
 
 ### 4.4 Механика бана реферальщика (resume-handoff-sla истёк)
 
-```
-По срабатыванию 'resume-handoff-sla:{applicationId}':
-  │
-  ├── Загрузить Application A
-  ├── Если A.status != AWAITING_RESUME_HANDOFF → noop
-  └── В транзакции:
-        1. paymentService.refund(A.escrowTx.yookassaPaymentId)
-        2. A.status = REFUNDED_BY_SLA
-        3. AuditLog.append({ from: AWAITING_RESUME_HANDOFF, to: REFUNDED_BY_SLA, actor: SYSTEM })
-        4. ReferrerSanction.create({
-             referrerId: A.vacancy.referrerId,
-             sanctionType: RESUME_HANDOFF_BAN,
-             expiresAt: now() + SANCTION_RESUME_BAN_MS,
-             applicationId: A.id
-           })
-        5. notify(A.seekerId, 'refund_by_sla', { applicationId })
-        6. notify(A.vacancy.referrerId, 'sanction_ban', { expiresAt })
+```mermaid
+flowchart TB
+  j[Job resume-handoff-sla:applicationId] --> load[Загрузить Application A]
+  load --> c{A.status AWAITING_RESUME_HANDOFF?}
+  c -->|Нет| np[noop]
+  c -->|Да| tx[Транзакция: refund, REFUNDED_BY_SLA, AuditLog, ReferrerSanction, notify]
 ```
 
 ### 4.5 Глобальный пул попыток реферальщика
@@ -160,7 +142,7 @@ availableAttempts(referrerId) =
 Точная реализация — через единый запрос к `ReferrerAttemptLedger`:
 
 ```typescript
-// server/repositories/referrerAttemptRepository.ts
+// src/server/repositories/referrerAttemptRepository.ts
 
 async function getAvailableAttempts(referrerId: string): Promise<number> {
   // Считаем "активные" траты: CONSUMED, у которых regeneratesAt ещё в будущем
@@ -179,47 +161,19 @@ async function getAvailableAttempts(referrerId: string): Promise<number> {
 
 #### Жизненный цикл попытки
 
+```mermaid
+flowchart TB
+  rc[referrerConfirmIntent] --> tx1[CONSUMED, regeneratesAt, BullMQ attempt-regen]
+  re[Job attempt-regen:ledger] --> tx2[REGENERATED, notify, activeConsumed уменьшается]
+  vd[vacancyDeletedCascade] --> loop[Для заявок с CONSUMED: RETURNED, backdate regeneratesAt]
 ```
-referrerConfirmIntent(applicationId):
-  │
-  └── В транзакции:
-        now = new Date()
-        regeneratesAt = new Date(now + ATTEMPT_REGENERATION_MS)
-        ledgerEntry = ReferrerAttemptLedger.create({
-          referrerId,
-          event: 'CONSUMED',
-          applicationId,
-          regeneratesAt,  // через 60 дней
-        })
-        BullMQ.add('attempt-regen:{ledgerEntry.id}', delay: ATTEMPT_REGENERATION_MS)
 
-По срабатыванию 'attempt-regen:{ledgerId}':
-  │
-  └── ReferrerAttemptLedger.create({
-        referrerId,
-        event: 'REGENERATED',
-        applicationId: ledgerEntry.applicationId,
-      })
-      // regeneratesAt у оригинального CONSUMED теперь в прошлом → не считается в activeConsumed
-      notify(referrerId, 'attempt_regenerated', { availableAttempts: getAvailableAttempts(...) })
-
-vacancyDeletedCascade(vacancyId):
-  │
-  └── Для каждой активной заявки A в вакансии:
-        если A уже потратила попытку (есть CONSUMED с applicationId = A.id):
-          ReferrerAttemptLedger.create({
-            referrerId,
-            event: 'RETURNED',
-            applicationId: A.id,
-          })
-          // Обновить regeneratesAt у соответствующего CONSUMED: установить в прошлое
-          // чтобы он не считался в activeConsumed
-```
+Деталь полей `ReferrerAttemptLedger` и `regeneratesAt` — в репозитории и `BUSINESS_RULES` (текст в коде ниже по спецификации).
 
 ### 4.6 Проверка бана при confirmReferralIntent
 
 ```typescript
-// server/commands/confirmReferralIntent.ts — guard проверки санкций
+// src/server/commands/confirmReferralIntent.ts — guard проверки санкций
 
 async function isReferrerBanned(referrerId: string): Promise<boolean> {
   const ban = await prisma.referrerSanction.findFirst({
@@ -319,9 +273,9 @@ Scenario: вакансия разморозилась, реферальщик с
 
 ## 10. Validation Criteria
 
-1. `shared/constants/businessRules.ts` содержит все константы из раздела 4.1.
-2. Ни одно числовое значение SLA или санкции не захардкожено в воркерах или командах.
-3. Все 6 типов SLA-таймеров реализованы в `server/workers/slaWorker.ts`.
+1. `src/shared/constants/businessRules.ts` содержит все константы из раздела 4.1.
+2. Числовые SLA и санкции не дублируются в воркерах и командах в обход `BUSINESS_RULES`.
+3. Все типы SLA-таймеров из матрицы очередей реализованы в `src/server/workers/slaWorker.ts` (включая цепочку регенерации попыток).
 4. `getAvailableAttempts()` корректно возвращает 3 при пустом ledger.
 5. `getAvailableAttempts()` корректно возвращает 0 после 3 последовательных `CONSUMED` без `REGENERATED`/`RETURNED`.
 6. Тест на уникальность `jobId`: два вызова планирования того же job не создают дублей в очереди.

@@ -8,7 +8,7 @@ tags: process, design, app
 
 # Introduction
 
-Данная спецификация определяет полную машину состояний заявки (`Application`) — все состояния, разрешённые переходы, guard-условия и инварианты. Является главным источником истины для реализации `server/commands/*.ts`.
+Данная спецификация определяет полную машину состояний заявки (`Application`) — все состояния, разрешённые переходы, guard-условия и инварианты. Реализация: `src/server/commands/*.ts` и процедуры [`src/server/trpc/routers/applications.ts`](../src/server/trpc/routers/applications.ts) (и связанные воркеры).
 
 ## 1. Purpose & Scope
 
@@ -31,18 +31,18 @@ tags: process, design, app
 | **Терминальное состояние** | Состояние, из которого нет переходов; заявка завершена              |
 | **Активная заявка**        | Заявка в нетерминальном состоянии; учитывается в лимитах соискателя |
 | **Guard**                  | Предусловие, которое должно быть истинным для выполнения перехода   |
-| **Command**                | TypeScript-функция в `server/commands/`, реализующая переход        |
+| **Command**                | Функция в `src/server/commands/` и/или мутация в `applications` router, выполняющая переход |
 | **Actor**                  | Инициатор перехода: `SEEKER`, `REFERRER`, `SYSTEM`, `MODERATOR`     |
 
 ---
 
 ## 3. Requirements, Constraints & Guidelines
 
-- **REQ-001**: Каждый переход состояния должен реализован в отдельном файле `server/commands/{commandName}.ts`.
+- **REQ-001**: Нетривиальные переходы (блокировки, списание попыток, эскроу) — в отдельных модулях `src/server/commands/{commandName}.ts`. Простые переходы с записью в `AuditLog` могут быть в `src/server/trpc/routers/applications.ts` (например `cancel`, часть путей после оплаты); новые переходы предпочтительно выносить в команды.
 - **REQ-002**: Перед изменением статуса команда должна выполнить `SELECT ... FOR UPDATE` на запись `Application` (пессимистичная блокировка).
 - **REQ-003**: Создание `AuditLog`-записи обязательно для каждого перехода.
 - **REQ-004**: Все переходы, затрагивающие `EscrowTransaction`, должны выполняться атомарно в одной транзакции Prisma.
-- **REQ-005**: Команды не должны напрямую вызывать внешние сервисы (ЮКасса, Telegram) — только через `server/services/*.ts`.
+- **REQ-005**: Код команд и роутеров не вызывает HTTP провайдеров напрямую из бизнес-слоя без абстракции — только через `src/server/services/*.ts` (платежи, Telegram, почта).
 - **CON-001**: Из терминального состояния переходы запрещены.
 - **CON-002**: Нельзя иметь более одной не-терминальной заявки по одной паре `(seekerId, vacancyId)`.
 - **GUD-001**: Guard-условия проверяются в строго определённом порядке: сначала статус заявки, затем права актора, затем бизнес-лимиты.
@@ -53,67 +53,42 @@ tags: process, design, app
 
 ### 4.1 Полная диаграмма состояний
 
+```mermaid
+stateDiagram-v2
+    [*] --> SUBMITTED: seekerSubmitsApplication
+
+    SUBMITTED --> AWAITING_PAYMENT: referrerConfirmIntent
+    SUBMITTED --> CANCELLED: seekerCancelApplication
+    SUBMITTED --> REJECTED_BY_REFERRER: referrerRejectApplication
+
+    AWAITING_PAYMENT --> AWAITING_RESUME_HANDOFF: escrowHoldSucceeded
+    note right of AWAITING_PAYMENT: rewardKopecks=0, сразу успешно, см. G9
+    AWAITING_PAYMENT --> CANCELLED: paymentDeadlineExpired
+    AWAITING_PAYMENT --> CANCELLED: seekerCancelApplication
+
+    AWAITING_RESUME_HANDOFF --> AWAITING_COMPANY_DECISION: referrerConfirmResumeHandoff
+    AWAITING_RESUME_HANDOFF --> REFUNDED_BY_SLA: resumeHandoffSLAExpired
+    AWAITING_RESUME_HANDOFF --> SEEKER_CANCEL_REQUESTED: seekerRequestCancel
+
+    SEEKER_CANCEL_REQUESTED --> REFUNDED_BY_CANCEL_ACK: referrerAcknowledgeCancel
+    SEEKER_CANCEL_REQUESTED --> REFUNDED_BY_CANCEL_AUTO: cancelAckSLAExpired
+
+    AWAITING_COMPANY_DECISION --> OFFER_ACCEPTED: seekerAcceptsOffer
+    AWAITING_COMPANY_DECISION --> REJECTED_BY_COMPANY: referrerConfirmsRejection
+    AWAITING_COMPANY_DECISION --> DISPUTED: referrerDeniesRejection
+    AWAITING_COMPANY_DECISION --> DISPUTED: seekerReportsRejection, исход Disputed, см. сноску
+    AWAITING_COMPANY_DECISION --> REJECTED_BY_COMPANY: seekerReportsRejection, исход RBC, сноска
+    note right of AWAITING_COMPANY_DECISION: seekerReportsRejection, ветвление, табл. 4.2, сноска
+
+    DISPUTED --> OFFER_ACCEPTED: moderatorResolveForReferrer
+    DISPUTED --> REFUNDED_BY_MODERATOR: moderatorResolveForSeeker
 ```
-                        ┌──────────┐
-                        │  START   │
-                        └────┬─────┘
-                             │ seekerSubmitsApplication
-                             ▼
-                     ┌──────────────┐
-              ┌──────│  SUBMITTED   │──────────────────────────────────┐
-              │      └──────────────┘                                  │
-              │         │     │                                        │
-              │ referrer│     │ seeker                                 │ referrer
-              │ confirms│     │ cancels                                │ rejects
-              │ intent  │     │                                        │
-              ▼         │     ▼                                        ▼
-    ┌──────────────────┐│  ┌─────────────────────┐       ┌──────────────────────┐
-    │ AWAITING_PAYMENT ││  │     CANCELLED [T]    │       │REJECTED_BY_REFERRER[T]│
-    └──────────────────┘│  └─────────────────────┘       └──────────────────────┘
-         │         │    │
-  seeker │         │ 5d SLA
-  pays   │         │ expires
-         │         ▼
-         │      ┌─────────────────────┐
-         │      │    CANCELLED [T]    │
-         │      └─────────────────────┘
-         ▼
-┌────────────────────────────┐
-│  AWAITING_RESUME_HANDOFF   │◄─────────────────────────────┐
-└────────────────────────────┘                              │ (если сумма = 0, сразу)
-    │           │           │
-referrer   5d SLA        seeker
-confirms   expires       requests
-handoff               cancellation
-    │           │           │
-    ▼           ▼           ▼
-┌──────────┐ ┌──────────┐ ┌───────────────────────────┐
-│ AWAITING │ │REFUNDED  │ │  SEEKER_CANCEL_REQUESTED   │
-│ COMPANY  │ │_BY_SLA[T]│ └───────────────────────────┘
-│ DECISION │ └──────────┘      │              │
-└──────────┘              referrer       3d SLA
-   │  │  │                confirms       expires
-   │  │  │                    │              │
-   │  │  └─→ DISPUTED         ▼              ▼
-   │  └──────────────→ REFUNDED_BY_    REFUNDED_BY_
-   │  both confirm      CANCEL_ACK[T]  CANCEL_AUTO[T]
-   │  company rejected
-   │
-   ├─→ OFFER_ACCEPTED → [выплата исполнителю / закрытие сделки → vacancy deleted]
-   │
-   └─→ REJECTED_BY_COMPANY [T] → [возврат заказчику]
-       (оба подтвердили)
 
-DISPUTED
-   │
-   ├─→ OFFER_ACCEPTED [moderator decides for referrer]
-   └─→ REFUNDED_BY_MODERATOR [T] [moderator decides for seeker]
+`[T]` = терминальные состояния: `CANCELLED`, `REJECTED_BY_REFERRER`, `REFUNDED_BY_SLA`, `REFUNDED_BY_CANCEL_ACK`, `REFUNDED_BY_CANCEL_AUTO`, `REJECTED_BY_COMPANY`, `OFFER_ACCEPTED`, `REFUNDED_BY_MODERATOR`, `REFUNDED_BY_VACANCY_DELETED`.
 
-Любое нетерминальное состояние + удаление вакансии
-   └─→ REFUNDED_BY_VACANCY_DELETED [T]
+`vacancyDeletedCascade`: из **любого нетерминального** состояния (см. таблицу команд) в `REFUNDED_BY_VACANCY_DELETED` — на диаграмме не все рёбра нарисованы, смысл зафиксирован в табл. 4.2.
 
-[T] = Терминальное состояние
-```
+Два исхода `seekerReportsRejection` из `AWAITING_COMPANY_DECISION` (стрелки 79–80) соответствуют сноске к табл. 4.2.
 
 ### 4.2 Таблица переходов
 
@@ -281,11 +256,11 @@ referrerConfirmIntent → AWAITING_PAYMENT
 
 ## 10. Validation Criteria
 
-1. Все переходы из таблицы 4.2 реализованы в отдельных файлах `server/commands/`.
-2. Каждый командный файл содержит `SELECT ... FOR UPDATE` перед проверкой guards.
-3. Unit-тесты покрывают все guards для каждой команды.
-4. Property-based тест не нарушает ни один из инвариантов INV-001..007 за 10 000 итераций.
-5. Не существует прямого SQL-запроса на обновление `Application.status` вне файлов `server/commands/`.
+1. Все переходы из таблицы 4.2 имеют реализацию в `src/server/commands/*.ts` и/или в `src/server/trpc/routers/applications.ts` (и модерация споров — `moderation.ts`) с записью в `AuditLog` где требуется спека.
+2. Команды с конкурентным доступом используют пессимистичную блокировку (`$transaction` + `findUnique` с контекстом блокировки там, где это введено в коде).
+3. Unit-тесты покрывают критичные guards для команд и роутеров по мере добавления.
+4. Property-based тест не нарушает ни один из инвариантов INV-001..007 за 10 000 итераций (целевой критерий при внедрении PBT).
+5. Обновление `Application.status` не выполняется произвольными raw SQL-скриптами вне приложения в рабочем контуре.
 
 ---
 

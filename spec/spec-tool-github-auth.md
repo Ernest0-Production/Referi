@@ -54,36 +54,40 @@ tags: tool, process, design, app
 
 ### 4.1 Полный флоу регистрации
 
+**Шаги 1–2: OAuth (браузер + GitHub)**
+
+```mermaid
+sequenceDiagram
+  actor U as User
+  participant B as Browser
+  participant A as App NextAuth
+  participant G as GitHub
+  U->>B: Войти через GitHub
+  B->>A: GET /api/auth/signin/github
+  A->>A: state, PKCE code_verifier
+  A->>G: redirect authorize
+  G->>B: callback code state
+  B->>A: GET /api/auth/callback/github
+  A->>A: verify state
+  A->>G: POST access_token
+  A->>G: GET /user
+  A->>A: signIn callback
 ```
-Шаг 1: Пользователь нажимает "Войти через GitHub"
-  Browser → GET /api/auth/signin/github
-    └──→ Auth.js генерирует state + code_verifier (PKCE)
-    └──→ Redirect: github.com/login/oauth/authorize?client_id=...&state=...&scope=read:user
 
-Шаг 2: GitHub OAuth callback
-  GitHub → GET /api/auth/callback/github?code=...&state=...
-    └──→ Auth.js: верификация state
-    └──→ POST github.com/login/oauth/access_token → { access_token }
-    └──→ GET api.github.com/user → { id, login, created_at, ... }
+**Шаг 3: `signIn` callback (серверный)**
 
-Шаг 3: Auth.js signIn callback (серверный)
-  signIn({ user, account, profile }) {
-    1. Проверить: существует ли User с githubId = profile.id?
-       ├── Нет → создать User + GitHubProfile (новый пользователь)
-       └── Да  → обновить access_token
-
-    2. age-check:
-       githubCreatedAt = new Date(profile.created_at)
-       accountAgeMs = Date.now() - githubCreatedAt.getTime()
-
-       ├── accountAgeMs >= 365 * 24 * 60 * 60 * 1000 → регистрация бесплатна
-       │     GitHubProfile.paidRegistration = false (не нужна)
-       └── accountAgeMs < 365 * ... →
-             если GitHubProfile.paidRegistration = true → регистрация разрешена (уже оплатил)
-             иначе → return '/registration/age-gate'  (блокирующий редирект)
-
-    3. При успехе → redirect в личный кабинет
-  }
+```mermaid
+flowchart TB
+  s[signIn user account profile] --> u{User по githubId?}
+  u -->|Нет| n[Создать User + GitHubProfile]
+  u -->|Да| t[Обновить access_token]
+  n --> ag[age-check accountAgeMs]
+  t --> ag
+  ag -->|ok 1 год| free[Бесплатно, paidRegistration false]
+  ag -->|младше| paid{paidRegistration?}
+  paid -->|true| ok[OK в кабинет]
+  paid -->|false| gate[redirect /registration/age-gate]
+  free --> ok
 ```
 
 ### 4.2 Страница `/registration/age-gate`
@@ -93,54 +97,36 @@ tags: tool, process, design, app
 **Содержимое**:
 - Объяснение почему аккаунт не прошёл проверку.
 - Информация о размере сбора (рублёвый эквивалент `REGISTRATION_FEE_KOP`).
-- Кнопка «Оплатить и зарегистрироваться» → вызывает `auth.initiateRegistrationPayment` mutation.
+- Кнопка «Оплатить и зарегистрироваться» → вызывает `auth.initiateRegistrationPayment` mutation с `{ userId }` (процедура **public** в [`src/server/trpc/routers/auth.ts`](../src/server/trpc/routers/auth.ts); вызывать только из доверенного UI после установления сессии).
 - После успешного платежа (webhook) → автоматический редирект в личный кабинет.
 
 **Логика кнопки**:
 ```typescript
 // Клиент
 const pay = trpc.auth.initiateRegistrationPayment.useMutation();
+void pay.mutateAsync({ userId: sessionUser.id });
 
-// Сервер: server/trpc/routers/auth.ts
-initiateRegistrationPayment: protectedProcedure
-  .mutation(async ({ ctx }) => {
+// Сервер: src/server/trpc/routers/auth.ts
+initiateRegistrationPayment: publicProcedure
+  .input(z.object({ userId: z.string().uuid() }))
+  .mutation(async ({ ctx, input }) => {
     const profile = await ctx.db.gitHubProfile.findUnique({
-      where: { userId: ctx.user.id },
+      where: { userId: input.userId },
     });
-    if (!profile) throw new TRPCError({ code: 'NOT_FOUND' });
+    if (!profile) throw new TRPCError({ code: "NOT_FOUND" });
     if (profile.paidRegistration) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'ALREADY_PAID' });
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ALREADY_PAID" });
     }
-
-    // Проверить, нет ли pending payment
-    const existing = await ctx.db.registrationPayment.findFirst({
-      where: { userId: ctx.user.id, paidAt: null },
+    const payment = await paymentProvider.createPayment({
+      /* … amountKopecks: BUSINESS_RULES.REGISTRATION_FEE_KOP, metadata: { userId, type: "registration" } … */
     });
-    if (existing?.yookassaPaymentId) {
-      // Вернуть существующий платёж (идемпотентность)
-      const status = await paymentService.getPaymentStatus(existing.yookassaPaymentId);
-      if (status === 'pending') {
-        return { confirmationUrl: existing.confirmationUrl };
-      }
-    }
-
-    const payment = await paymentService.createPayment({
-      idempotencyKey: `registration:${ctx.user.id}:1`,
-      amountKopecks: BigInt(BUSINESS_RULES.REGISTRATION_FEE_KOP),
-      description: 'Регистрационный сбор Referi',
-      capture: false,  // регистрационный платёж — обычный платёж, не заявка Safe deal
-      returnUrl: `${process.env.NEXT_PUBLIC_URL}/registration/age-gate/success`,
-      metadata: { userId: ctx.user.id, type: 'registration' },
-    });
-
     await ctx.db.registrationPayment.create({
       data: {
-        userId: ctx.user.id,
-        amountKopecks: BigInt(BUSINESS_RULES.REGISTRATION_FEE_KOP),
+        userId: input.userId,
+        amountKopecks: BUSINESS_RULES.REGISTRATION_FEE_KOP,
         yookassaPaymentId: payment.paymentId,
       },
     });
-
     return { confirmationUrl: payment.confirmationUrl };
   }),
 ```
@@ -148,7 +134,7 @@ initiateRegistrationPayment: protectedProcedure
 ### 4.3 Обработка успешного платежа за регистрацию
 
 ```typescript
-// server/workers/paymentWorker.ts (фрагмент обработчика webhook)
+// src/server/workers/paymentWorker.ts (фрагмент обработчика webhook)
 
 case 'payment.succeeded':
   const regPayment = await db.registrationPayment.findUnique({
@@ -173,7 +159,7 @@ case 'payment.succeeded':
 ### 4.4 Auth.js конфигурация
 
 ```typescript
-// lib/auth.ts
+// src/lib/auth.ts
 
 import NextAuth from 'next-auth';
 import GitHub from 'next-auth/providers/github';
@@ -265,10 +251,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 - **AC-001**: Given GitHub аккаунт создан < 365 дней назад и `paidRegistration = false`, When пользователь проходит OAuth, Then Auth.js возвращает редирект на `/registration/age-gate`.
 - **AC-002**: Given GitHub аккаунт создан < 365 дней назад и `paidRegistration = true`, When пользователь проходит OAuth, Then вход выполняется успешно.
 - **AC-003**: Given GitHub аккаунт создан ≥ 365 дней назад, When пользователь проходит OAuth, Then вход выполняется успешно без оплаты.
-- **AC-004**: Given `auth.initiateRegistrationPayment` вызывается дважды для одного пользователя, When второй вызов приходит до оплаты, Then возвращается тот же `confirmationUrl` (идемпотентность).
+- **AC-004**: Given `auth.initiateRegistrationPayment` с одним и тем же `userId` до оплаты, When повторный вызов, Then поведение согласовано с реализацией (новый `RegistrationPayment` / провайдер; идемпотентность на стороне ЮKassa по ключам).
 - **AC-005**: Given webhook `payment.succeeded` для регистрационного платежа, When обработчик выполняется, Then `GitHubProfile.paidRegistration = true` и `RegistrationPayment.paidAt` установлен.
 - **AC-006**: Given `access_token` GitHub сохранён в БД, When значение читается из БД напрямую через SQL, Then оно зашифровано (не является читаемым токеном).
-- **AC-007**: Given пользователь с `paidRegistration = true` вызывает `auth.initiateRegistrationPayment`, When запрос приходит, Then возвращается `TRPCError('ALREADY_PAID')`.
+- **AC-007**: Given пользователь с `paidRegistration = true` вызывает `auth.initiateRegistrationPayment` с его `userId`, When запрос приходит, Then `PRECONDITION_FAILED` / `ALREADY_PAID`.
 
 ---
 
@@ -321,7 +307,7 @@ Auth.js signIn callback должен вернуть false (deny login) + лог�
 
 ## 10. Validation Criteria
 
-1. `lib/auth.ts` содержит `signIn` callback с age-check логикой.
+1. `src/lib/auth.ts` содержит `signIn` callback с age-check логикой.
 2. `GITHUB_TOKEN_ENCRYPTION_KEY` используется во всех операциях записи/чтения `accessToken`.
 3. `GET api.github.com/user` вызывается только в серверных контекстах (нет клиентских fetch).
 4. Тест `AC-001` проходит на мок-данных с `created_at = 1 месяц назад`.

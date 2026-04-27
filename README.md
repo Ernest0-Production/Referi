@@ -55,4 +55,4 @@ docker compose up --build
 - Платежи по заявкам с вознаграждением проектируются через **безопасную сделку ЮKassa** (удержание у провайдера, без отдельного эскроу-счёта Referi); детали — `docs/PRD.md`, `spec/spec-data-payments-escrow.md`.
 - `AGENTS.md` — соглашения и факты о стеке для ассистентов и разработчиков
 - `spec/spec-architecture-referi-system.md` — архитектура системы
-- `docs/ROADMAP.md` — дорожная карта (может отставать от кода)
+- `docs/ROADMAP.md` — дорожная карта (обновляется вместе с изменениями контракта и фич; см. `.cursor/rules/documentation-sync.mdc`)

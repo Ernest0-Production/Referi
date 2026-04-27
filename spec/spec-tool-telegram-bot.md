@@ -65,7 +65,7 @@ tags: tool, process, design
 ### 4.2 Интерфейс TelegramService
 
 ```typescript
-// server/services/telegramService.ts
+// src/server/services/telegramService.ts
 
 export interface SendMessageOptions {
   chatId: number | string;
@@ -107,21 +107,20 @@ export interface TelegramService {
 
 ### 4.4 Флоу привязки Telegram аккаунта (`/link`)
 
-```
-Шаг 1: Пользователь в веб-интерфейсе Referi нажимает "Привязать Telegram"
-  └──→ auth.generateTelegramLinkToken() mutation
-       Создаёт запись TelegramLinkToken { userId, token (uuid), expiresAt: now+10min }
-       Возвращает: { token, botUsername }
-  └──→ UI показывает ссылку: https://t.me/{botUsername}?start={token}
-
-Шаг 2: Пользователь переходит по ссылке → открывается бот → нажимает /start
-  Telegram → Update { message: { text: '/start {token}', from: { id: telegramUserId, username } } }
-  └──→ webhookHandler:
-       1. Найти TelegramLinkToken по token
-       2. Проверить expiresAt (ещё не истёк)
-       3. Создать TelegramLink { userId, telegramUserId, chatId, telegramUsername }
-       4. Удалить TelegramLinkToken
-       5. Отправить сообщение: "✅ Аккаунт успешно привязан к Referi"
+```mermaid
+sequenceDiagram
+  actor U as User
+  participant W as Web Referi
+  participant T as tRPC
+  participant TG as Telegram
+  U->>W: Привязать Telegram
+  W->>T: generateTelegramLinkToken
+  T->>T: TelegramLinkToken, expires
+  T-->>W: token, botUsername
+  W-->>U: t.me or bot, start=token
+  U->>TG: start с token
+  TG->>W: webhook Update /start
+  W->>W: по token, проверка expires, TelegramLink, delete token, сообщение
 ```
 
 ### 4.5 Обработка входящих Updates (webhook handler)
@@ -203,7 +202,7 @@ export const messages = {
 - Telegram-группа с несколькими модераторами.
 
 ```typescript
-// server/services/telegramService.ts (фрагмент)
+// src/server/services/telegramService.ts (фрагмент)
 
 async function notifyModerators(text: string, replyMarkup?: InlineKeyboardMarkup) {
   await sendMessage({
@@ -274,7 +273,7 @@ export async function register() {
 ### Edge Case: недоступность Telegram API в РФ
 
 ```typescript
-// server/services/telegramService.ts
+// src/server/services/telegramService.ts
 
 async sendMessage(options: SendMessageOptions): Promise<void> {
   try {

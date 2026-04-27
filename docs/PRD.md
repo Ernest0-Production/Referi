@@ -309,24 +309,19 @@ Referi — реферальная job-board для разработчиков (�
 
 ### 3.1 Architecture Overview
 
+```mermaid
+flowchart TB
+  browser[Браузер пользователя] --> next[Next.js App Router + TypeScript, SSR RSC] --> trpc[tRPC API layer]
+  trpc --> pg[PostgreSQL 16, Prisma]
+  trpc --> gha[GitHub REST, OAuth, age-check]
+  trpc --> yk[YooKassa, сделка, платежи, выплаты]
+  trpc --> rmq[Redis + BullMQ, SLA]
+  trpc --> smtp[SMTP, транзакционные письма]
+  trpc --> tgb[Telegram Bot, модерация]
+  wh[YooKassa, Telegram, внешние] --> rest[POST REST, вебхуки] --> w[payment handlers, воркеры, БД]
 ```
-[Браузер пользователя]
-        │
-        ▼
-[Next.js 15 App Router + TypeScript]   ← SSR/RSC
-        │
-    [tRPC API Layer]
-    ╔═══╪═══════════════════════════════════════╗
-    ║   ├── PostgreSQL 16 (Prisma ORM)          ║
-    ║   ├── GitHub REST API (OAuth + age-check) ║
-    ║   ├── ЮKassa (безопасная сделка + платежи + выплаты) ║
-    ║   ├── Redis + BullMQ (SLA-таймеры)        ║
-    ║   ├── SMTP (транзакционные письма)        ║
-    ║   └── Telegram Bot API (модерация)        ║
-    ╚══════════════════════════════════════════╝
-        │
-[REST endpoints] ← вебхуки ЮКасса и Telegram
-```
+
+**Браузер** ходит в `Next` / `tRPC`; **внешние** сервисы пушат события в `POST` маршруты, не в tRPC-роуты.
 
 Детальная архитектурная спецификация — в [`spec/spec-architecture-referi-system.md`](../spec/spec-architecture-referi-system.md).
 
@@ -348,16 +343,16 @@ Referi — реферальная job-board для разработчиков (�
 - **Аудит-лог**: все переходы состояний заявки фиксируются в таблице `AuditLog` с timestamp и actor.
 - **Платёжные данные**: Referi не хранит данные карт. Все транзакции обрабатываются на стороне ЮКассы.
 - **Вебхуки**: ЮКасса — верификация HMAC-подписи заголовка `Authorization`; Telegram — верификация `X-Telegram-Bot-Api-Secret-Token`.
-- **Rate limiting**: все tRPC-мутации — ≤ 20 req/мин на пользователя; публичные запросы ленты — ≤ 60 req/мин на IP.
+- **Rate limiting** (при `FEATURE_RATE_LIMITING=true`, Redis, [`src/app/api/trpc/[trpc]/route.ts`](../src/app/api/trpc/%5Btrpc%5D/route.ts)): неаутентифицированные запросы к tRPC — до 60 req/мин на IP; аутентифицированные — до 120 req/мин на пользователя (скользящее окно; см. [`spec/spec-design-api.md`](../spec/spec-design-api.md) §4.10).
 - **HTTPS only**: все соединения только по TLS 1.2+.
 
 ### 3.4 Technology Stack
 
 | Слой           | Технология                                                   |
 | -------------- | ------------------------------------------------------------ |
-| Фронтенд       | Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
+| Фронтенд       | Next.js 16+ (App Router), TypeScript, Tailwind CSS, shadcn/ui |
 | API            | tRPC v11 (type-safe), REST для вебхуков                      |
-| БД             | PostgreSQL 16, Prisma ORM                                    |
+| БД             | PostgreSQL 16, Prisma 7 (`schema.prisma` + `prisma.config.ts`) |
 | Auth           | Auth.js v5 (NextAuth) + GitHub OAuth                         |
 | Платежи        | ЮKassa API v3, абстракция `PaymentProvider`; заявки с вознаграждением — **безопасная сделка** |
 | Очереди        | BullMQ + Redis                                               |

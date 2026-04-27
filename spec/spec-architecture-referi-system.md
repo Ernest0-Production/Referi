@@ -46,7 +46,7 @@ tags: architecture, infrastructure, design, app
 
 ## 3. Requirements, Constraints & Guidelines
 
-- **REQ-001**: Приложение должно быть реализовано как monorepo с единым Next.js 15 приложением (App Router).
+- **REQ-001**: Приложение — единое Next.js приложение (App Router; текущая ветка — Next 16+).
 - **REQ-002**: Вся бизнес-логика серверная; клиент получает данные через tRPC или RSC.
 - **REQ-003**: Все денежные суммы хранятся в базе данных как целые числа (копейки, `BigInt`); конвертация в рубли происходит только в слое представления.
 - **REQ-004**: Каждый переход состояния `Application` должен создавать запись в `AuditLog`.
@@ -57,8 +57,8 @@ tags: architecture, infrastructure, design, app
 - **SEC-001**: Все inter-service вебхуки должны верифицироваться по подписи (HMAC для ЮКасса, secret token для Telegram).
 - **SEC-002**: Контактная информация соискателя должна быть доступна только авторизованному реферальщику данной вакансии, и только если заявка находится в активном статусе (не `cancelled`, не `rejected*`, не `refunded*`).
 - **GUD-001**: Новые модули должны следовать структуре директорий, описанной в разделе 4.
-- **PAT-001**: Паттерн Repository — весь доступ к БД инкапсулируется в `server/repositories/*.ts`; бизнес-логика не вызывает Prisma напрямую.
-- **PAT-002**: Паттерн Command — каждый переход состояния реализован как изолированная функция в `server/commands/*.ts` с полными guard-проверками.
+- **PAT-001**: Паттерн Repository — вынесен в `src/server/repositories/*.ts` для повторяющихся запросов; роутеры и команды могут использовать Prisma напрямую там, где слой репозитория ещё не введён.
+- **PAT-002**: Паттерн Command — нетривиальные переходы `Application` и связанные транзакции — в `src/server/commands/*.ts`; часть переходов и уведомлений реализована в tRPC-процедурах (`applications.ts`, `moderation.ts`).
 
 ---
 
@@ -89,22 +89,21 @@ referi/
 │   │   │   │   ├── applications.ts
 │   │   │   │   ├── payments.ts
 │   │   │   │   ├── subscriptions.ts
-│   │   │   │   └── moderation.ts
-│   │   │   ├── context.ts           # tRPC context (session, db)
+│   │   │   │   └── moderation.ts    # + export reportsRouter
+│   │   │   ├── context.ts           # tRPC context (session, db, ip)
+│   │   │   ├── trpc.ts              # protectedProcedure, moderatorProcedure, superjson
 │   │   │   └── root.ts              # AppRouter
-│   │   ├── repositories/            # Доступ к БД (PAT-001)
+│   │   ├── repositories/            # PAT-001 (частичное покрытие)
 │   │   │   ├── vacancyRepository.ts
 │   │   │   ├── applicationRepository.ts
-│   │   │   ├── userRepository.ts
-│   │   │   ├── escrowRepository.ts
+│   │   │   ├── referrerAttemptRepository.ts
 │   │   │   └── auditLogRepository.ts
-│   │   ├── commands/                # Команды переходов состояний (PAT-002)
+│   │   ├── commands/                # Команды переходов (PAT-002)
 │   │   │   ├── confirmReferralIntent.ts
 │   │   │   ├── confirmResumeHandoff.ts
 │   │   │   ├── acceptOffer.ts
-│   │   │   ├── reportRejection.ts
 │   │   │   ├── seekerRequestCancel.ts
-│   │   │   └── moderatorResolveDispute.ts
+│   │   │   └── submitApplication.ts
 │   │   ├── services/
 │   │   │   ├── paymentService.ts    # Абстракция PaymentProvider
 │   │   │   ├── telegramService.ts   # Отправка сообщений в Telegram
@@ -112,8 +111,7 @@ referi/
 │   │   │   └── githubService.ts     # GitHub REST (age-check)
 │   │   └── workers/                 # BullMQ jobs
 │   │       ├── slaWorker.ts
-│   │       ├── attemptRegenerationWorker.ts
-│   │       └── paymentWorker.ts
+│   │       └── paymentWorker.ts     # в т.ч. регенерация попыток по расписанию очереди
 │   ├── shared/
 │   │   ├── constants/
 │   │   │   └── businessRules.ts     # Все SLA, лимиты, тарифы
@@ -126,12 +124,12 @@ referi/
 │   └── lib/
 │       ├── prisma.ts                # Prisma Client singleton
 │       ├── redis.ts                 # Redis/BullMQ client
+│       ├── rateLimiter.ts           # Redis rate limits (tRPC handler)
 │       └── auth.ts                  # Auth.js config
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
-├── config/
-│   └── businessRules.ts             # Re-export из shared/constants
+├── prisma.config.ts                 # Prisma 7: datasource URL, путь к миграциям
 ├── tests/
 │   ├── unit/
 │   ├── integration/
@@ -145,106 +143,89 @@ referi/
 
 ### 4.2 Bounded Contexts
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     IDENTITY CONTEXT                     │
-│  User · GitHubProfile · SeekerSubscription               │
-│  Commands: registerWithGitHub, payRegistrationFee        │
-└──────────────────────┬──────────────────────────────────┘
-                       │ userId
-┌──────────────────────▼──────────────────────────────────┐
-│                     VACANCY CONTEXT                      │
-│  Vacancy · VacancyStatus · ReferrerAttemptLedger         │
-│  Commands: createVacancy, deleteVacancy, freezeVacancy   │
-└──────────────────────┬──────────────────────────────────┘
-                       │ vacancyId
-┌──────────────────────▼──────────────────────────────────┐
-│                  APPLICATION CONTEXT                     │
-│  Application · ApplicationContent · ApplicationStatus    │
-│  Commands: submitApplication, confirmReferralIntent,     │
-│            seekerCancelRequest, confirmResumeHandoff,    │
-│            acceptOffer, reportRejection                  │
-└────────────┬────────────────────────┬───────────────────┘
-             │ applicationId           │ applicationId
-┌────────────▼────────┐  ┌────────────▼────────────────────┐
-│   PAYMENT CONTEXT   │  │       MODERATION CONTEXT         │
-│  EscrowTransaction  │  │  ModeratorCase · AbuseReport     │
-│  PaymentProvider    │  │  TelegramNotification            │
-│  hold/capture/      │  │  Commands: openDispute,          │
-│  refund/payout      │  │  resolveDispute, blockUser       │
-└─────────────────────┘  └──────────────────────────────────┘
-             │
-┌────────────▼────────┐
-│    AUDIT CONTEXT    │
-│    AuditLog         │
-│  (append-only)      │
-└─────────────────────┘
+```mermaid
+flowchart TB
+  subgraph idCtx[Identity context]
+    idD[User, GitHubProfile, SeekerSubscription]
+    idCmd[registerWithGitHub, payRegistrationFee]
+  end
+  subgraph vCtx[Vacancy context]
+    vD[Vacancy, VacancyStatus, ReferrerAttemptLedger]
+    vCmd[createVacancy, deleteVacancy, freezeVacancy]
+  end
+  subgraph aCtx[Application context]
+    aD[Application, ApplicationContent, ApplicationStatus]
+    aCmd[submitApplication, confirmReferralIntent, seekerCancelRequest, confirmResumeHandoff, acceptOffer, reportRejection]
+  end
+  subgraph payC[Payment context]
+    pD[EscrowTransaction, PaymentProvider, hold capture refund payout]
+  end
+  subgraph modC[Moderation context]
+    mD[ModeratorCase, AbuseReport, TelegramNotification]
+    mCmd[openDispute, resolveDispute, blockUser]
+  end
+  subgraph audC[Audit context]
+    au[AuditLog, append only]
+  end
+  idCtx -->|userId| vCtx -->|vacancyId| aCtx
+  aCtx -->|applicationId| payC
+  aCtx -->|applicationId| modC
+  payC --> audC
+  modC --> audC
+  aCtx --> audC
 ```
 
 ### 4.3 Request Flow — Типовой запрос (пример: `submitApplication`)
 
-```
-Browser
-  │  POST /api/trpc/applications.submit
-  ▼
-tRPC Handler (app/api/trpc/[trpc]/route.ts)
-  │  validateSession(ctx)
-  ▼
-applications.submit router
-  │  1. Check seeker active application limit
-  │  2. Check vacancy status = ACTIVE
-  │  3. Validate ApplicationContent (bio ≤ 1000, cover ≤ 300)
-  ▼
-applicationRepository.create(data)
-  │
-  ▼
-auditLogRepository.append({ applicationId, event: 'submitted', actor: seekerId })
-  │
-  ▼
-telegramService.notifyReferrer(vacancy.referrerId, applicationId)  [async, non-blocking]
-  │
-  ▼
-Response { applicationId, status: 'submitted' }
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant H as tRPC handler
+  participant R as applications.submit
+  participant AR as applicationRepository
+  participant AL as auditLogRepository
+  participant T as telegramService
+  B->>H: POST /api/trpc/applications.submit
+  H->>H: validateSession(ctx)
+  H->>R: invoke
+  R->>R: лимит заявок, vacancy ACTIVE, валидация контента
+  R->>AR: create(data)
+  R->>AL: append(submitted, seekerId)
+  R-->>T: notifyReferrer (async)
+  R-->>B: applicationId, status submitted
 ```
 
 ### 4.4 Webhook Flow — ЮКасса
 
+```mermaid
+flowchart TB
+  yk[YooKassa] --> post[POST /api/webhooks/yookassa, HMAC header]
+  post --> ver[verifyYookassaSignature]
+  ver -->|invalid| e401[HTTP 401]
+  ver -->|ok| parse[parsePaymentEvent]
+  parse --> sw{event}
+  sw -->|payment.succeeded| h1[paymentWorker.handleSuccess]
+  sw -->|payment.canceled| h2[paymentWorker.handleCancel]
+  sw -->|refund.succeeded| h3[paymentWorker.handleRefundSuccess]
+  sw -->|payout.succeeded| h4[paymentWorker.handlePayoutSuccess]
+  h1 --> ok[Response 200]
+  h2 --> ok
+  h3 --> ok
+  h4 --> ok
 ```
-ЮКасса
-  │  POST /api/webhooks/yookassa
-  │  Headers: Authorization: <HMAC-SHA256>
-  ▼
-verifyYookassaSignature(request)
-  │  throws 401 if invalid
-  ▼
-parsePaymentEvent(body)
-  │
-  ├── event = 'payment.succeeded' → paymentWorker.handleSuccess(paymentId)
-  ├── event = 'payment.canceled'  → paymentWorker.handleCancel(paymentId)
-  ├── event = 'refund.succeeded'  → paymentWorker.handleRefundSuccess(refundId)
-  └── event = 'payout.succeeded'  → paymentWorker.handlePayoutSuccess(payoutId)
-  │
-  ▼
-Response 200 OK (всегда, если подпись валидна)
-```
+
+При **невалидной** подписи — `401`, тело не обрабатывается. При **валидной** — ответ `200` после маршрутизации в `paymentWorker` (как в оригинальной спецификации).
 
 ### 4.5 SLA Timer Flow — BullMQ
 
-```
-Событие в Application (например, awaitingResumeHandoff)
-  │
-  ▼
-slaWorker.scheduleJob({
-  jobId: `sla:resume-handoff:${applicationId}`,
-  delay: SLA_RESUME_HANDOFF_MS,     // 5 дней в мс
-  data: { applicationId, type: 'resumeHandoff' }
-})
-  │
-  ▼ (через 5 дней)
-slaWorker.process(job)
-  │  Check: application.status still === 'awaitingResumeHandoff'?
-  ├── Yes → refundBySLA(applicationId) + banReferrer(referrerId, 30d)
-  └── No  → noop (job removed)
+```mermaid
+flowchart TB
+  ev[Событие, например awaitingResumeHandoff] --> sch[slaWorker.scheduleJob, delay 5d]
+  sch --> wait[Ожидание по BullMQ]
+  wait --> proc[slaWorker.process job]
+  proc --> check{status still awaitingResumeHandoff?}
+  check -->|Yes| do[refundBySLA + banReferrer 30d]
+  check -->|No| noop[noop, job removed]
 ```
 
 ---
@@ -256,18 +237,18 @@ slaWorker.process(job)
 - **AC-003**: Given вебхук от ЮКассы с валидной подписью `payment.succeeded`, When соответствующий платёж найден в БД, Then статус `Application` переходит в `awaitingResumeHandoff` и создаётся запись в `AuditLog`.
 - **AC-004**: Given реферальщик запрашивает контакты соискателя по чужой заявке, When система проверяет права, Then возвращает HTTP 403.
 - **AC-005**: Given BullMQ worker перезапустился, When в очереди есть jobs с уникальными jobId, Then дублирующих переходов состояний не происходит.
-- **AC-006**: Given директория `server/repositories/`, When код в `server/commands/*.ts` нужен доступ к БД, Then вызов идёт через repository, а не напрямую через Prisma Client.
+- **AC-006**: Given нетривиальный переход `Application`, When выполняется команда в `src/server/commands/*.ts`, Then используется транзакция Prisma и запись в `AuditLog`; репозитории — по мере введения, прямой `ctx.db` / Prisma в tRPC допустим для остальных операций.
 
 ---
 
 ## 6. Test Automation Strategy
 
-- **Unit-тесты** (Vitest): команды (`server/commands/*.ts`) тестируются с мок-репозиториями; полное покрытие guard-условий.
+- **Unit-тесты** (Vitest): команды (`src/server/commands/*.ts`) и guard-ы роутеров; моки Prisma или репозиториев по месту.
 - **Integration-тесты** (Vitest + testcontainers): репозитории тестируются на реальной Postgres-БД в контейнере.
 - **Property-based тесты** (fast-check): машина состояний Application — генерация случайных последовательностей действий и проверка инвариантов.
 - **E2E-тесты** (Playwright): ключевые user journeys (регистрация, создание вакансии, полный цикл заявки).
 - **Webhook-тесты**: мок-сервер ЮКассы, тест обработки `payment.succeeded` / `refund.succeeded`.
-- **Coverage**: минимум 80% строк для `server/commands/` и `server/services/`.
+- **Coverage**: целевой минимум для `src/server/commands/` и `src/server/services/` задаётся в CI по мере роста проекта.
 
 ---
 
@@ -300,7 +281,7 @@ slaWorker.process(job)
 - **INF-003**: Node.js 20+ LTS — среда исполнения сервера.
 
 ### Technology Platform Dependencies
-- **PLT-001**: Next.js 15 с App Router — обязательно; версия 14 не поддерживается (требуется Server Actions v2 и async cookies).
+- **PLT-001**: Next.js с App Router (текущая ветка — 16.x); закреплять major-версию в `package.json`.
 - **PLT-002**: Auth.js v5 — несовместим с Auth.js v4; использовать только v5 API.
 
 ### Compliance Dependencies
@@ -314,7 +295,7 @@ slaWorker.process(job)
 ### Edge Case: Гонка состояний при подтверждении реферальщика
 
 ```typescript
-// server/commands/confirmReferralIntent.ts
+// src/server/commands/confirmReferralIntent.ts (псевдокод / ориентир по слоям)
 export async function confirmReferralIntent(
   applicationId: string,
   referrerId: string
@@ -350,7 +331,7 @@ export async function confirmReferralIntent(
 ### Edge Case: Ручное удаление вакансии с активными заявками
 
 ```typescript
-// server/commands/deleteVacancy.ts
+// Удаление вакансии: логика в src/server/trpc/routers/vacancies.ts (транзакция + refund)
 // Должен выполняться в транзакции:
 // 1. Получить все активные заявки по вакансии (FOR UPDATE)
 // 2. Для каждой: если есть активное удержание по заявке → инициировать refund в ЮKassa
@@ -365,8 +346,8 @@ export async function confirmReferralIntent(
 ## 10. Validation Criteria
 
 1. Структура директорий соответствует схеме в разделе 4.1.
-2. Ни один файл в `src/app/` не импортирует Prisma Client напрямую (только через репозитории).
-3. Все `ApplicationStatus` переходы определены как функции в `server/commands/`.
+2. Мутации состояния заявок и эскроу не обходят бизнес-guard-ы (команды или процедуры с транзакциями и `AuditLog`).
+3. Основные переходы `ApplicationStatus` реализованы в `src/server/commands/*.ts` и/или в `src/server/trpc/routers/applications.ts` согласно [spec-process-application-lifecycle.md](spec-process-application-lifecycle.md).
 4. Все денежные операции используют тип `BigInt` для суммы в копейках.
 5. Все вебхуки имеют тест на невалидную подпись (ожидаемый результат: 401).
 

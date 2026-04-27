@@ -8,11 +8,16 @@
 
 ## Зависимости между фазами
 
+```mermaid
+flowchart LR
+  p0[Phase0] --> p1[Phase1] --> p2[Phase2] --> p3[Phase3] --> p4[Phase4]
+  p4 --> p5[Phase5]
+  p4 --> p6[Phase6]
+  p5 --> p7[Phase7]
+  p6 --> p7
 ```
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
-                                              ↑                    ↑
-                                          (Phase 3)           (Phase 4)
-```
+
+Порядок 5–6 в списке фаз условен: ветки Phase5 и Phase6 **параллельны** и обе стартуют после Phase4.
 
 Фазы 0–3 — строго последовательны. Фазы 5–6 могут вестись параллельно после завершения Phase 4.
 
@@ -26,7 +31,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 
 | Задача                              | Флаг     | Описание                                                                 |
 | ----------------------------------- | -------- | ------------------------------------------------------------------------ |
-| Инициализация Next.js 15            | `[CORE]` | `npx create-next-app` с App Router, TypeScript strict, Tailwind CSS      |
+| Инициализация Next.js (App Router)   | `[CORE]` | `create-next-app` с App Router, TypeScript strict, Tailwind CSS (текущая ветка — 16.x) |
 | Prisma + PostgreSQL                 | `[CORE]` | `prisma init`, базовая конфигурация, первая пустая миграция              |
 | Docker Compose                      | `[CORE]` | `postgres:16`, `redis:7`, `app` сервисы; `docker-compose.yml` для dev    |
 | Redis + BullMQ                      | `[CORE]` | Клиент Redis, базовая очередь, тест подключения                          |
@@ -34,7 +39,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 | tRPC v11                            | `[CORE]` | `initTRPC`, базовый `appRouter`, `superjson` transformer                 |
 | CI pipeline                         | `[CORE]` | GitHub Actions: `lint` (ESLint + Prettier), `typecheck`, `test` (Vitest) |
 | `.env.example`                      | `[CORE]` | Все переменные окружения с описаниями                                    |
-| `shared/constants/businessRules.ts` | `[CORE]` | Все SLA, тарифы, лимиты из спецификации                                  |
+| `src/shared/constants/businessRules.ts` | `[CORE]` | Все SLA, тарифы, лимиты из спецификации                              |
 | shadcn/ui                           | `[CORE]` | Установка, базовые компоненты: Button, Card, Input, Badge, Dialog        |
 
 ### Definition of Done
@@ -60,7 +65,8 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 | Полная Prisma schema               | `[CORE]` | Все модели из `spec-schema-database.md`; миграции            |
 | Страница `/login`                  | `[CORE]` | Кнопка «Войти через GitHub», обработка ошибок                |
 | Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                             |
-| `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC mutation; ЮКасса MockPaymentProvider                    |
+| `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC **public** mutation `{ userId }`; ЮКасса / MockPaymentProvider |
+| `auth.generateTelegramLinkToken`   | `[MOD]`  | Deep-link привязки Telegram (`TelegramLinkToken`)              |
 | Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`              |
 | Профиль пользователя               | `[CORE]` | Страница `/dashboard/profile`; `auth.updateProfile` mutation |
 | Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                    |
@@ -152,17 +158,17 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 | Задача                                    | Флаг    | Описание                                               |
 | ----------------------------------------- | ------- | ------------------------------------------------------ |
 | `YookassaPaymentProvider`                 | `[PAY]` | Реализация `PaymentProvider`; целевой объём — API Safe deal + Payments |
-| `payments.createEscrow` mutation          | `[PAY]` | Старт оплаты заказчика по заявке; `confirmationUrl` (имя процедуры без изменений) |
+| `payments.initiateEscrow` mutation        | `[PAY]` | Старт оплаты соискателя по заявке; `confirmationUrl` / `paymentId`              |
 | Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация HMAC; обработка событий платежа/сделки     |
 | `paymentWorker`                           | `[PAY]` | BullMQ обработчик webhook-событий; идемпотентность     |
 | Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)   |
 | `refundPayment` при всех refund-переходах | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator |
-| `payments.addPayoutCard`                  | `[PAY]` | Добавление карты реферальщика для выплат               |
-| `payments.buyApplicationToken`            | `[PAY]` | Разовый токен отклика (199 ₽)                          |
+| `payments.addPayoutCard` (бэклог)         | `[PAY]` | Отдельная tRPC-процедура не реализована; выплаты — воркер + `User.yookassaPayoutDestination` |
+| `payments.buyApplicationToken` (бэклог)   | `[PAY]` | Отдельная покупка токена не в API; есть `paidTokenId?` в `applications.submit` + модель `PaidApplicationToken` |
 | `PaidApplicationToken` использование      | `[PAY]` | При submit с токеном — лимит не проверяется            |
-| `subscriptions.subscribe`                 | `[PAY]` | Подписка PRO (499 ₽/мес); рекуррентный платёж ЮКасса   |
+| `subscriptions.initiatePro`               | `[PAY]` | Подписка PRO (499 ₽/мес); платёж ЮКасса                |
 | `subscriptions.cancel`                    | `[PAY]` | Отмена подписки                                        |
-| `subscriptions.getMySubscription`         | `[PAY]` | Текущий статус подписки                                |
+| `subscriptions.me`                        | `[PAY]` | Текущий статус подписки                                |
 | Лимит 5 откликов с PRO                    | `[PAY]` | Guard в `applications.submit` проверяет подписку       |
 | Polling fallback                          | `[PAY]` | BullMQ job если webhook не пришёл за 5 мин             |
 | `calculateCommission`                     | `[PAY]` | Утилита + unit-тесты на граничные значения             |
@@ -192,7 +198,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 | `slaWorker` — `cancel-ack-sla`            | `[AUTO]` | Авто-возврат через 3 дня                           |
 | `slaWorker` — `company-decision-sla`      | `[AUTO]` | Авто-открытие спора через 30 дней                  |
 | `slaWorker` — `vacancy-unfreeze`          | `[AUTO]` | Разморозка вакансии через 14 дней                  |
-| `attemptRegenerationWorker`               | `[AUTO]` | Восстановление попытки через 60 дней               |
+| `slaWorker` — регенерация попыток         | `[AUTO]` | Восстановление попытки через 60 дней (логика в `slaWorker`, не отдельный воркер) |
 | Авто-удаление вакансии при OFFER_ACCEPTED | `[AUTO]` | Внутри команды `acceptOffer`                       |
 | `vacancyDeletedCascade`                   | `[AUTO]` | Возврат средств и попыток при ручном удалении      |
 | `ReferrerSanction` проверка в guards      | `[AUTO]` | `isReferrerBanned()` в `confirmReferralIntent`     |
@@ -227,10 +233,10 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 | Admin-панель `/admin`                     | `[MOD]` | Список споров + жалоб + кнопки разрешения                 |
 | `reports.submitAbuseReport`               | `[MOD]` | tRPC mutation + уведомление модераторам                   |
 | Команды бота `/dispute`, `/resolve_*`     | `[MOD]` | Модераторские команды (MVP: только текстовые)             |
-| `moderatorResolveForReferrer` command     | `[MOD]` | capture + payout → закрыть `ModeratorCase`                |
-| `moderatorResolveForSeeker` command       | `[MOD]` | refund → закрыть `ModeratorCase`                          |
+| `moderation.resolveForReferrer`           | `[MOD]` | capture + payout → закрыть `ModeratorCase`                |
+| `moderation.resolveForSeeker`             | `[MOD]` | refund → закрыть `ModeratorCase`                          |
 | Страница `/dashboard/applications/[id]`   | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                 |
-| Блокировка пользователя/вакансии          | `[MOD]` | `moderation.blockUser`, `moderation.blockVacancy`         |
+| Блокировка пользователя / вакансии        | `[MOD]` | `moderation.blockUser`; вакансия — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
 
 ### Definition of Done
 
@@ -252,7 +258,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 | ------------------------------ | -------- | ------------------------------------------------------------------ |
 | `emailService` (SMTP)          | `[CORE]` | Транзакционные письма для всех ключевых событий                    |
 | Email-шаблоны                  | `[CORE]` | HTML-письма (React Email или MJML)                                 |
-| Rate limiting middleware       | `[CORE]` | Edge middleware + Redis; таблица из spec-design-api                |
+| Rate limiting (tRPC)           | `[CORE]` | `FEATURE_RATE_LIMITING` + Redis в `src/lib/rateLimiter.ts`, проверка в `src/app/api/trpc/[trpc]/route.ts` (см. spec-design-api §4.10) |
 | Полировка UI                   | `[CORE]` | Адаптивность, accessibility (Lighthouse ≥ 95), темизация           |
 | Страница настроек пользователя | `[CORE]` | Профиль, подписка, карта для выплат, привязка Telegram             |
 | Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                      |
@@ -298,22 +304,14 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
 
 ## Фича-флаги (Feature Flags)
 
-В `shared/constants/featureFlags.ts`:
+В [`src/shared/constants/featureFlags.ts`](../src/shared/constants/featureFlags.ts):
 
 ```typescript
 export const FEATURE_FLAGS = {
-  // Phase 4
-  REAL_PAYMENTS: process.env.FEATURE_REAL_PAYMENTS === 'true',
-
-  // Phase 6
-  TELEGRAM_NOTIFICATIONS: process.env.FEATURE_TELEGRAM === 'true',
-  EMAIL_NOTIFICATIONS: process.env.FEATURE_EMAIL === 'true',
-
-  // Phase 7
-  RATE_LIMITING: process.env.FEATURE_RATE_LIMITING === 'true',
-
-  // v1.1
-  ANTIFROD: false,
+  REAL_PAYMENTS: process.env.FEATURE_REAL_PAYMENTS === "true",
+  TELEGRAM: process.env.FEATURE_TELEGRAM === "true",
+  EMAIL: process.env.FEATURE_EMAIL === "true",
+  RATE_LIMITING: process.env.FEATURE_RATE_LIMITING === "true",
 } as const;
 ```
 
