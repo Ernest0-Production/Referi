@@ -114,6 +114,8 @@ Referi — реферальная job-board для разработчиков (�
 
 #### Epic 3: Отклики
 
+В user stories этого эпика статусы заявки даны в **удобочитаемом виде** (например `` `submitted` ``, `` `awaitingPayment` ``). В реализации они совпадают с перечислением Prisma **`ApplicationStatus`** в форме `SUBMITTED`, `AWAITING_PAYMENT`, `SEEKER_CANCEL_REQUESTED` и т.д.; полная матрица переходов — в [spec-process-application-lifecycle.md](../spec/spec-process-application-lifecycle.md).
+
 **US-006** — Отправка отклика
 *As a* соискатель, *I want to* откликнуться на вакансию, *so that* реферальщик увидел мою кандидатуру.
 
@@ -357,7 +359,7 @@ flowchart TB
 | Платежи        | ЮKassa API v3, абстракция `PaymentProvider`; заявки с вознаграждением — **безопасная сделка** |
 | Очереди        | BullMQ + Redis                                               |
 | Email          | SMTP (Mailgun / SendPulse)                                   |
-| Модерация      | Telegram Bot API (grammy или node-telegram-bot-api)          |
+| Модерация      | Telegram Bot API: HTTPS к `api.telegram.org` из `src/server/services/telegramService.ts` (webhook, исходящие сообщения); отдельные SDK не подключаются |
 | Тесты          | Vitest, Playwright, fast-check                               |
 | Инфраструктура | Docker Compose (dev), Yandex Cloud / VPS (prod)              |
 

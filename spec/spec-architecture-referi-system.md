@@ -304,25 +304,29 @@ export async function confirmReferralIntent(
   const application = await applicationRepository.findByIdForUpdate(applicationId);
 
   // Guards
-  if (application.status !== 'submitted') {
-    throw new BusinessError('APPLICATION_WRONG_STATUS');
+  if (application.status !== "SUBMITTED") {
+    throw new BusinessError("APPLICATION_WRONG_STATUS");
   }
   if (application.vacancy.referrerId !== referrerId) {
     throw new ForbiddenError();
   }
   const attempts = await referrerAttemptRepository.getAvailable(referrerId);
   if (attempts <= 0) {
-    throw new BusinessError('NO_ATTEMPTS_LEFT');
+    throw new BusinessError("NO_ATTEMPTS_LEFT");
   }
   const activeReviews = await applicationRepository.countActiveReviewsByReferrer(referrerId);
   if (activeReviews >= 1) {
-    throw new BusinessError('ACTIVE_REVIEW_LIMIT_REACHED');
+    throw new BusinessError("ACTIVE_REVIEW_LIMIT_REACHED");
   }
 
   // Transition
   await referrerAttemptRepository.consume(referrerId, applicationId);
-  const updated = await applicationRepository.updateStatus(applicationId, 'awaitingPayment');
-  await auditLogRepository.append({ applicationId, event: 'awaitingPayment', actor: referrerId });
+  const updated = await applicationRepository.updateStatus(applicationId, "AWAITING_PAYMENT");
+  await auditLogRepository.append({
+    applicationId,
+    toStatus: "AWAITING_PAYMENT",
+    actor: referrerId,
+  });
 
   return updated;
 }
