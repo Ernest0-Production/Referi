@@ -152,8 +152,6 @@ case 'payment.succeeded':
         data: { paidRegistration: true },
       }),
     ]);
-    // Уведомить пользователя (email)
-    await emailService.send(regPayment.userId, 'registration_complete');
   }
 ```
 

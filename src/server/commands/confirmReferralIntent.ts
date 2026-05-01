@@ -94,24 +94,5 @@ export async function confirmReferralIntent(
     void schedulePaymentDeadline(applicationId);
   }
 
-  void (async () => {
-    const seeker = await db.user.findUnique({
-      where: { id: application.seekerId },
-      select: { email: true, displayName: true },
-    });
-    if (!seeker?.email) return;
-    const { emailService, emailTemplates } = await import("@/server/services/emailService");
-    const tpl = emailTemplates.applicationStatusChanged({
-      seekerName: seeker.displayName,
-      vacancyTitle: application.vacancy.title,
-      newStatus: isFreeReferral ? "Ожидание передачи резюме" : "Ожидание оплаты",
-    });
-    await emailService.send({
-      to: seeker.email,
-      subject: tpl.subject,
-      html: tpl.html,
-    });
-  })();
-
   return result.updatedApp;
 }

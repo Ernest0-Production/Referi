@@ -5,8 +5,6 @@
 export const FEATURE_FLAGS = {
   /** Enable real YooKassa payments (vs MockPaymentProvider) */
   REAL_PAYMENTS: process.env.FEATURE_REAL_PAYMENTS === "true",
-  /** Enable email notifications */
-  EMAIL: process.env.FEATURE_EMAIL === "true",
   /** Enable request rate limiting */
   RATE_LIMITING: process.env.FEATURE_RATE_LIMITING === "true",
 } as const;

@@ -121,27 +121,5 @@ export async function submitApplication(db: PrismaClient, input: SubmitApplicati
     void scheduleReactionSLA(input.vacancyId);
   }
 
-  void (async () => {
-    const referrer = await db.user.findUnique({
-      where: { id: vacancy.referrerId },
-      select: { email: true, displayName: true },
-    });
-    if (!referrer?.email) return;
-    const seeker = await db.user.findUnique({
-      where: { id: input.seekerId },
-      select: { displayName: true },
-    });
-    const { emailService, emailTemplates } = await import("@/server/services/emailService");
-    const tpl = emailTemplates.newApplication({
-      vacancyTitle: vacancy.title,
-      seekerName: seeker?.displayName ?? input.seekerId,
-    });
-    await emailService.send({
-      to: referrer.email,
-      subject: tpl.subject,
-      html: tpl.html,
-    });
-  })();
-
   return application;
 }

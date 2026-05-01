@@ -105,7 +105,6 @@ referi/
 │   │   │   └── submitApplication.ts
 │   │   ├── services/
 │   │   │   ├── paymentService.ts    # Абстракция PaymentProvider
-│   │   │   ├── emailService.ts      # SMTP-отправка
 │   │   │   └── githubService.ts     # GitHub REST (age-check)
 │   │   └── workers/                 # BullMQ jobs
 │   │       ├── slaWorker.ts
@@ -182,14 +181,12 @@ sequenceDiagram
   participant R as applications.submit
   participant AR as applicationRepository
   participant AL as auditLogRepository
-  participant E as emailService
   B->>H: POST /api/trpc/applications.submit
   H->>H: validateSession(ctx)
   H->>R: invoke
   R->>R: лимит заявок, vacancy ACTIVE, валидация контента
   R->>AR: create(data)
   R->>AL: append(submitted, seekerId)
-  R-->>E: notifyReferrer by email async when FEATURE_EMAIL
   R-->>B: applicationId, status submitted
 ```
 
@@ -270,8 +267,7 @@ flowchart TB
 ### Third-Party Services
 - **SVC-001**: ЮKassa **безопасная сделка (Safe deal)** — сделки между заказчиком и исполнителем, удержание, [возвраты](https://yookassa.ru/developers/solutions-for-platforms/safe-deal/integration/refunds), выплата исполнителю; обычные платежи — через Payments API. SLA ответа API ≤ 3 с.
 - **SVC-002**: ЮKassa Payouts API — выплаты на карты и поддерживаемые способы в составе сделки и отдельные сценарии.
-- **SVC-003**: SMTP-провайдер (Mailgun / SendPulse) — транзакционные email-уведомления.
-- **SVC-004**: Публичная ссылка контакта модерации (`NEXT_PUBLIC_MODERATION_CONTACT_URL`) — только клиентский UI, без серверной интеграции с мессенджерами; см. [spec-moderation-contact.md](spec-moderation-contact.md).
+- **SVC-003**: Публичная ссылка контакта модерации (`NEXT_PUBLIC_MODERATION_CONTACT_URL`) — только клиентский UI, без серверной интеграции с мессенджерами; см. [spec-moderation-contact.md](spec-moderation-contact.md).
 
 ### Infrastructure Dependencies
 - **INF-001**: PostgreSQL 16 — основная реляционная БД.

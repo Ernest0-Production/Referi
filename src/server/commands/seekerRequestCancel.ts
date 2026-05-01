@@ -41,32 +41,5 @@ export async function seekerRequestCancel(
   void cancelSLAJob(`resume-handoff-sla:${applicationId}`);
   void scheduleCancelAckSLA(applicationId);
 
-  void (async () => {
-    if (process.env.FEATURE_EMAIL !== "true") return;
-    const rid = application.vacancy.referrerId;
-    const referrer = await db.user.findUnique({
-      where: { id: rid },
-      select: { email: true, displayName: true },
-    });
-    if (!referrer?.email) return;
-    const seeker = await db.user.findUnique({
-      where: { id: seekerId },
-      select: { displayName: true },
-    });
-    const deadline = cancelAckDeadline.toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
-    const { emailService, emailTemplates } = await import("@/server/services/emailService");
-    const tpl = emailTemplates.seekerRequestedCancel({
-      referrerName: referrer.displayName ?? "Здравствуйте",
-      vacancyTitle: application.vacancy.title,
-      seekerName: seeker?.displayName ?? seekerId,
-      deadlineMoscow: deadline,
-    });
-    await emailService.send({
-      to: referrer.email,
-      subject: tpl.subject,
-      html: tpl.html,
-    });
-  })();
-
   return { status: "SEEKER_CANCEL_REQUESTED" as const, cancelAckDeadline };
 }

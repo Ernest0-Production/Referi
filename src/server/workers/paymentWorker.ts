@@ -100,23 +100,6 @@ async function processJob(job: Job<PaymentJobData>) {
         },
       });
 
-      void (async () => {
-        const referrer = await prisma.user.findUnique({
-          where: { id: vacancy.referrerId },
-          select: { email: true, displayName: true },
-        });
-        if (!referrer?.email) return;
-        const { emailService, emailTemplates } = await import("@/server/services/emailService");
-        const tpl = emailTemplates.payoutInitiated({
-          referrerName: referrer.displayName,
-          amountRub: (Number(escrowTx.netPayoutKopecks) / 100).toFixed(2),
-        });
-        await emailService.send({
-          to: referrer.email,
-          subject: tpl.subject,
-          html: tpl.html,
-        });
-      })();
       break;
     }
 
@@ -147,26 +130,6 @@ async function processJob(job: Job<PaymentJobData>) {
         where: { id: app.escrowTx.id },
         data: { status: "REFUNDED", refundedAt: new Date(), yookassaRefundId: res.refundId },
       });
-      const refundedAmountRub = (Number(app.escrowTx.amountKopecks) / 100).toFixed(2);
-
-      void (async () => {
-        const seeker = await prisma.user.findUnique({
-          where: { id: app.seekerId },
-          select: { email: true, displayName: true },
-        });
-        if (!seeker?.email) return;
-        const { emailService, emailTemplates } = await import("@/server/services/emailService");
-        const tpl = emailTemplates.refundIssued({
-          seekerName: seeker.displayName,
-          amountRub: refundedAmountRub,
-          reason: "Возврат по заявке",
-        });
-        await emailService.send({
-          to: seeker.email,
-          subject: tpl.subject,
-          html: tpl.html,
-        });
-      })();
       break;
     }
 
