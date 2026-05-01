@@ -1,18 +1,23 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
-  applyEscrowPaymentHeld,
+  applyEscrowPaymentSucceeded,
   applyRegistrationPaymentSucceeded,
+  applySubscriptionPaymentSucceeded,
+  applyPaidTokenPaymentSucceeded,
 } from "@/server/services/yookassaWebhookHandlers";
+
+interface YookassaWebhookObject {
+  id: string;
+  status?: string;
+  metadata?: Record<string, string>;
+  payment_method?: { id?: string };
+}
 
 interface YookassaWebhookEvent {
   type: string;
   event: string;
-  object: {
-    id: string;
-    status: string;
-    metadata?: Record<string, string>;
-  };
+  object: YookassaWebhookObject;
 }
 
 /**
@@ -52,29 +57,69 @@ export async function POST(request: Request) {
 
 async function processWebhookEvent(event: YookassaWebhookEvent) {
   try {
-    const { type, object } = event;
-    const paymentId = object.id;
+    const { type, event: eventName, object } = event;
+    if (type !== "notification") return;
 
-    if (type === "notification" && event.event === "payment.waiting_for_capture") {
-      // Escrow hold succeeded
-      await handlePaymentHeld(paymentId);
-    } else if (type === "notification" && event.event === "payment.canceled") {
-      // Payment canceled (deadline expired or user canceled)
-      await handlePaymentCanceled(paymentId);
-    } else if (type === "notification" && event.event === "payment.succeeded") {
-      // Registration payment for young accounts
-      await handleRegistrationPaymentSucceeded(paymentId);
+    const paymentId = object.id;
+    const metaType = object.metadata?.type;
+
+    if (eventName === "payment.succeeded") {
+      if (metaType === "escrow") {
+        await applyEscrowPaymentSucceeded(paymentId);
+        return;
+      }
+      if (metaType === "registration") {
+        await applyRegistrationPaymentSucceeded(paymentId);
+        return;
+      }
+      if (metaType === "subscription") {
+        const userId = object.metadata?.userId;
+        if (userId) {
+          await applySubscriptionPaymentSucceeded(userId, object.payment_method?.id ?? null);
+        }
+        return;
+      }
+      if (metaType === "paid_token") {
+        await applyPaidTokenPaymentSucceeded(paymentId);
+        return;
+      }
+
+      const escrow = await prisma.escrowTransaction.findFirst({
+        where: { yookassaPaymentId: paymentId },
+      });
+      if (escrow) {
+        await applyEscrowPaymentSucceeded(paymentId);
+        return;
+      }
+
+      const reg = await prisma.registrationPayment.findFirst({
+        where: { yookassaPaymentId: paymentId },
+      });
+      if (reg) {
+        await applyRegistrationPaymentSucceeded(paymentId);
+        return;
+      }
+
+      await applyPaidTokenPaymentSucceeded(paymentId);
+      return;
+    }
+
+    if (eventName === "payment.waiting_for_capture" && metaType === "escrow") {
+      await applyEscrowPaymentSucceeded(paymentId);
+      return;
+    }
+
+    if (eventName === "payment.canceled") {
+      if (metaType === "escrow" || !metaType) {
+        await handleEscrowPaymentCanceled(paymentId);
+      }
     }
   } catch (err) {
     console.error("Webhook processing error:", err);
   }
 }
 
-async function handlePaymentHeld(yookassaPaymentId: string) {
-  await applyEscrowPaymentHeld(yookassaPaymentId);
-}
-
-async function handlePaymentCanceled(yookassaPaymentId: string) {
+async function handleEscrowPaymentCanceled(yookassaPaymentId: string) {
   const escrow = await prisma.escrowTransaction.findFirst({
     where: { yookassaPaymentId },
   });
@@ -100,8 +145,4 @@ async function handlePaymentCanceled(yookassaPaymentId: string) {
       },
     });
   });
-}
-
-async function handleRegistrationPaymentSucceeded(yookassaPaymentId: string) {
-  await applyRegistrationPaymentSucceeded(yookassaPaymentId);
 }

@@ -1,6 +1,6 @@
 /**
  * Seed script for development/staging.
- * Run: npx prisma db seed
+ * Run: npm run db:seed
  */
 
 import "dotenv/config";
@@ -17,6 +17,9 @@ async function main() {
     create: {
       id: "00000000-0000-0000-0000-000000000001",
       displayName: "Алексей (Референт)",
+      email: "alexey@example.test",
+      contactInfo: "@alexey_ref",
+      bio: "Backend-разработчик, 8+ лет опыта в распределенных системах.",
       roles: ["REFERRER"],
       githubProfile: {
         create: {
@@ -36,6 +39,9 @@ async function main() {
     create: {
       id: "00000000-0000-0000-0000-000000000002",
       displayName: "Мария (Соискатель)",
+      email: "maria@example.test",
+      contactInfo: "@maria_seek",
+      bio: "Fullstack-инженер, работаю с React, Node.js и PostgreSQL.",
       roles: ["SEEKER"],
       githubProfile: {
         create: {
@@ -55,6 +61,7 @@ async function main() {
     create: {
       id: "00000000-0000-0000-0000-000000000003",
       displayName: "Модератор",
+      email: "moderator@example.test",
       roles: ["MODERATOR", "ADMIN"],
       githubProfile: {
         create: {

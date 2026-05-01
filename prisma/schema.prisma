@@ -26,6 +26,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   displayName String
+  contactInfo String?  @db.VarChar(500)
+  bio         String?  @db.VarChar(1000)
+  email       String?  @db.VarChar(320)
   roles       UserRole[]
 
   /// Номер кошелька YooMoney / id сохранённого способа выплаты (ЮKassa); для dev можно не задавать
@@ -260,6 +263,7 @@ model EscrowTransaction {
 
   status EscrowStatus @default(HELD)
 
+  yookassaDealId    String? @unique
   yookassaPaymentId String? @unique
   yookassaRefundId  String? @unique
   yookassaPayoutId  String? @unique
@@ -282,6 +286,7 @@ model PaidApplicationToken {
   amountKopecks     BigInt
   yookassaPaymentId String?  @unique
   expiresAt         DateTime
+  paidAt            DateTime?
   usedAt            DateTime?
   refundedAt        DateTime?
 

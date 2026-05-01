@@ -31,6 +31,18 @@ export default async function ProfilePage() {
             <span>{me.githubLogin ?? "—"}</span>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span className="font-medium">Email:</span>
+            <span>{me.email ?? "—"}</span>
+          </div>
+          <div className="space-y-1 text-sm text-gray-600">
+            <span className="font-medium">Контакт:</span>
+            <p>{me.contactInfo ?? "—"}</p>
+          </div>
+          <div className="space-y-1 text-sm text-gray-600">
+            <span className="font-medium">Биография:</span>
+            <p className="whitespace-pre-wrap">{me.bio ?? "—"}</p>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-600">
             <span className="font-medium">Роли:</span>
             <span>{me.roles.join(", ")}</span>
           </div>
@@ -43,8 +55,13 @@ export default async function ProfilePage() {
         </div>
 
         <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <h2 className="mb-4 font-semibold text-gray-800">Изменить отображаемое имя</h2>
-          <UpdateProfileForm currentName={me.displayName} />
+          <h2 className="mb-4 font-semibold text-gray-800">Редактирование профиля</h2>
+          <UpdateProfileForm
+            currentName={me.displayName}
+            currentContactInfo={me.contactInfo}
+            currentBio={me.bio}
+            currentRoles={me.roles}
+          />
         </div>
       </div>
     </main>

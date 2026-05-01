@@ -13,7 +13,9 @@ export async function acceptOffer(db: PrismaClient, applicationId: string, seeke
   if (application.status !== "AWAITING_COMPANY_DECISION")
     throw new BusinessError("APPLICATION_WRONG_STATUS");
 
-  const hadEscrowPayment = Boolean(application.escrowTx?.yookassaPaymentId);
+  const hadEscrowPayment = Boolean(
+    application.escrowTx?.yookassaPaymentId && application.escrowTx?.yookassaDealId,
+  );
 
   await db.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({

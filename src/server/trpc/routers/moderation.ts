@@ -4,8 +4,8 @@ import { router, moderatorProcedure, protectedProcedure } from "../trpc";
 import type { Prisma } from "@prisma/client";
 
 import { telegramService } from "@/server/services/telegramService";
-import { paymentProvider } from "@/server/services/paymentService";
-import { schedulePayoutReferrer } from "@/server/workers/paymentWorker";
+import { refundEscrowOrThrow } from "@/server/services/paymentService";
+import { scheduleOfferAcceptedPayout } from "@/server/workers/paymentWorker";
 
 export const moderationRouter = router({
   openCases: moderatorProcedure.query(async ({ ctx }) => {
@@ -72,21 +72,7 @@ export const moderationRouter = router({
         });
       }
 
-      if (app.escrowTx?.yookassaPaymentId) {
-        await paymentProvider.capturePayment({
-          idempotencyKey: `capture-moderator:${app.id}`,
-          paymentId: app.escrowTx.yookassaPaymentId,
-          amountKopecks: app.escrowTx.amountKopecks,
-        });
-      }
-
       await ctx.db.$transaction(async (tx: Prisma.TransactionClient) => {
-        if (app.escrowTx?.yookassaPaymentId) {
-          await tx.escrowTransaction.update({
-            where: { id: app.escrowTx.id },
-            data: { capturedAt: new Date(), status: "CAPTURED" },
-          });
-        }
         await tx.application.update({
           where: { id: app.id },
           data: { status: "OFFER_ACCEPTED" },
@@ -113,11 +99,7 @@ export const moderationRouter = router({
       });
 
       if (app.escrowTx?.yookassaPaymentId) {
-        void schedulePayoutReferrer(
-          app.id,
-          app.escrowTx.amountKopecks,
-          `payout-moderator-referrer:${app.id}`,
-        );
+        void scheduleOfferAcceptedPayout(app.id);
       }
 
       return { status: "RESOLVED_FOR_REFERRER" as const };
@@ -148,12 +130,15 @@ export const moderationRouter = router({
         });
       }
 
-      // Refund if escrow exists
       if (app.escrowTx?.yookassaPaymentId) {
-        await paymentProvider.refundPayment({
+        await refundEscrowOrThrow({
           idempotencyKey: `refund-moderator:${app.id}`,
-          paymentId: app.escrowTx.yookassaPaymentId,
-          amountKopecks: app.escrowTx.amountKopecks,
+          escrow: {
+            yookassaPaymentId: app.escrowTx.yookassaPaymentId,
+            yookassaDealId: app.escrowTx.yookassaDealId,
+            amountKopecks: app.escrowTx.amountKopecks,
+            netPayoutKopecks: app.escrowTx.netPayoutKopecks,
+          },
           description: "Возврат по решению модератора",
         });
       }
@@ -236,6 +221,18 @@ export const moderationRouter = router({
         });
       }
 
+      if (process.env.FEATURE_TELEGRAM === "true") {
+        const reporterLink = await ctx.db.telegramLink.findUnique({
+          where: { userId: report.reporterId },
+        });
+        if (reporterLink) {
+          void telegramService.sendMessage({
+            chatId: reporterLink.chatId.toString(),
+            text: `Жалоба №${report.id} рассмотрена. Решение: ${input.resolution}`,
+          });
+        }
+      }
+
       return { success: true };
     }),
 
@@ -293,6 +290,18 @@ export const reportsRouter = router({
           vacancyTitle: report.vacancy?.title,
         }),
       });
+
+      if (process.env.FEATURE_TELEGRAM === "true") {
+        const link = await ctx.db.telegramLink.findUnique({
+          where: { userId: ctx.userId },
+        });
+        if (link) {
+          void telegramService.sendMessage({
+            chatId: link.chatId.toString(),
+            text: `Жалоба №${report.id} принята. Решение модератора будет отправлено в этот чат.`,
+          });
+        }
+      }
 
       return { reportId: report.id };
     }),

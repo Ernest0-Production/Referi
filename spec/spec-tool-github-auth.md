@@ -30,7 +30,7 @@ tags: tool, process, design, app
 | **GitHub OAuth**         | Протокол авторизации через GitHub; сервер получает `access_token`       |
 | **age-check**            | Проверка даты создания GitHub аккаунта: `now() - created_at < 365 дней` |
 | **Молодой аккаунт**      | GitHub аккаунт с возрастом < 365 дней на момент регистрации             |
-| **Регистрационный сбор** | Единоразовый платёж для молодых аккаунтов (`REGISTRATION_FEE_KOP`)      |
+| **Регистрационный сбор** | Единоразовый платёж для молодых аккаунтов; сумма фиксирована в `BUSINESS_RULES.REGISTRATION_FEE_KOP` (50 000 ₽) |
 | **paidRegistration**     | Флаг в `GitHubProfile`; `true` если молодой аккаунт оплатил сбор        |
 
 ---
@@ -96,7 +96,7 @@ flowchart TB
 
 **Содержимое**:
 - Объяснение почему аккаунт не прошёл проверку.
-- Информация о размере сбора (рублёвый эквивалент `REGISTRATION_FEE_KOP`).
+- Информация о размере сбора (50 000 ₽, значение из `BUSINESS_RULES.REGISTRATION_FEE_KOP`).
 - Кнопка «Оплатить и зарегистрироваться» → вызывает `auth.initiateRegistrationPayment` mutation с `{ userId }` (процедура **public** в [`src/server/trpc/routers/auth.ts`](../src/server/trpc/routers/auth.ts); вызывать только из доверенного UI после установления сессии).
 - После успешного платежа (webhook) → автоматический редирект в личный кабинет.
 
@@ -117,13 +117,14 @@ initiateRegistrationPayment: publicProcedure
     if (profile.paidRegistration) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ALREADY_PAID" });
     }
+    const feeKopecks = BUSINESS_RULES.REGISTRATION_FEE_KOP;
     const payment = await paymentProvider.createPayment({
-      /* … amountKopecks: BUSINESS_RULES.REGISTRATION_FEE_KOP, metadata: { userId, type: "registration" } … */
+      /* … amountKopecks: feeKopecks, metadata: { userId, type: "registration" } … */
     });
     await ctx.db.registrationPayment.create({
       data: {
         userId: input.userId,
-        amountKopecks: BUSINESS_RULES.REGISTRATION_FEE_KOP,
+        amountKopecks: feeKopecks,
         yookassaPaymentId: payment.paymentId,
       },
     });
@@ -270,7 +271,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 **Только GitHub**: разработчики в РФ активно используют GitHub. Аккаунт GitHub — надёжный прокси-сигнал реальности разработчика (история коммитов, публичные репозитории). Это снижает порог входа для верификации без сложной KYC-процедуры.
 
-**Возрастной сбор**: 365 дней — стандартный период для органического развития аккаунта. $500-эквивалент создаёт экономический барьер для массового создания фейков, при этом не являясь запретительным для серьёзных пользователей.
+**Возрастной сбор**: 365 дней — стандартный период для органического развития аккаунта. Фиксированная сумма 50 000 ₽ создаёт экономический барьер для массового создания фейков, при этом не являясь запретительной для серьёзных пользователей.
 
 **Шифрование access_token**: GitHub access token с `read:user` скоупом — sensitive data. Хранение в открытом виде нарушало бы принципы безопасности.
 

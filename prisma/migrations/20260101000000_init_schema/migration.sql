@@ -46,6 +46,9 @@ CREATE TABLE "users" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "displayName" TEXT NOT NULL,
+"contactInfo" VARCHAR(500),
+"bio" VARCHAR(1000),
+"email" VARCHAR(320),
     "roles" "UserRole"[],
     "yookassaPayoutDestination" TEXT,
 
@@ -155,6 +158,7 @@ CREATE TABLE "escrow_transactions" (
     "netPayoutKopecks" BIGINT NOT NULL,
     "status" "EscrowStatus" NOT NULL DEFAULT 'HELD',
     "yookassaPaymentId" TEXT,
+"yookassaDealId" TEXT,
     "yookassaRefundId" TEXT,
     "yookassaPayoutId" TEXT,
     "heldAt" TIMESTAMP(3),
@@ -173,6 +177,7 @@ CREATE TABLE "paid_application_tokens" (
     "amountKopecks" BIGINT NOT NULL,
     "yookassaPaymentId" TEXT,
     "expiresAt" TIMESTAMP(3) NOT NULL,
+"paidAt" TIMESTAMP(3),
     "usedAt" TIMESTAMP(3),
     "refundedAt" TIMESTAMP(3),
 
@@ -305,6 +310,8 @@ CREATE UNIQUE INDEX "escrow_transactions_applicationId_key" ON "escrow_transacti
 -- CreateIndex
 CREATE UNIQUE INDEX "escrow_transactions_yookassaPaymentId_key" ON "escrow_transactions"("yookassaPaymentId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "escrow_transactions_yookassaDealId_key" ON "escrow_transactions" ("yookassaDealId");
 -- CreateIndex
 CREATE UNIQUE INDEX "escrow_transactions_yookassaRefundId_key" ON "escrow_transactions"("yookassaRefundId");
 

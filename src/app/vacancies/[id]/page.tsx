@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import Link from "next/link";
+import { ReportVacancyForm } from "./ReportVacancyForm";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -144,6 +145,8 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               </Link>
             )}
           </div>
+
+          {session?.user && <ReportVacancyForm vacancyId={vacancy.id} />}
         </div>
       </div>
     </main>

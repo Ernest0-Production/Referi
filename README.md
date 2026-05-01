@@ -33,7 +33,7 @@ docker compose up --build
 ```
 
 После первого подъёма с пустой БД примените миграции:
-`docker compose exec app npx prisma migrate deploy`
+`docker compose exec app npm run db:migrate:deploy`
 
 Сервис `app` читает `.env`; в compose уже заданы `DATABASE_URL` и `REDIS_URL` для контейнеров. Для воркеров BullMQ в образе задано `ENABLE_BULLMQ_WORKERS=true` (см. `src/instrumentation.ts`).
 
@@ -45,10 +45,13 @@ docker compose up --build
 | `npm run build` / `npm start`        | Продакшен-сборка и запуск       |
 | `npm run lint` / `npm run typecheck` | ESLint и проверка типов         |
 | `npm test`                           | Vitest                          |
-| `npm run test:e2e`                   | Playwright                      |
+| `npm run test:e2e` / `npm run test:e2e:ui` | Playwright                      |
 | `npm run db:migrate`                 | Миграции Prisma (`migrate dev`) |
+| `npm run db:migrate:deploy`          | Миграции на прод (`migrate deploy`) |
 | `npm run db:seed`                    | Сид данных                      |
 | `npm run db:studio`                  | Prisma Studio                   |
+| `npm run db:generate`                | Только `prisma generate`        |
+| `npm run playwright:install`         | Установка браузеров Playwright (CI/локально) |
 
 ## Документация по проекту
 

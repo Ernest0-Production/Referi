@@ -7,10 +7,6 @@ import { kopecksToString } from "@/shared/utils/money";
 import { randomUUID } from "crypto";
 
 export const paymentsRouter = router({
-  /**
-   * Initiate escrow payment for a submitted application.
-   * Returns a YooKassa confirmation URL (or mock URL for dev).
-   */
   initiateEscrow: protectedProcedure
     .input(z.object({ applicationId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -42,36 +38,47 @@ export const paymentsRouter = router({
       });
 
       if (existingTx?.yookassaPaymentId) {
-        // Check current status; if still pending, return existing payment id
         const status = await paymentProvider.getPaymentStatus(existingTx.yookassaPaymentId);
-        if (status === "pending" || status === "waiting_for_capture") {
+        if (status === "pending" || status === "waiting_for_capture" || status === "succeeded") {
           return {
             confirmationUrl: null,
             paymentId: existingTx.yookassaPaymentId,
+            dealId: existingTx.yookassaDealId,
           };
         }
       }
 
-      const idempotencyKey = randomUUID();
+      const idDeal = randomUUID();
+      const idPay = randomUUID();
       const amountKopecks = app.vacancy.rewardKopecks;
-
-      // Use platform-defined fee if vacancy reward is 0
-      const chargeAmount =
-        amountKopecks === 0n ? BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP : amountKopecks;
+      if (amountKopecks <= 0n) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "FREE_REFERRAL_NO_PAYMENT_REQUIRED",
+        });
+      }
+      const chargeAmount = amountKopecks;
 
       const returnUrl = `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/dashboard/applications/${app.id}`;
 
-      const payment = await paymentProvider.createPayment({
-        idempotencyKey,
-        amountKopecks: chargeAmount,
-        description: `Заявка на вакансию "${app.vacancy.title}" в ${app.vacancy.companyName}`,
-        metadata: { applicationId: app.id, type: "escrow" },
-        capture: false, // hold until confirmReferralIntent
-        returnUrl,
-      });
-
       const { calculateCommission } = await import("@/shared/utils/money");
       const { commission, netPayout } = calculateCommission(chargeAmount);
+
+      const deal = await paymentProvider.createSafeDeal({
+        idempotencyKey: idDeal,
+        description: `Сделка Referi по заявке ${app.id}`,
+        metadata: { applicationId: app.id, type: "escrow" },
+      });
+
+      const payment = await paymentProvider.createDealPayment({
+        idempotencyKey: idPay,
+        dealId: deal.dealId,
+        amountKopecks: chargeAmount,
+        payoutSettlementKopecks: netPayout,
+        description: `Заявка на вакансию "${app.vacancy.title}" в ${app.vacancy.companyName}`,
+        metadata: { applicationId: app.id, type: "escrow" },
+        returnUrl,
+      });
 
       await ctx.db.escrowTransaction.upsert({
         where: { applicationId: input.applicationId },
@@ -80,10 +87,11 @@ export const paymentsRouter = router({
           amountKopecks: chargeAmount,
           commissionKopecks: commission,
           netPayoutKopecks: netPayout,
+          yookassaDealId: deal.dealId,
           yookassaPaymentId: payment.paymentId,
-          heldAt: new Date(),
         },
         update: {
+          yookassaDealId: deal.dealId,
           yookassaPaymentId: payment.paymentId,
         },
       });
@@ -91,13 +99,64 @@ export const paymentsRouter = router({
       return {
         confirmationUrl: payment.confirmationUrl,
         paymentId: payment.paymentId,
+        dealId: deal.dealId,
         amountKopecks: kopecksToString(chargeAmount),
       };
     }),
 
-  /**
-   * Returns current escrow status for an application.
-   */
+  initiatePaidApplicationToken: protectedProcedure
+    .input(z.object({ vacancyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const vacancy = await ctx.db.vacancy.findUnique({
+        where: { id: input.vacancyId },
+      });
+      if (!vacancy || vacancy.status !== "ACTIVE") {
+        throw new TRPCError({ code: "NOT_FOUND", message: "VACANCY_NOT_ACTIVE" });
+      }
+
+      const idempotencyKey = randomUUID();
+      const expiresAt = new Date(
+        Date.now() + BUSINESS_RULES.PAID_APPLICATION_TOKEN_VALIDITY_DAYS * 24 * 60 * 60 * 1000,
+      );
+
+      const token = await ctx.db.paidApplicationToken.create({
+        data: {
+          seekerId: ctx.userId,
+          vacancyId: input.vacancyId,
+          amountKopecks: BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP,
+          expiresAt,
+        },
+      });
+
+      const returnUrl = `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/dashboard/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}`;
+
+      const payment = await paymentProvider.createPayment({
+        idempotencyKey,
+        amountKopecks: BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP,
+        description: `Дополнительный отклик на вакансию «${vacancy.title}»`,
+        metadata: {
+          type: "paid_token",
+          tokenId: token.id,
+          seekerId: ctx.userId,
+          vacancyId: input.vacancyId,
+        },
+        capture: true,
+        returnUrl,
+      });
+
+      await ctx.db.paidApplicationToken.update({
+        where: { id: token.id },
+        data: { yookassaPaymentId: payment.paymentId },
+      });
+
+      return {
+        confirmationUrl: payment.confirmationUrl,
+        paymentId: payment.paymentId,
+        tokenId: token.id,
+        amountKopecks: kopecksToString(BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP),
+      };
+    }),
+
   escrowStatus: protectedProcedure
     .input(z.object({ applicationId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
@@ -117,6 +176,7 @@ export const paymentsRouter = router({
       if (!tx) return null;
 
       return {
+        dealId: tx.yookassaDealId,
         paymentId: tx.yookassaPaymentId,
         amountKopecks: kopecksToString(tx.amountKopecks),
         capturedAt: tx.capturedAt,

@@ -3,8 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
 import { cancelSLAJob } from "@/server/workers/slaWorker";
-import { scheduleRefundSeeker } from "@/server/workers/paymentWorker";
-import type { Prisma } from "@prisma/client";
+import { scheduleRefundSeeker, scheduleRefundPaidToken } from "@/server/workers/paymentWorker";
+import { Prisma } from "@prisma/client";
 
 const specialtyEnum = z.enum([
   "FRONTEND",
@@ -40,6 +40,7 @@ const vacancyListSchema = z.object({
   salaryFrom: z.number().int().positive().optional(),
   salaryTo: z.number().int().positive().optional(),
   query: z.string().max(200).optional(),
+  sort: z.enum(["created_desc", "salary_desc"]).default("created_desc"),
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(50).default(20),
 });
@@ -61,10 +62,30 @@ function serializeVacancy<
 
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
-    const { specialty, grade, workFormat, salaryFrom, salaryTo, query, page, limit } = input;
+    const { specialty, grade, workFormat, salaryFrom, salaryTo, query, sort, page, limit } = input;
+    const q = query?.trim();
+    let ftsIds: string[] | undefined;
+
+    if (q) {
+      const rows = await ctx.db.$queryRaw<{ id: string }[]>(
+        Prisma.sql`
+          SELECT "id" FROM "vacancies"
+          WHERE "status" = 'ACTIVE'::"VacancyStatus"
+            AND to_tsvector(
+              'russian',
+              coalesce("title",'') || ' ' || coalesce("description",'') || ' ' || coalesce("companyName",'')
+            ) @@ plainto_tsquery('russian', ${q})
+        `,
+      );
+      ftsIds = rows.map((row) => row.id);
+      if (ftsIds.length === 0) {
+        return { items: [], total: 0, page, totalPages: 0 };
+      }
+    }
 
     const where: Prisma.VacancyWhereInput = {
       status: "ACTIVE",
+      ...(ftsIds && { id: { in: ftsIds } }),
       ...(specialty?.length && { specialty: { in: specialty } }),
       ...(grade?.length && { grade: { in: grade } }),
       ...(workFormat?.length && { workFormat: { in: workFormat } }),
@@ -72,19 +93,17 @@ export const vacanciesRouter = router({
         salaryToKopecks: { gte: BigInt(salaryFrom * 100) },
       }),
       ...(salaryTo && { salaryFromKopecks: { lte: BigInt(salaryTo * 100) } }),
-      ...(query && {
-        OR: [
-          { title: { contains: query, mode: "insensitive" } },
-          { description: { contains: query, mode: "insensitive" } },
-          { companyName: { contains: query, mode: "insensitive" } },
-        ],
-      }),
     };
+
+    const orderBy: Prisma.VacancyOrderByWithRelationInput[] =
+      sort === "salary_desc"
+        ? [{ salaryToKopecks: "desc" }, { salaryFromKopecks: "desc" }, { createdAt: "desc" }]
+        : [{ createdAt: "desc" }];
 
     const [items, total] = await Promise.all([
       ctx.db.vacancy.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
         select: {
@@ -276,6 +295,19 @@ export const vacanciesRouter = router({
         await attemptRepo.returnAttempt(userId, app.id);
       }
 
+      const paidTokens = await ctx.db.paidApplicationToken.findMany({
+        where: {
+          vacancyId: input.id,
+          usedAt: null,
+          refundedAt: null,
+          paidAt: { not: null },
+          yookassaPaymentId: { not: null },
+        },
+      });
+      for (const token of paidTokens) {
+        void scheduleRefundPaidToken(token.id, `refund-token-vacancy-deleted:${token.id}`);
+      }
+
       return { success: true };
     }),
 
@@ -300,7 +332,7 @@ export const vacanciesRouter = router({
       if (vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
 
       const applications = await ctx.db.application.findMany({
-        where: { vacancyId: input.vacancyId },
+        where: { vacancyId: input.vacancyId, status: "SUBMITTED" },
         include: {
           content: true,
           seeker: { select: { id: true, displayName: true } },
@@ -313,10 +345,7 @@ export const vacanciesRouter = router({
         status: app.status,
         createdAt: app.createdAt,
         seeker: app.seeker,
-        // Only show contact info for active applications
-        contactInfo: !["CANCELLED", "REJECTED_BY_REFERRER"].includes(app.status)
-          ? app.content?.contactInfo
-          : undefined,
+        contactInfo: app.content?.contactInfo,
         bio: app.content?.bio,
         coverLetter: app.content?.coverLetter,
       }));

@@ -14,7 +14,13 @@ export default async function SettingsPage() {
   const [user, telegramLink, subscription] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, displayName: true, roles: true },
+      select: {
+        id: true,
+        displayName: true,
+        contactInfo: true,
+        bio: true,
+        roles: true,
+      },
     }),
     prisma.telegramLink.findUnique({
       where: { userId },
@@ -47,7 +53,12 @@ export default async function SettingsPage() {
             <p className="text-xs text-gray-400">GitHub аккаунт</p>
             <p className="text-sm text-gray-700">{session.user.name ?? "—"}</p>
           </div>
-          <UpdateProfileForm currentName={user.displayName ?? ""} />
+          <UpdateProfileForm
+            currentName={user.displayName ?? ""}
+            currentContactInfo={user.contactInfo}
+            currentBio={user.bio}
+            currentRoles={user.roles}
+          />
         </section>
 
         {/* Subscription section */}

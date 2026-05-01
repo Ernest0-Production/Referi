@@ -22,6 +22,13 @@ test.describe("Vacancies catalog", () => {
     const body = page.locator("body");
     await expect(body).toBeVisible();
   });
+
+  test("vacancies filters include sort and salary controls", async ({ page }) => {
+    await page.goto("/vacancies");
+    await expect(page.getByText("Сортировка")).toBeVisible();
+    await expect(page.getByPlaceholder("От")).toBeVisible();
+    await expect(page.getByPlaceholder("До")).toBeVisible();
+  });
 });
 
 test.describe("Authentication flow", () => {
@@ -61,5 +68,13 @@ test.describe("Webhook security", () => {
       },
     });
     expect(response.status()).toBe(401);
+  });
+
+  test("Mock complete endpoint requires paymentId", async ({ request }) => {
+    const response = await request.post("/api/pay/mock-complete", {
+      data: {},
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(response.status()).toBe(400);
   });
 });

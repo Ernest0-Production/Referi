@@ -197,9 +197,7 @@ export const messages = {
 
 ### 4.8 Уведомления модераторам — группа
 
-Все уведомления о спорах и жалобах отправляются в `TELEGRAM_MODERATOR_CHAT_ID`. Это может быть:
-- Личный чат модератора (для MVP с одним модератором).
-- Telegram-группа с несколькими модераторами.
+Все уведомления о спорах и жалобах отправляются в `TELEGRAM_MODERATOR_CHAT_ID`. Это может быть личный чат модератора или Telegram-группа с несколькими модераторами.
 
 ```typescript
 // src/server/services/telegramService.ts (фрагмент)
@@ -301,11 +299,11 @@ async sendMessage(options: SendMessageOptions): Promise<void> {
 ### Edge Case: модератор нажал кнопку в боте (Inline Keyboard)
 
 ```
-// Для MVP: модераторы используют команды /resolve_referrer, /resolve_seeker
-// В v1.1: добавить Inline Keyboard с кнопками прямо в уведомление о споре
+// Модератор разрешает спор текстовыми командами /resolve_referrer, /resolve_seeker (caseId берётся из уведомления).
+// Inline Keyboard в уведомлении не используется.
 //
 // Update { callback_query: { data: 'resolve:referrer:{caseId}', from: {...} } }
-// → moderatorCommand.resolveForReferrer(caseId, callbackQuery.from.id)
+// → при необходимости можно обработать callback отдельно
 ```
 
 ---

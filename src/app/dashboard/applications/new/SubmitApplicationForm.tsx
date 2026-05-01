@@ -4,14 +4,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
 
-export function SubmitApplicationForm({ vacancyId }: { vacancyId: string }) {
+interface Props {
+  vacancyId: string;
+  paidTokenId?: string;
+  defaultContactInfo?: string;
+  defaultBio?: string;
+}
+
+export function SubmitApplicationForm({
+  vacancyId,
+  paidTokenId,
+  defaultContactInfo,
+  defaultBio,
+}: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
-    contactInfo: "",
-    bio: "",
+    contactInfo: defaultContactInfo ?? "",
+    bio: defaultBio ?? "",
     coverLetter: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [tokenId, setTokenId] = useState<string | undefined>(paidTokenId);
 
   const submit = trpcReact.applications.submit.useMutation({
     onSuccess() {
@@ -19,15 +32,29 @@ export function SubmitApplicationForm({ vacancyId }: { vacancyId: string }) {
     },
     onError(err) {
       const msg = err.message;
-      if (msg === "TOO_MANY_ACTIVE_APPLICATIONS") {
-        setError("У вас уже есть 2 активные заявки. Дождитесь завершения одной из них.");
-      } else if (msg === "ALREADY_APPLIED") {
+      if (msg === "ACTIVE_APPLICATION_LIMIT_REACHED") {
+        setError("Достигнут лимит активных откликов. Купите дополнительный токен или дождитесь завершения заявки.");
+      } else if (msg === "DUPLICATE_APPLICATION") {
         setError("Вы уже откликались на эту вакансию.");
       } else if (msg === "VACANCY_NOT_ACTIVE") {
         setError("Вакансия больше не активна.");
+      } else if (msg.startsWith("PAID_TOKEN_")) {
+        setError("Токен отклика недействителен. Купите новый токен для этой вакансии.");
       } else {
         setError(err.message);
       }
+    },
+  });
+
+  const buyToken = trpcReact.payments.initiatePaidApplicationToken.useMutation({
+    onSuccess(data) {
+      setTokenId(data.tokenId);
+      if (data.confirmationUrl) {
+        window.location.href = data.confirmationUrl;
+      }
+    },
+    onError(err) {
+      setError(err.message);
     },
   });
 
@@ -39,6 +66,7 @@ export function SubmitApplicationForm({ vacancyId }: { vacancyId: string }) {
       contactInfo: form.contactInfo,
       bio: form.bio,
       coverLetter: form.coverLetter || undefined,
+      paidTokenId: tokenId,
     });
   }
 
@@ -88,6 +116,25 @@ export function SubmitApplicationForm({ vacancyId }: { vacancyId: string }) {
           className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
           placeholder="Почему именно эта вакансия?"
         />
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+        <p className="text-sm font-medium text-gray-800">Разовый токен отклика (199 ₽)</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Если бесплатный лимит активных откликов исчерпан, купите токен для этой вакансии.
+        </p>
+        {tokenId ? (
+          <p className="mt-2 text-xs text-green-700">Токен активирован для текущей заявки.</p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => buyToken.mutate({ vacancyId })}
+            disabled={buyToken.isPending}
+            className="mt-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-60"
+          >
+            {buyToken.isPending ? "Переход к оплате…" : "Купить токен"}
+          </button>
+        )}
       </div>
 
       {error && (

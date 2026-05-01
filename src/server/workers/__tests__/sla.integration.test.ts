@@ -176,9 +176,9 @@ describe("BullMQ deterministic jobId uniqueness", () => {
       "cancel-ack-sla": (appId) => `cancel-ack-sla:${appId}`,
       "company-decision-sla": (appId) => `company-decision-sla:${appId}`,
       "attempt-regen": (ledgerEntryId) => `attempt-regen:${ledgerEntryId}`,
-      "capture-escrow": (appId) => `capture-escrow:${appId}`,
-      "payout-referrer": (appId) => `payout-referrer:${appId}`,
+      "offer-accepted": (appId) => `offer-accepted:${appId}`,
       "refund-seeker": (appId) => `refund-seeker:${appId}`,
+      "refund-paid-token": (tokenId) => `refund-paid-token:${tokenId}`,
     };
     return (jobIdMap[type] ?? ((i: string) => `unknown:${i}`))(id);
   }
@@ -191,9 +191,9 @@ describe("BullMQ deterministic jobId uniqueness", () => {
       ["resume-handoff-sla", "app-1"],
       ["cancel-ack-sla", "app-1"],
       ["attempt-regen", "ledger-1"],
-      ["capture-escrow", "app-1"],
-      ["payout-referrer", "app-1"],
+      ["offer-accepted", "app-1"],
       ["refund-seeker", "app-1"],
+      ["refund-paid-token", "token-1"],
     ];
 
     for (const [type, id] of cases) {

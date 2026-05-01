@@ -1,24 +1,17 @@
 /**
- * Payment Worker — processes payment capture and payout jobs asynchronously.
- * All jobs use deterministic `jobId` for idempotency.
+ * Payment Worker — эскроу Safe deal (выплата), возвраты, проверка регистрации.
  */
 
 import { Queue, Worker, type Job } from "bullmq";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
-import { paymentProvider } from "@/server/services/paymentService";
-import { calculateCommission } from "@/shared/utils/money";
-
-// ─────────────────────────────────────────────
-// Job types
-// ─────────────────────────────────────────────
+import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentService";
 
 export type PaymentJobType =
-  | "capture-escrow"
-  | "payout-referrer"
+  | "offer-accepted"
   | "refund-seeker"
   | "registration-payment-check"
-  | "offer-accepted";
+  | "refund-paid-token";
 
 export interface PaymentJobData {
   type: PaymentJobType;
@@ -27,11 +20,8 @@ export interface PaymentJobData {
   yookassaPaymentId?: string;
   amountKopecks?: string;
   idempotencyKey: string;
+  tokenId?: string;
 }
-
-// ─────────────────────────────────────────────
-// Queue
-// ─────────────────────────────────────────────
 
 let _paymentQueue: Queue<PaymentJobData> | null = null;
 
@@ -50,10 +40,6 @@ function getPaymentQueue() {
   return _paymentQueue;
 }
 
-// ─────────────────────────────────────────────
-// Payout destination (User field or env fallback)
-// ─────────────────────────────────────────────
-
 async function getReferrerPayoutDestination(referrerId: string): Promise<string> {
   const u = await prisma.user.findUnique({
     where: { id: referrerId },
@@ -62,35 +48,6 @@ async function getReferrerPayoutDestination(referrerId: string): Promise<string>
   const d = u?.yookassaPayoutDestination?.trim();
   if (d) return d;
   return process.env.YOOKASSA_PAYOUT_MOCK_WALLET?.trim() ?? "mock_payout_referrer_dev";
-}
-
-// ─────────────────────────────────────────────
-// Schedule helpers (idempotent via jobId)
-// ─────────────────────────────────────────────
-
-export async function scheduleCaptureEscrow(applicationId: string, idempotencyKey: string) {
-  await getPaymentQueue().add(
-    "payment-job",
-    { type: "capture-escrow", applicationId, idempotencyKey },
-    { jobId: `capture-escrow:${applicationId}` },
-  );
-}
-
-export async function schedulePayoutReferrer(
-  applicationId: string,
-  amountKopecks: bigint,
-  idempotencyKey: string,
-) {
-  await getPaymentQueue().add(
-    "payment-job",
-    {
-      type: "payout-referrer",
-      applicationId,
-      amountKopecks: amountKopecks.toString(),
-      idempotencyKey,
-    },
-    { jobId: `payout-referrer:${applicationId}` },
-  );
 }
 
 export async function scheduleRefundSeeker(
@@ -119,70 +76,72 @@ export async function scheduleOfferAcceptedPayout(applicationId: string) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Worker
-// ─────────────────────────────────────────────
+export async function scheduleRefundPaidToken(tokenId: string, idempotencyKey: string) {
+  await getPaymentQueue().add(
+    "payment-job",
+    { type: "refund-paid-token", tokenId, idempotencyKey },
+    { jobId: `refund-paid-token:${tokenId}` },
+  );
+}
 
 async function processJob(job: Job<PaymentJobData>) {
-  const { type, applicationId, amountKopecks, idempotencyKey } = job.data;
+  const { type, applicationId, amountKopecks, idempotencyKey, tokenId } = job.data;
 
   switch (type) {
-    case "capture-escrow": {
-      if (!applicationId) throw new Error("capture-escrow: missing applicationId");
-
-      const app = await prisma.application.findUnique({
-        where: { id: applicationId },
-        include: { escrowTx: true },
-      });
-      if (!app?.escrowTx?.yookassaPaymentId) {
-        console.log(`[paymentWorker] capture-escrow: no escrow tx for ${applicationId}, skipping`);
-        return;
-      }
-
-      await paymentProvider.capturePayment({
-        paymentId: app.escrowTx.yookassaPaymentId,
-        amountKopecks: app.escrowTx.amountKopecks,
-        idempotencyKey,
-      });
-
-      await prisma.escrowTransaction.update({
-        where: { id: app.escrowTx.id },
-        data: { capturedAt: new Date(), status: "CAPTURED" },
-      });
-
-      console.log(`[paymentWorker] captured escrow for application ${applicationId}`);
-      break;
-    }
-
-    case "payout-referrer": {
-      if (!applicationId || !amountKopecks) throw new Error("payout-referrer: missing params");
+    case "offer-accepted": {
+      if (!applicationId) throw new Error("offer-accepted: missing applicationId");
 
       const app = await prisma.application.findUnique({
         where: { id: applicationId },
         include: { escrowTx: true, vacancy: { select: { referrerId: true } } },
       });
-      if (!app) throw new Error(`payout-referrer: application ${applicationId} not found`);
-
-      const dest = await getReferrerPayoutDestination(app.vacancy.referrerId);
-      const amount = BigInt(amountKopecks);
-      const { netPayout } = calculateCommission(amount);
-
-      const result = await paymentProvider.createPayout({
-        idempotencyKey,
-        amountKopecks: netPayout,
-        description: `Реферальное вознаграждение по заявке ${applicationId}`,
-        savedPaymentMethodId: dest,
-        metadata: { referrerId: app.vacancy.referrerId, applicationId },
-      });
-
-      if (app.escrowTx) {
-        await prisma.escrowTransaction.update({
-          where: { id: app.escrowTx.id },
-          data: { yookassaPayoutId: result.payoutId },
-        });
+      if (!app?.escrowTx?.yookassaPaymentId) {
+        console.log(`[paymentWorker] offer-accepted: no escrow payment for ${applicationId}, skipping`);
+        return;
+      }
+      const dealId = app.escrowTx.yookassaDealId;
+      if (!dealId) {
+        console.log(`[paymentWorker] offer-accepted: no deal id for ${applicationId}, skipping`);
+        return;
       }
 
-      console.log(`[paymentWorker] payout ${netPayout} kop to referrer for ${applicationId}`);
+      const { escrowTx, vacancy } = app;
+      const dest = await getReferrerPayoutDestination(vacancy.referrerId);
+      const payout = await paymentProvider.createDealPayout({
+        idempotencyKey,
+        dealId,
+        amountKopecks: escrowTx.netPayoutKopecks,
+        description: `Реферальное вознаграждение по заявке ${applicationId}`,
+        yooMoneyWallet: dest,
+        metadata: { referrerId: vacancy.referrerId, applicationId },
+      });
+
+      await prisma.escrowTransaction.update({
+        where: { id: escrowTx.id },
+        data: {
+          yookassaPayoutId: payout.payoutId,
+          capturedAt: new Date(),
+          status: "CAPTURED",
+        },
+      });
+
+      void (async () => {
+        const referrer = await prisma.user.findUnique({
+          where: { id: vacancy.referrerId },
+          select: { email: true, displayName: true },
+        });
+        if (!referrer?.email) return;
+        const { emailService, emailTemplates } = await import("@/server/services/emailService");
+        const tpl = emailTemplates.payoutInitiated({
+          referrerName: referrer.displayName,
+          amountRub: (Number(escrowTx.netPayoutKopecks) / 100).toFixed(2),
+        });
+        await emailService.send({
+          to: referrer.email,
+          subject: tpl.subject,
+          html: tpl.html,
+        });
+      })();
       break;
     }
 
@@ -194,14 +153,18 @@ async function processJob(job: Job<PaymentJobData>) {
         include: { escrowTx: true },
       });
       if (!app?.escrowTx?.yookassaPaymentId) {
-        console.log(`[paymentWorker] refund-seeker: no payment to refund for ${applicationId}`);
+        console.log(`[paymentWorker] refund-seeker: no payment for ${applicationId}`);
         return;
       }
 
-      const res = await paymentProvider.refundPayment({
-        paymentId: app.escrowTx.yookassaPaymentId,
-        amountKopecks: BigInt(amountKopecks),
+      const res = await refundEscrowOrThrow({
         idempotencyKey,
+        escrow: {
+          yookassaPaymentId: app.escrowTx.yookassaPaymentId,
+          yookassaDealId: app.escrowTx.yookassaDealId,
+          amountKopecks: app.escrowTx.amountKopecks,
+          netPayoutKopecks: app.escrowTx.netPayoutKopecks,
+        },
         description: `Возврат по заявке ${applicationId}`,
       });
 
@@ -209,53 +172,44 @@ async function processJob(job: Job<PaymentJobData>) {
         where: { id: app.escrowTx.id },
         data: { status: "REFUNDED", refundedAt: new Date(), yookassaRefundId: res.refundId },
       });
+      const refundedAmountRub = (Number(app.escrowTx.amountKopecks) / 100).toFixed(2);
 
-      console.log(`[paymentWorker] refunded ${amountKopecks} kop for ${applicationId}`);
+      void (async () => {
+        const seeker = await prisma.user.findUnique({
+          where: { id: app.seekerId },
+          select: { email: true, displayName: true },
+        });
+        if (!seeker?.email) return;
+        const { emailService, emailTemplates } = await import("@/server/services/emailService");
+        const tpl = emailTemplates.refundIssued({
+          seekerName: seeker.displayName,
+          amountRub: refundedAmountRub,
+          reason: "Возврат по заявке",
+        });
+        await emailService.send({
+          to: seeker.email,
+          subject: tpl.subject,
+          html: tpl.html,
+        });
+      })();
       break;
     }
 
-    case "offer-accepted": {
-      if (!applicationId) throw new Error("offer-accepted: missing applicationId");
-      if (!idempotencyKey) throw new Error("offer-accepted: missing idempotencyKey");
+    case "refund-paid-token": {
+      if (!tokenId) throw new Error("refund-paid-token: missing tokenId");
+      const tok = await prisma.paidApplicationToken.findUnique({ where: { id: tokenId } });
+      if (!tok?.yookassaPaymentId || tok.refundedAt) return;
 
-      const app = await prisma.application.findUnique({
-        where: { id: applicationId },
-        include: { escrowTx: true, vacancy: { select: { referrerId: true } } },
+      await paymentProvider.refundPayment({
+        idempotencyKey,
+        paymentId: tok.yookassaPaymentId,
+        amountKopecks: tok.amountKopecks,
+        description: `Возврат токена отклика ${tokenId}`,
       });
-      if (!app?.escrowTx?.yookassaPaymentId) {
-        console.log(`[paymentWorker] offer-accepted: no escrow for ${applicationId}, skipping`);
-        return;
-      }
 
-      const { escrowTx, vacancy } = app;
-      const eid = escrowTx.id;
-      const ykPayId = escrowTx.yookassaPaymentId;
-      if (!ykPayId) return;
-
-      if (!escrowTx.capturedAt) {
-        await paymentProvider.capturePayment({
-          paymentId: ykPayId,
-          amountKopecks: escrowTx.amountKopecks,
-          idempotencyKey: `${idempotencyKey}:capture`,
-        });
-        await prisma.escrowTransaction.update({
-          where: { id: eid },
-          data: { capturedAt: new Date(), status: "CAPTURED" },
-        });
-      }
-
-      const dest = await getReferrerPayoutDestination(vacancy.referrerId);
-      const { netPayout } = calculateCommission(escrowTx.amountKopecks);
-      const payout = await paymentProvider.createPayout({
-        idempotencyKey: `${idempotencyKey}:payout`,
-        amountKopecks: netPayout,
-        description: `Реферальное вознаграждение по заявке ${applicationId}`,
-        savedPaymentMethodId: dest,
-        metadata: { referrerId: vacancy.referrerId, applicationId },
-      });
-      await prisma.escrowTransaction.update({
-        where: { id: eid },
-        data: { yookassaPayoutId: payout.payoutId },
+      await prisma.paidApplicationToken.update({
+        where: { id: tokenId },
+        data: { refundedAt: new Date() },
       });
       break;
     }

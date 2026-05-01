@@ -86,16 +86,16 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 
 | Процедура                          | Тип      | Auth   | Входные данные                             | Описание                                      |
 | ---------------------------------- | -------- | ------ | ------------------------------------------ | --------------------------------------------- |
-| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + роли + GitHub + подписка + `availableAttempts` |
-| `auth.updateProfile`               | mutation | isAuth | `{ displayName }`                          | Обновить отображаемое имя                     |
-| `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                               | Создать платёж за регистрацию (молодой GitHub); `confirmationUrl` |
+| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + профиль (контакты/bio/email) + роли + подписка + `availableAttempts` |
+| `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo?, bio?, roles? }` | Обновить профиль пользователя                     |
+| `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                               | Создать платёж за регистрацию (молодой GitHub); сумма — `BUSINESS_RULES.REGISTRATION_FEE_KOP`; `confirmationUrl` |
 | `auth.generateTelegramLinkToken`   | mutation | isAuth | —                                          | Одноразовый токен привязки Telegram; `deepLink`, `expiresAt` |
 
 ### 4.3 Router: `vacancies`
 
 | Процедура              | Тип      | Auth   | Входные данные                                                                                             | Описание                                                    |
 | ---------------------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `vacancies.list`       | query    | public | `{ specialty?, grade?, workFormat?, salaryFrom?, salaryTo?, query?, page?, limit? }`                       | Лента активных вакансий с фильтрами                         |
+| `vacancies.list`       | query    | public | `{ specialty?, grade?, workFormat?, salaryFrom?, salaryTo?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами                         |
 | `vacancies.getById`    | query    | public | `{ id }`                                                                                                   | Детальная страница вакансии (без данных реферальщика)       |
 | `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия                |
 | `vacancies.delete`     | mutation | isAuth | `{ id }`                                                                                                   | Удалить вакансию; cascade refund                            |
@@ -148,10 +148,11 @@ type VacancyListItem = {
 
 | Процедура                 | Тип      | Auth   | Входные данные      | Описание                                                                                                                     |
 | ------------------------- | -------- | ------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `payments.initiateEscrow` | mutation | isAuth | `{ applicationId }` | Инициировать оплату соискателя по заявке (`AWAITING_PAYMENT`); возвращает `{ confirmationUrl?, paymentId?, amountKopecks? }` |
+| `payments.initiateEscrow` | mutation | isAuth | `{ applicationId }` | Инициировать оплату соискателя по заявке (`AWAITING_PAYMENT`) через Safe deal; возвращает `{ confirmationUrl?, paymentId?, dealId?, amountKopecks? }` |
+| `payments.initiatePaidApplicationToken` | mutation | isAuth | `{ vacancyId }` | Купить разовый токен отклика; возвращает `{ confirmationUrl, paymentId, tokenId }` |
 | `payments.escrowStatus`   | query    | isAuth | `{ applicationId }` | Зеркало `EscrowTransaction` для участников заявки (`paymentId`, суммы, даты)                                                 |
 
-Отдельных tRPC-процедур для покупки разового токена отклика и привязки карты выплат в текущей кодовой базе нет (токен передаётся опционально в `applications.submit` как `paidTokenId`, выплаты реферальщику — через воркер после `capture`).
+Токен оплачивается отдельной процедурой `payments.initiatePaidApplicationToken`; после webhook `payment.succeeded` запись `PaidApplicationToken.paidAt` заполняется и токен может быть использован в `applications.submit`.
 
 ### 4.6 Router: `subscriptions`
 

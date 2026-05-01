@@ -54,6 +54,32 @@ export async function submitApplication(db: PrismaClient, input: SubmitApplicati
   const isFirstApplicationOnVacancy = !vacancy.firstApplicationAt;
 
   const application = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    if (input.paidTokenId) {
+      const token = await tx.paidApplicationToken.findUnique({
+        where: { id: input.paidTokenId },
+      });
+      if (!token || token.seekerId !== input.seekerId) {
+        throw new BusinessError("PAID_TOKEN_INVALID");
+      }
+      if (token.vacancyId !== input.vacancyId) {
+        throw new BusinessError("PAID_TOKEN_WRONG_VACANCY");
+      }
+      if (token.usedAt) {
+        throw new BusinessError("PAID_TOKEN_ALREADY_USED");
+      }
+      if (token.expiresAt < new Date()) {
+        throw new BusinessError("PAID_TOKEN_EXPIRED");
+      }
+      if (!token.paidAt) {
+        throw new BusinessError("PAID_TOKEN_NOT_PAID");
+      }
+
+      await tx.paidApplicationToken.update({
+        where: { id: token.id },
+        data: { usedAt: new Date() },
+      });
+    }
+
     // Create application + content
     const app = await tx.application.create({
       data: {
@@ -94,6 +120,28 @@ export async function submitApplication(db: PrismaClient, input: SubmitApplicati
   if (isFirstApplicationOnVacancy) {
     void scheduleReactionSLA(input.vacancyId);
   }
+
+  void (async () => {
+    const referrer = await db.user.findUnique({
+      where: { id: vacancy.referrerId },
+      select: { email: true, displayName: true },
+    });
+    if (!referrer?.email) return;
+    const seeker = await db.user.findUnique({
+      where: { id: input.seekerId },
+      select: { displayName: true },
+    });
+    const { emailService, emailTemplates } = await import("@/server/services/emailService");
+    const tpl = emailTemplates.newApplication({
+      vacancyTitle: vacancy.title,
+      seekerName: seeker?.displayName ?? input.seekerId,
+    });
+    await emailService.send({
+      to: referrer.email,
+      subject: tpl.subject,
+      html: tpl.html,
+    });
+  })();
 
   return application;
 }

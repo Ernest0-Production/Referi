@@ -18,8 +18,9 @@ async function upsertUserFromGitHub(data: {
   githubLogin: string;
   githubCreatedAt: Date;
   encryptedAccessToken: string;
+  email?: string | null;
 }) {
-  const { githubId, githubLogin, githubCreatedAt, encryptedAccessToken } = data;
+  const { githubId, githubLogin, githubCreatedAt, encryptedAccessToken, email } = data;
 
   const existingProfile = await prisma.gitHubProfile.findUnique({
     where: { githubId },
@@ -28,6 +29,10 @@ async function upsertUserFromGitHub(data: {
 
   if (existingProfile) {
     // Update access token on each login
+    await prisma.user.update({
+      where: { id: existingProfile.user.id },
+      data: { email: email ?? undefined },
+    });
     await prisma.gitHubProfile.update({
       where: { githubId },
       data: { accessToken: encryptedAccessToken, githubLogin },
@@ -39,6 +44,7 @@ async function upsertUserFromGitHub(data: {
   const user = await prisma.user.create({
     data: {
       displayName: githubLogin,
+      email: email ?? undefined,
       roles: ["SEEKER"] as UserRole[],
       githubProfile: {
         create: {
@@ -81,6 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         githubLogin: githubProfile.login,
         githubCreatedAt,
         encryptedAccessToken,
+        email: githubProfile.email ?? null,
       });
 
       const isOldEnough = isGitHubAccountOldEnough(githubCreatedAt);

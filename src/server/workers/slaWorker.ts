@@ -8,7 +8,7 @@ import type { Prisma } from "@prisma/client"
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
-import { paymentProvider } from "@/server/services/paymentService";
+import { refundEscrowOrThrow } from "@/server/services/paymentService";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
 import { telegramService } from "@/server/services/telegramService";
 import { telegramMessages } from "@/shared/telegram/messages";
@@ -236,10 +236,14 @@ async function handleResumeHandoffSLA(applicationId: string) {
   // Refund if escrow exists
   if (app.escrowTx?.yookassaPaymentId) {
     try {
-      await paymentProvider.refundPayment({
+      await refundEscrowOrThrow({
         idempotencyKey: `refund-sla:${applicationId}`,
-        paymentId: app.escrowTx.yookassaPaymentId,
-        amountKopecks: app.escrowTx.amountKopecks,
+        escrow: {
+          yookassaPaymentId: app.escrowTx.yookassaPaymentId,
+          yookassaDealId: app.escrowTx.yookassaDealId,
+          amountKopecks: app.escrowTx.amountKopecks,
+          netPayoutKopecks: app.escrowTx.netPayoutKopecks,
+        },
         description: "Возврат по истечении SLA передачи резюме",
       });
     } catch (err) {
@@ -345,10 +349,14 @@ async function handleCancelAckSLA(applicationId: string) {
   // Auto-refund
   if (app.escrowTx?.yookassaPaymentId) {
     try {
-      await paymentProvider.refundPayment({
+      await refundEscrowOrThrow({
         idempotencyKey: `refund-cancel-auto:${applicationId}`,
-        paymentId: app.escrowTx.yookassaPaymentId,
-        amountKopecks: app.escrowTx.amountKopecks,
+        escrow: {
+          yookassaPaymentId: app.escrowTx.yookassaPaymentId,
+          yookassaDealId: app.escrowTx.yookassaDealId,
+          amountKopecks: app.escrowTx.amountKopecks,
+          netPayoutKopecks: app.escrowTx.netPayoutKopecks,
+        },
         description: "Авто-возврат по запросу соискателя",
       });
     } catch (err) {

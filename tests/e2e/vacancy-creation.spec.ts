@@ -6,7 +6,7 @@ import { test, expect } from "@playwright/test";
  * In CI, they run against a staging environment with seed data.
  *
  * To run locally with auth:
- *   PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test
+ *   PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e
  *   (requires active dev server with a seeded database)
  */
 

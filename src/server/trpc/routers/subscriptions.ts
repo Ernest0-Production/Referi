@@ -50,6 +50,7 @@ export const subscriptionsRouter = router({
         metadata: { userId: ctx.userId, type: "subscription" },
         capture: true,
         returnUrl,
+        savePaymentMethod: true,
       });
 
       return {

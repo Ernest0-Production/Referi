@@ -3,11 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { cancelSLAJob, scheduleResumeHandoffSLA } from "@/server/workers/slaWorker";
 
-/**
- * Hold succeeded (payment.waiting_for_capture): advance application to resume handoff.
- * Used by the YooKassa HTTP webhook and by the dev mock flow.
- */
-export async function applyEscrowPaymentHeld(yookassaPaymentId: string): Promise<void> {
+export async function applyEscrowPaymentSucceeded(yookassaPaymentId: string): Promise<void> {
   const escrow = await prisma.escrowTransaction.findFirst({
     where: { yookassaPaymentId },
   });
@@ -62,4 +58,42 @@ export async function applyRegistrationPaymentSucceeded(yookassaPaymentId: strin
       data: { paidRegistration: true },
     }),
   ]);
+}
+
+export async function applySubscriptionPaymentSucceeded(
+  userId: string,
+  paymentMethodId?: string | null,
+): Promise<void> {
+  const periodMs = 30 * 24 * 60 * 60 * 1000;
+  const start = new Date();
+  const end = new Date(Date.now() + periodMs);
+
+  await prisma.seekerSubscription.upsert({
+    where: { userId },
+    create: {
+      userId,
+      status: "ACTIVE",
+      currentPeriodStart: start,
+      currentPeriodEnd: end,
+      yookassaPaymentMethodId: paymentMethodId ?? undefined,
+    },
+    update: {
+      status: "ACTIVE",
+      currentPeriodStart: start,
+      currentPeriodEnd: end,
+      ...(paymentMethodId ? { yookassaPaymentMethodId: paymentMethodId } : {}),
+    },
+  });
+}
+
+export async function applyPaidTokenPaymentSucceeded(yookassaPaymentId: string): Promise<void> {
+  const token = await prisma.paidApplicationToken.findFirst({
+    where: { yookassaPaymentId },
+  });
+  if (!token || token.paidAt) return;
+
+  await prisma.paidApplicationToken.update({
+    where: { id: token.id },
+    data: { paidAt: new Date() },
+  });
 }

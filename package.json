@@ -15,9 +15,18 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "playwright:install": "playwright install chromium --with-deps",
+    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "db:up": "docker compose up -d --wait db",
+    "db:sync": "docker compose up -d --wait db && prisma db push",
+    "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -67,6 +76,7 @@
     "prisma": "^7.7.0",
     "shadcn": "^4.5.0",
     "tailwindcss": "^4",
+    "tsx": "^4.19.0",
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.4"

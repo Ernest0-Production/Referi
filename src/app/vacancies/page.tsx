@@ -8,6 +8,9 @@ interface PageProps {
     specialty?: string;
     grade?: string;
     workFormat?: string;
+    salaryFrom?: string;
+    salaryTo?: string;
+    sort?: "created_desc" | "salary_desc";
     query?: string;
     page?: string;
   }>;
@@ -16,15 +19,33 @@ interface PageProps {
 export default async function VacanciesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page ?? 1);
+  const salaryFrom = params.salaryFrom ? Number(params.salaryFrom) : undefined;
+  const salaryTo = params.salaryTo ? Number(params.salaryTo) : undefined;
 
   const { items, total, totalPages } = await trpc.vacancies.list({
     specialty: params.specialty ? [params.specialty as never] : undefined,
     grade: params.grade ? [params.grade as never] : undefined,
     workFormat: params.workFormat ? [params.workFormat as never] : undefined,
+    salaryFrom: Number.isFinite(salaryFrom) ? salaryFrom : undefined,
+    salaryTo: Number.isFinite(salaryTo) ? salaryTo : undefined,
+    sort: params.sort ?? "created_desc",
     query: params.query,
     page,
     limit: 20,
   });
+
+  const buildPageLink = (nextPage: number) => {
+    const q = new URLSearchParams();
+    q.set("page", String(nextPage));
+    if (params.specialty) q.set("specialty", params.specialty);
+    if (params.grade) q.set("grade", params.grade);
+    if (params.workFormat) q.set("workFormat", params.workFormat);
+    if (params.salaryFrom) q.set("salaryFrom", params.salaryFrom);
+    if (params.salaryTo) q.set("salaryTo", params.salaryTo);
+    if (params.sort) q.set("sort", params.sort);
+    if (params.query) q.set("query", params.query);
+    return `/vacancies?${q.toString()}`;
+  };
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -64,7 +85,7 @@ export default async function VacanciesPage({ searchParams }: PageProps) {
               <div className="flex items-center justify-center gap-2 pt-4">
                 {page > 1 && (
                   <a
-                    href={`/vacancies?page=${page - 1}`}
+                    href={buildPageLink(page - 1)}
                     className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
                   >
                     Назад
@@ -75,7 +96,7 @@ export default async function VacanciesPage({ searchParams }: PageProps) {
                 </span>
                 {page < totalPages && (
                   <a
-                    href={`/vacancies?page=${page + 1}`}
+                    href={buildPageLink(page + 1)}
                     className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
                   >
                     Вперёд

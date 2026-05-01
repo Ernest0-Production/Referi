@@ -67,7 +67,7 @@ jobs:
               docker compose -f docker-compose.prod.yml pull app
             DOCKER_IMAGE=ghcr.io/${{ github.repository }}:latest \
               docker compose -f docker-compose.prod.yml up -d --no-build
-            docker compose -f docker-compose.prod.yml exec -T app npx prisma migrate deploy
+            docker compose -f docker-compose.prod.yml exec -T app npm run db:migrate:deploy
             docker image prune -f
 
   e2e:
@@ -90,7 +90,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
+        run: npm run playwright:install
 
       - name: Run E2E tests
         run: npm run test:e2e

@@ -37,6 +37,8 @@ interface Props {
 export function VacancyFilters({ currentParams }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState(currentParams.query ?? "");
+  const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
+  const [salaryTo, setSalaryTo] = useState(currentParams.salaryTo ?? "");
 
   function apply(updates: Record<string, string | undefined>) {
     const merged = { ...currentParams, ...updates, page: "1" };
@@ -61,6 +63,18 @@ export function VacancyFilters({ currentParams }: Props) {
             className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-600">Сортировка</label>
+        <select
+          value={currentParams.sort ?? "created_desc"}
+          onChange={(e) => apply({ sort: e.target.value || "created_desc" })}
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        >
+          <option value="created_desc">Сначала новые</option>
+          <option value="salary_desc">По зарплате (убыв.)</option>
+        </select>
       </div>
 
       <div>
@@ -109,6 +123,30 @@ export function VacancyFilters({ currentParams }: Props) {
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-600">Зарплата (RUB)</label>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            min={0}
+            value={salaryFrom}
+            onChange={(e) => setSalaryFrom(e.target.value)}
+            onBlur={() => apply({ salaryFrom: salaryFrom || undefined })}
+            placeholder="От"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          />
+          <input
+            type="number"
+            min={0}
+            value={salaryTo}
+            onChange={(e) => setSalaryTo(e.target.value)}
+            onBlur={() => apply({ salaryTo: salaryTo || undefined })}
+            placeholder="До"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          />
+        </div>
       </div>
 
       <button

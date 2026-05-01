@@ -29,8 +29,6 @@ export const BUSINESS_RULES = {
   PRO_SUBSCRIPTION_PRICE_KOP: BigInt(499_00), // 499 ₽/month
   PLATFORM_COMMISSION_RATE: 0.1, // 10%
 
-  // Registration fee for GitHub accounts < 1 year old
-  // ~50 000 ₽ equivalent of $500 at April 2026 exchange rate
   REGISTRATION_FEE_KOP: BigInt(50_000_00),
 
   // GitHub account age requirement (days)

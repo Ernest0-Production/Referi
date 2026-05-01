@@ -1,7 +1,5 @@
 /**
- * PaymentProvider abstraction — spec/spec-data-payments-escrow.md
- * First implementation: YookassaPaymentProvider (Phase 4)
- * Testing: MockPaymentProvider
+ * PaymentProvider — обычные платежи ЮKassa + безопасная сделка (Safe deal) для эскроу по заявкам.
  */
 
 export interface CreatePaymentOptions {
@@ -11,6 +9,7 @@ export interface CreatePaymentOptions {
   metadata: Record<string, string>;
   capture: boolean;
   returnUrl: string;
+  savePaymentMethod?: boolean;
 }
 
 export interface CreatePaymentResult {
@@ -37,6 +36,11 @@ export interface RefundResult {
   status: "succeeded" | "pending";
 }
 
+export interface RefundDealOptions extends RefundOptions {
+  dealId: string;
+  refundSettlementKopecks: bigint;
+}
+
 export interface PayoutOptions {
   idempotencyKey: string;
   amountKopecks: bigint;
@@ -50,26 +54,64 @@ export interface PayoutResult {
   status: "pending" | "succeeded";
 }
 
+export interface CreateSafeDealOptions {
+  idempotencyKey: string;
+  description: string;
+  metadata: Record<string, string>;
+}
+
+export interface CreateSafeDealResult {
+  dealId: string;
+}
+
+export interface CreateDealPaymentOptions {
+  idempotencyKey: string;
+  dealId: string;
+  amountKopecks: bigint;
+  payoutSettlementKopecks: bigint;
+  description: string;
+  metadata: Record<string, string>;
+  returnUrl: string;
+}
+
+export interface CreateDealPayoutOptions {
+  idempotencyKey: string;
+  dealId: string;
+  amountKopecks: bigint;
+  description: string;
+  yooMoneyWallet: string;
+  metadata: Record<string, string>;
+}
+
 export type PaymentStatus = "pending" | "waiting_for_capture" | "succeeded" | "canceled";
 
 export interface PaymentProvider {
   createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult>;
   capturePayment(options: CaptureOptions): Promise<void>;
   refundPayment(options: RefundOptions): Promise<RefundResult>;
+  refundDealPayment(options: RefundDealOptions): Promise<RefundResult>;
   createPayout(options: PayoutOptions): Promise<PayoutResult>;
+  createSafeDeal(options: CreateSafeDealOptions): Promise<CreateSafeDealResult>;
+  createDealPayment(options: CreateDealPaymentOptions): Promise<CreatePaymentResult>;
+  createDealPayout(options: CreateDealPayoutOptions): Promise<PayoutResult>;
   getPaymentStatus(paymentId: string): Promise<PaymentStatus>;
 }
 
-// ─────────────────────────────────────────────
-// MockPaymentProvider — for tests and development
-// ─────────────────────────────────────────────
+function kopecksToAmountString(kopecks: bigint): string {
+  return (Number(kopecks) / 100).toFixed(2);
+}
 
 const mockStorage = new Map<string, { status: PaymentStatus }>();
+const mockDeals = new Map<string, { id: string }>();
 
 export class MockPaymentProvider implements PaymentProvider {
   async createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult> {
-    const paymentId = `mock_${options.idempotencyKey}`;
-    mockStorage.set(paymentId, { status: "waiting_for_capture" });
+    const paymentId =
+      options.metadata.type === "subscription" && options.metadata.userId
+        ? `mock_sub:${options.metadata.userId}:${options.idempotencyKey}`
+        : `mock_${options.idempotencyKey}`;
+    const status: PaymentStatus = options.capture ? "succeeded" : "waiting_for_capture";
+    mockStorage.set(paymentId, { status });
     return {
       paymentId,
       confirmationUrl: `http://localhost:3000/pay/mock?paymentId=${paymentId}`,
@@ -89,9 +131,36 @@ export class MockPaymentProvider implements PaymentProvider {
     };
   }
 
+  async refundDealPayment(options: RefundDealOptions): Promise<RefundResult> {
+    return this.refundPayment(options);
+  }
+
   async createPayout(options: PayoutOptions): Promise<PayoutResult> {
     return {
       payoutId: `payout_${options.idempotencyKey}`,
+      status: "succeeded",
+    };
+  }
+
+  async createSafeDeal(options: CreateSafeDealOptions): Promise<CreateSafeDealResult> {
+    const dealId = `mock_deal_${options.idempotencyKey}`;
+    mockDeals.set(dealId, { id: dealId });
+    return { dealId };
+  }
+
+  async createDealPayment(options: CreateDealPaymentOptions): Promise<CreatePaymentResult> {
+    const paymentId = `mock_${options.idempotencyKey}`;
+    mockStorage.set(paymentId, { status: "waiting_for_capture" });
+    return {
+      paymentId,
+      confirmationUrl: `http://localhost:3000/pay/mock?paymentId=${paymentId}`,
+      status: "pending",
+    };
+  }
+
+  async createDealPayout(options: CreateDealPayoutOptions): Promise<PayoutResult> {
+    return {
+      payoutId: `payout_deal_${options.idempotencyKey}`,
       status: "succeeded",
     };
   }
@@ -100,10 +169,6 @@ export class MockPaymentProvider implements PaymentProvider {
     return mockStorage.get(paymentId)?.status ?? "pending";
   }
 }
-
-// ─────────────────────────────────────────────
-// YookassaPaymentProvider — real implementation
-// ─────────────────────────────────────────────
 
 export class YookassaPaymentProvider implements PaymentProvider {
   private readonly baseUrl = "https://api.yookassa.ru/v3";
@@ -147,7 +212,22 @@ export class YookassaPaymentProvider implements PaymentProvider {
     return res.json() as Promise<T>;
   }
 
-  async createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult> {
+  async createSafeDeal(options: CreateSafeDealOptions): Promise<CreateSafeDealResult> {
+    const response = await this.request<{ id: string }>(
+      "/deals",
+      "POST",
+      {
+        type: "safe_deal",
+        fee_moment: "payment_succeeded",
+        description: options.description,
+        metadata: options.metadata,
+      },
+      options.idempotencyKey,
+    );
+    return { dealId: response.id };
+  }
+
+  async createDealPayment(options: CreateDealPaymentOptions): Promise<CreatePaymentResult> {
     const response = await this.request<{
       id: string;
       confirmation: { confirmation_url: string };
@@ -156,16 +236,116 @@ export class YookassaPaymentProvider implements PaymentProvider {
       "POST",
       {
         amount: {
-          value: (Number(options.amountKopecks) / 100).toFixed(2),
+          value: kopecksToAmountString(options.amountKopecks),
           currency: "RUB",
         },
-        capture: options.capture,
+        capture: true,
         confirmation: { type: "redirect", return_url: options.returnUrl },
         description: options.description,
         metadata: options.metadata,
+        deal: {
+          id: options.dealId,
+          settlements: [
+            {
+              type: "payout",
+              amount: {
+                value: kopecksToAmountString(options.payoutSettlementKopecks),
+                currency: "RUB",
+              },
+            },
+          ],
+        },
       },
       options.idempotencyKey,
     );
+
+    return {
+      paymentId: response.id,
+      confirmationUrl: response.confirmation.confirmation_url,
+      status: "pending",
+    };
+  }
+
+  async createDealPayout(options: CreateDealPayoutOptions): Promise<PayoutResult> {
+    const response = await this.request<{ id: string; status: string }>(
+      "/payouts",
+      "POST",
+      {
+        amount: {
+          value: kopecksToAmountString(options.amountKopecks),
+          currency: "RUB",
+        },
+        payout_destination_data: {
+          type: "yoo_money",
+          account_number: options.yooMoneyWallet,
+        },
+        description: options.description,
+        metadata: options.metadata,
+        deal: {
+          id: options.dealId,
+        },
+      },
+      options.idempotencyKey,
+    );
+
+    return {
+      payoutId: response.id,
+      status: response.status === "succeeded" ? "succeeded" : "pending",
+    };
+  }
+
+  async refundDealPayment(options: RefundDealOptions): Promise<RefundResult> {
+    const response = await this.request<{ id: string; status: string }>(
+      "/refunds",
+      "POST",
+      {
+        payment_id: options.paymentId,
+        amount: {
+          value: kopecksToAmountString(options.amountKopecks),
+          currency: "RUB",
+        },
+        description: options.description,
+        deal: {
+          id: options.dealId,
+          refund_settlements: [
+            {
+              type: "payout",
+              amount: {
+                value: kopecksToAmountString(options.refundSettlementKopecks),
+                currency: "RUB",
+              },
+            },
+          ],
+        },
+      },
+      options.idempotencyKey,
+    );
+
+    return {
+      refundId: response.id,
+      status: response.status === "succeeded" ? "succeeded" : "pending",
+    };
+  }
+
+  async createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult> {
+    const body: Record<string, unknown> = {
+      amount: {
+        value: kopecksToAmountString(options.amountKopecks),
+        currency: "RUB",
+      },
+      capture: options.capture,
+      confirmation: { type: "redirect", return_url: options.returnUrl },
+      description: options.description,
+      metadata: options.metadata,
+    };
+    if (options.savePaymentMethod) {
+      body.save_payment_method = true;
+    }
+
+    const response = await this.request<{
+      id: string;
+      confirmation: { confirmation_url: string };
+    }>("/payments", "POST", body, options.idempotencyKey);
 
     return {
       paymentId: response.id,
@@ -180,7 +360,7 @@ export class YookassaPaymentProvider implements PaymentProvider {
       "POST",
       {
         amount: {
-          value: (Number(options.amountKopecks) / 100).toFixed(2),
+          value: kopecksToAmountString(options.amountKopecks),
           currency: "RUB",
         },
       },
@@ -195,7 +375,7 @@ export class YookassaPaymentProvider implements PaymentProvider {
       {
         payment_id: options.paymentId,
         amount: {
-          value: (Number(options.amountKopecks) / 100).toFixed(2),
+          value: kopecksToAmountString(options.amountKopecks),
           currency: "RUB",
         },
         description: options.description,
@@ -215,7 +395,7 @@ export class YookassaPaymentProvider implements PaymentProvider {
       "POST",
       {
         amount: {
-          value: (Number(options.amountKopecks) / 100).toFixed(2),
+          value: kopecksToAmountString(options.amountKopecks),
           currency: "RUB",
         },
         payout_destination_data: {
@@ -248,3 +428,32 @@ export function createPaymentProvider(): PaymentProvider {
 }
 
 export const paymentProvider = createPaymentProvider();
+
+export async function refundEscrowOrThrow(params: {
+  idempotencyKey: string;
+  escrow: {
+    yookassaPaymentId: string;
+    yookassaDealId: string | null;
+    amountKopecks: bigint;
+    netPayoutKopecks: bigint;
+  };
+  description: string;
+}): Promise<RefundResult> {
+  const { escrow } = params;
+  if (escrow.yookassaDealId) {
+    return paymentProvider.refundDealPayment({
+      idempotencyKey: params.idempotencyKey,
+      paymentId: escrow.yookassaPaymentId,
+      amountKopecks: escrow.amountKopecks,
+      description: params.description,
+      dealId: escrow.yookassaDealId,
+      refundSettlementKopecks: escrow.netPayoutKopecks,
+    });
+  }
+  return paymentProvider.refundPayment({
+    idempotencyKey: params.idempotencyKey,
+    paymentId: escrow.yookassaPaymentId,
+    amountKopecks: escrow.amountKopecks,
+    description: params.description,
+  });
+}

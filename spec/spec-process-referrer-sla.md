@@ -84,8 +84,8 @@ export const BUSINESS_RULES = {
   PRO_SUBSCRIPTION_PRICE_KOP:  499_00,  // 499 ₽/мес
   PLATFORM_COMMISSION_RATE:    0.10,    // 10%
 
-  // Регистрационный сбор (в копейках, фиксируется на момент релиза)
-  REGISTRATION_FEE_KOP:        50_000_00, // ~50 000 ₽ (эквивалент $500 на апрель 2026)
+  // Регистрационный сбор (в копейках, фиксированная сумма в коде)
+  REGISTRATION_FEE_KOP:        50_000_00, // 50 000 ₽, фиксированная сумма в бизнес-правилах
 
   // GitHub age requirement
   GITHUB_ACCOUNT_MIN_AGE_DAYS: 365,

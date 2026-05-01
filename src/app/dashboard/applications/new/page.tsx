@@ -4,19 +4,20 @@ import { trpc } from "@/trpc/server";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
 
 interface PageProps {
-  searchParams: Promise<{ vacancyId?: string }>;
+  searchParams: Promise<{ vacancyId?: string; paidTokenId?: string }>;
 }
 
 export default async function NewApplicationPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const { vacancyId } = await searchParams;
+  const { vacancyId, paidTokenId } = await searchParams;
   if (!vacancyId) notFound();
 
   let vacancy;
   try {
-    vacancy = await trpc.vacancies.getById({ id: vacancyId });
+    const [v, me] = await Promise.all([trpc.vacancies.getById({ id: vacancyId }), trpc.auth.me()]);
+    vacancy = { ...v, me };
   } catch {
     notFound();
   }
@@ -41,7 +42,12 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
         </div>
 
         <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <SubmitApplicationForm vacancyId={vacancyId} />
+          <SubmitApplicationForm
+            vacancyId={vacancyId}
+            paidTokenId={paidTokenId}
+            defaultContactInfo={vacancy.me.contactInfo ?? ""}
+            defaultBio={vacancy.me.bio ?? ""}
+          />
         </div>
       </div>
     </main>

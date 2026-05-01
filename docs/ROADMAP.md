@@ -159,13 +159,13 @@ flowchart LR
 | ----------------------------------------- | ------- | ------------------------------------------------------ |
 | `YookassaPaymentProvider`                 | `[PAY]` | Реализация `PaymentProvider`; целевой объём — API Safe deal + Payments |
 | `payments.initiateEscrow` mutation        | `[PAY]` | Старт оплаты соискателя по заявке; `confirmationUrl` / `paymentId`              |
-| Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация HMAC; обработка событий платежа/сделки     |
+| Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация Basic Auth (`shopId:secretKey`); диспетчеризация по `metadata.type` |
 | `paymentWorker`                           | `[PAY]` | BullMQ обработчик webhook-событий; идемпотентность     |
 | Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)   |
 | `refundPayment` при всех refund-переходах | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator |
 | `payments.addPayoutCard` (бэклог)         | `[PAY]` | Отдельная tRPC-процедура не реализована; выплаты — воркер + `User.yookassaPayoutDestination` |
-| `payments.buyApplicationToken` (бэклог)   | `[PAY]` | Отдельная покупка токена не в API; есть `paidTokenId?` в `applications.submit` + модель `PaidApplicationToken` |
-| `PaidApplicationToken` использование      | `[PAY]` | При submit с токеном — лимит не проверяется            |
+| `payments.initiatePaidApplicationToken`   | `[PAY]` | Покупка разового токена отклика через Payments API |
+| `PaidApplicationToken` использование      | `[PAY]` | При submit с токеном (`paidTokenId`) бесплатный лимит не проверяется |
 | `subscriptions.initiatePro`               | `[PAY]` | Подписка PRO (499 ₽/мес); платёж ЮКасса                |
 | `subscriptions.cancel`                    | `[PAY]` | Отмена подписки                                        |
 | `subscriptions.me`                        | `[PAY]` | Текущий статус подписки                                |
@@ -232,8 +232,8 @@ flowchart LR
 | `moderation.*` роутеры                    | `[MOD]` | Все процедуры из spec-design-api (resolve, abuse reports) |
 | Admin-панель `/admin`                     | `[MOD]` | Список споров + жалоб + кнопки разрешения                 |
 | `reports.submitAbuseReport`               | `[MOD]` | tRPC mutation + уведомление модераторам                   |
-| Команды бота `/dispute`, `/resolve_*`     | `[MOD]` | Модераторские команды (MVP: только текстовые)             |
-| `moderation.resolveForReferrer`           | `[MOD]` | capture + payout → закрыть `ModeratorCase`                |
+| Команды бота `/dispute`, `/resolve_*`     | `[MOD]` | Модераторские текстовые команды в чате (без inline-кнопок) |
+| `moderation.resolveForReferrer`           | `[MOD]` | постановка выплаты по Safe deal (воркер) → закрыть `ModeratorCase` |
 | `moderation.resolveForSeeker`             | `[MOD]` | refund → закрыть `ModeratorCase`                          |
 | Страница `/dashboard/applications/[id]`   | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                 |
 | Блокировка пользователя / вакансии        | `[MOD]` | `moderation.blockUser`; вакансия — флаг `blockVacancy` в `moderation.resolveAbuseReport` |

@@ -92,6 +92,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   displayName String
+  contactInfo String?  @db.VarChar(500)
+  bio         String?  @db.VarChar(1000)
+  email       String?  @db.VarChar(320)
   roles       UserRole[]
 
   yookassaPayoutDestination String?
@@ -338,7 +341,8 @@ model EscrowTransaction {
 
   status              EscrowStatus @default(HELD)
 
-  // Идентификаторы в ЮKassa (платёж / возврат / выплата исполнителю в Safe deal)
+  // Идентификаторы в ЮKassa (сделка / платёж / возврат / выплата исполнителю)
+  yookassaDealId      String?  @unique  // ID сделки Safe deal
   yookassaPaymentId   String?  @unique  // ID платежа заказчика
   yookassaRefundId    String?  @unique  // ID возврата заказчику
   yookassaPayoutId    String?  @unique  // ID выплаты исполнителю
@@ -362,6 +366,7 @@ model PaidApplicationToken {
   amountKopecks      BigInt   // Стоимость на момент покупки
   yookassaPaymentId  String?  @unique
   expiresAt          DateTime
+  paidAt             DateTime?  // Подтверждение оплаты webhook-ом
   usedAt             DateTime?  // NULL = не использован
   refundedAt         DateTime?  // Возврат при удалении вакансии
 
@@ -369,7 +374,7 @@ model PaidApplicationToken {
   @@map("paid_application_tokens")
 }
 
-// Платёжная транзакция для разовой оплаты регистрации ($500 equiv)
+// Платёжная транзакция для разовой оплаты регистрации (сумма = REGISTRATION_FEE_KOP)
 model RegistrationPayment {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String   @db.Uuid
