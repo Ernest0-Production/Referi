@@ -4,6 +4,8 @@ import {
   applyEscrowPaymentSucceeded,
   applyRegistrationPaymentSucceeded,
   applySubscriptionPaymentSucceeded,
+  applySubscriptionRenewalSucceeded,
+  applySubscriptionRenewalCanceled,
   applyPaidTokenPaymentSucceeded,
 } from "@/server/services/yookassaWebhookHandlers";
 
@@ -75,7 +77,22 @@ async function processWebhookEvent(event: YookassaWebhookEvent) {
       if (metaType === "subscription") {
         const userId = object.metadata?.userId;
         if (userId) {
-          await applySubscriptionPaymentSucceeded(userId, object.payment_method?.id ?? null);
+          await applySubscriptionPaymentSucceeded(
+            userId,
+            object.payment_method?.id ?? null,
+            paymentId,
+          );
+        }
+        return;
+      }
+      if (metaType === "subscription_renewal") {
+        const userId = object.metadata?.userId;
+        if (userId) {
+          await applySubscriptionRenewalSucceeded(
+            userId,
+            paymentId,
+            object.payment_method?.id ?? null,
+          );
         }
         return;
       }
@@ -110,6 +127,13 @@ async function processWebhookEvent(event: YookassaWebhookEvent) {
     }
 
     if (eventName === "payment.canceled") {
+      if (metaType === "subscription_renewal") {
+        const userId = object.metadata?.userId;
+        if (userId) {
+          await applySubscriptionRenewalCanceled(userId);
+        }
+        return;
+      }
       if (metaType === "escrow" || !metaType) {
         await handleEscrowPaymentCanceled(paymentId);
       }

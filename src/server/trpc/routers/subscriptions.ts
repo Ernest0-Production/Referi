@@ -19,6 +19,7 @@ export const subscriptionsRouter = router({
       status: sub.status,
       currentPeriodStart: sub.currentPeriodStart,
       currentPeriodEnd: sub.currentPeriodEnd,
+      autoRenewEnabled: sub.status === "ACTIVE",
     };
   }),
 
@@ -31,7 +32,11 @@ export const subscriptionsRouter = router({
       const existing = await ctx.db.seekerSubscription.findUnique({
         where: { userId: ctx.userId },
       });
-      if (existing?.status === "ACTIVE") {
+      const now = new Date();
+      if (
+        existing?.status === "ACTIVE" &&
+        existing.currentPeriodEnd > now
+      ) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "SUBSCRIPTION_ALREADY_ACTIVE",
@@ -61,7 +66,8 @@ export const subscriptionsRouter = router({
     }),
 
   /**
-   * Cancel active PRO subscription (won't renew after currentPeriodEnd).
+   * Cancel active PRO subscription (immediate downgrade to free tier for new applications;
+   * saved payment method stops being used for autopayment).
    */
   cancel: protectedProcedure.mutation(async ({ ctx }) => {
     const sub = await ctx.db.seekerSubscription.findUnique({

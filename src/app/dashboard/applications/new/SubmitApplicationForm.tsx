@@ -83,7 +83,7 @@ export function SubmitApplicationForm({
           value={form.contactInfo}
           onChange={(e) => setForm((f) => ({ ...f, contactInfo: e.target.value }))}
           className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="email, Telegram или LinkedIn"
+          placeholder="мессенджер, email или ссылка"
         />
         <p className="mt-0.5 text-xs text-gray-400">
           Видно реферальщику только в активных статусах заявки

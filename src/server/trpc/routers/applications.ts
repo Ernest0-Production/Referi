@@ -317,35 +317,6 @@ export const applicationsRouter = router({
 
       void cancelSLAJob(`company-decision-sla:${input.applicationId}`);
 
-      // Notify moderators via Telegram (fire-and-forget)
-      void (async () => {
-        try {
-          const { telegramService } = await import("@/server/services/telegramService");
-          const { telegramMessages } = await import("@/shared/telegram/messages");
-          const referrer = await ctx.db.user.findUnique({
-            where: { id: ctx.userId },
-            select: { displayName: true },
-          });
-          const moderatorCase = await ctx.db.moderatorCase.findFirst({
-            where: { applicationId: input.applicationId },
-            select: { id: true },
-            orderBy: { createdAt: "desc" },
-          });
-          if (moderatorCase) {
-            await telegramService.sendMessage({
-              chatId: process.env.TELEGRAM_MODERATOR_CHAT_ID ?? "",
-              text: telegramMessages.newDispute({
-                caseId: moderatorCase.id,
-                appId: input.applicationId,
-                referrerName: referrer?.displayName ?? ctx.userId,
-              }),
-            });
-          }
-        } catch (err) {
-          console.error("[Telegram] Failed to notify moderators of dispute:", err);
-        }
-      })();
-
       return { status: "DISPUTED" as const };
     }),
 

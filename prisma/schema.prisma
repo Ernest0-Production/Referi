@@ -40,7 +40,6 @@ model User {
   vacancies           Vacancy[]                @relation("ReferrerVacancies")
   referrerSanctions   ReferrerSanction[]
   attemptLedger       ReferrerAttemptLedger[]
-  telegramLink        TelegramLink?
   moderatorCases      ModeratorCase[]          @relation("ModeratorCases")
   abuseReportsFrom    AbuseReport[]            @relation("ReporterAbuseReports")
 
@@ -65,7 +64,7 @@ model GitHubProfile {
 
 model SeekerSubscription {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @unique @db.Uuid
+  userId    String     @unique @db.Uuid
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -73,6 +72,8 @@ model SeekerSubscription {
   currentPeriodStart      DateTime
   currentPeriodEnd        DateTime
   yookassaPaymentMethodId String?
+
+  subscriptionPayments SubscriptionPayment[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -83,6 +84,24 @@ enum SubscriptionStatus {
   ACTIVE
   CANCELLED
   PAST_DUE
+}
+
+enum SubscriptionPaymentKind {
+  INITIAL
+  RENEWAL
+}
+
+model SubscriptionPayment {
+  id                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String                  @db.Uuid
+  yookassaPaymentId   String                  @unique
+  kind                SubscriptionPaymentKind
+  createdAt           DateTime                @default(now())
+
+  seekerSubscription SeekerSubscription @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("subscription_payments")
 }
 
 // ─────────────────────────────────────────────
@@ -376,36 +395,6 @@ model AbuseReport {
   vacancy  Vacancy? @relation(fields: [vacancyId], references: [id])
 
   @@map("abuse_reports")
-}
-
-// ─────────────────────────────────────────────
-// TELEGRAM CONTEXT
-// ─────────────────────────────────────────────
-
-model TelegramLink {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @unique @db.Uuid
-  createdAt DateTime @default(now())
-
-  telegramUserId   BigInt @unique
-  telegramUsername String?
-  chatId           BigInt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("telegram_links")
-}
-
-model TelegramLinkToken {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @db.Uuid
-  createdAt DateTime @default(now())
-
-  token     String   @unique
-  expiresAt DateTime
-
-  @@index([token])
-  @@map("telegram_link_tokens")
 }
 
 // ─────────────────────────────────────────────

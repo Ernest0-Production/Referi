@@ -54,6 +54,7 @@ tags: schema, data, infrastructure
 - **CON-001**: Файлы резюме не хранятся. Поле типа `file`, `bytes`, `blob` в схеме запрещено.
 - **CON-002**: Пароли не хранятся (аутентификация только через GitHub OAuth).
 - **SEC-001**: Поле `SeekerSubscription.yookassaPaymentMethodId` хранит только ссылочный идентификатор ЮКассы; не хранит данные карты.
+- **SEC-002**: `SubscriptionPayment.yookassaPaymentId` — уникальный идентификатор успешного платежа в ЮKassa; дубли вебхуков не создают повторных начислений периода.
 - **GUD-001**: Названия таблиц в snake_case (PostgreSQL convention), модели Prisma в PascalCase.
 - **GUD-002**: Внешние ключи всегда именуются `{relation}Id`.
 
@@ -105,7 +106,6 @@ model User {
   vacancies           Vacancy[]              @relation("ReferrerVacancies")
   referrerSanctions   ReferrerSanction[]
   attemptLedger       ReferrerAttemptLedger[]
-  telegramLink        TelegramLink?
   moderatorCases      ModeratorCase[]        @relation("ModeratorCases")
   abuseReportsFrom    AbuseReport[]          @relation("ReporterAbuseReports")
 
@@ -140,9 +140,29 @@ model SeekerSubscription {
   // Ссылочный ID платёжного метода в ЮКассе (не данные карты)
   yookassaPaymentMethodId String?
 
+  subscriptionPayments SubscriptionPayment[]
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("seeker_subscriptions")
+}
+
+enum SubscriptionPaymentKind {
+  INITIAL
+  RENEWAL
+}
+
+model SubscriptionPayment {
+  id                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String                  @db.Uuid
+  yookassaPaymentId   String                  @unique
+  kind                SubscriptionPaymentKind
+  createdAt           DateTime                @default(now())
+
+  seekerSubscription SeekerSubscription @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("subscription_payments")
 }
 
 enum SubscriptionStatus {
@@ -310,7 +330,7 @@ model ApplicationContent {
   id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   applicationId String @unique @db.Uuid
 
-  contactInfo   String  @db.VarChar(500)   // Telegram handle / email / ссылка
+  contactInfo   String  @db.VarChar(500)   // ник в мессенджере, email, ссылка
   bio           String  @db.VarChar(1000)  // Краткая биография
   coverLetter   String? @db.VarChar(300)   // Сопроводительное письмо (опционально)
 
@@ -457,36 +477,6 @@ model AbuseReport {
   vacancy  Vacancy? @relation(fields: [vacancyId], references: [id])
 
   @@map("abuse_reports")
-}
-
-// ─────────────────────────────────────────────
-// TELEGRAM CONTEXT
-// ─────────────────────────────────────────────
-
-model TelegramLink {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @unique @db.Uuid
-  createdAt DateTime @default(now())
-
-  telegramUserId   BigInt  @unique  // Telegram user_id (числовой)
-  telegramUsername String?          // @username (может отсутствовать)
-  chatId           BigInt           // ID чата для отправки сообщений
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("telegram_links")
-}
-
-model TelegramLinkToken {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @db.Uuid
-  createdAt DateTime @default(now())
-
-  token     String   @unique
-  expiresAt DateTime
-
-  @@index([token])
-  @@map("telegram_link_tokens")
 }
 
 // ─────────────────────────────────────────────

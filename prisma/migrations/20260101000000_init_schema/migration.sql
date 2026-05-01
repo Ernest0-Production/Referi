@@ -8,6 +8,8 @@ CREATE TYPE "UserRole" AS ENUM ('SEEKER', 'REFERRER', 'MODERATOR', 'ADMIN');
 CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELLED', 'PAST_DUE');
 
 -- CreateEnum
+CREATE TYPE "SubscriptionPaymentKind" AS ENUM ('INITIAL', 'RENEWAL');
+-- CreateEnum
 CREATE TYPE "VacancyStatus" AS ENUM ('ACTIVE', 'FROZEN', 'BLOCKED', 'DELETED', 'CLOSED');
 
 -- CreateEnum
@@ -83,6 +85,15 @@ CREATE TABLE "seeker_subscriptions" (
     CONSTRAINT "seeker_subscriptions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "subscription_payments" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid (),
+    "userId" UUID NOT NULL,
+    "yookassaPaymentId" TEXT NOT NULL,
+    "kind" "SubscriptionPaymentKind" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "subscription_payments_pkey" PRIMARY KEY ("id")
+);
 -- CreateTable
 CREATE TABLE "vacancies" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -238,29 +249,6 @@ CREATE TABLE "abuse_reports" (
 );
 
 -- CreateTable
-CREATE TABLE "telegram_links" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "userId" UUID NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "telegramUserId" BIGINT NOT NULL,
-    "telegramUsername" TEXT,
-    "chatId" BIGINT NOT NULL,
-
-    CONSTRAINT "telegram_links_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "telegram_link_tokens" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "userId" UUID NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "token" TEXT NOT NULL,
-    "expiresAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "telegram_link_tokens_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "audit_logs" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "applicationId" UUID NOT NULL,
@@ -283,6 +271,11 @@ CREATE UNIQUE INDEX "github_profiles_githubId_key" ON "github_profiles"("githubI
 -- CreateIndex
 CREATE UNIQUE INDEX "seeker_subscriptions_userId_key" ON "seeker_subscriptions"("userId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "subscription_payments_yookassaPaymentId_key" ON "subscription_payments" ("yookassaPaymentId");
+
+-- CreateIndex
+CREATE INDEX "subscription_payments_userId_idx" ON "subscription_payments" ("userId");
 -- CreateIndex
 CREATE INDEX "vacancies_status_specialty_grade_workFormat_idx" ON "vacancies"("status", "specialty", "grade", "workFormat");
 
@@ -334,18 +327,6 @@ CREATE INDEX "referrer_sanctions_referrerId_expiresAt_idx" ON "referrer_sanction
 CREATE UNIQUE INDEX "moderator_cases_applicationId_key" ON "moderator_cases"("applicationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "telegram_links_userId_key" ON "telegram_links"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "telegram_links_telegramUserId_key" ON "telegram_links"("telegramUserId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "telegram_link_tokens_token_key" ON "telegram_link_tokens"("token");
-
--- CreateIndex
-CREATE INDEX "telegram_link_tokens_token_idx" ON "telegram_link_tokens"("token");
-
--- CreateIndex
 CREATE INDEX "audit_logs_applicationId_createdAt_idx" ON "audit_logs"("applicationId", "createdAt");
 
 -- AddForeignKey
@@ -354,6 +335,9 @@ ALTER TABLE "github_profiles" ADD CONSTRAINT "github_profiles_userId_fkey" FOREI
 -- AddForeignKey
 ALTER TABLE "seeker_subscriptions" ADD CONSTRAINT "seeker_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- AddForeignKey
+ALTER TABLE "subscription_payments"
+ADD CONSTRAINT "subscription_payments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "seeker_subscriptions" ("userId") ON DELETE CASCADE ON UPDATE CASCADE;
 -- AddForeignKey
 ALTER TABLE "vacancies" ADD CONSTRAINT "vacancies_referrerId_fkey" FOREIGN KEY ("referrerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -386,9 +370,6 @@ ALTER TABLE "abuse_reports" ADD CONSTRAINT "abuse_reports_reporterId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "abuse_reports" ADD CONSTRAINT "abuse_reports_vacancyId_fkey" FOREIGN KEY ("vacancyId") REFERENCES "vacancies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "telegram_links" ADD CONSTRAINT "telegram_links_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_applicationId_fkey" FOREIGN KEY ("applicationId") REFERENCES "applications"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

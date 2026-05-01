@@ -54,7 +54,7 @@ tags: architecture, infrastructure, design, app
 - **CON-001**: Хранение файлов резюме запрещено. Сервис хранит только текстовые данные (контакты, биография, cover letter).
 - **CON-002**: Карточные данные пользователей никогда не поступают на серверы Referi (только через ЮКасса hosted fields / redirect).
 - **CON-003**: Максимальное время ответа API на запросы ленты вакансий — 500 мс при нагрузке 100 rps.
-- **SEC-001**: Все inter-service вебхуки должны верифицироваться по подписи (HMAC для ЮКасса, secret token для Telegram).
+- **SEC-001**: Входящий вебхук ЮKassa верифицируется (Basic Auth при реальных платежах; см. [`src/app/api/webhooks/yookassa/route.ts`](../src/app/api/webhooks/yookassa/route.ts)).
 - **SEC-002**: Контактная информация соискателя должна быть доступна только авторизованному реферальщику данной вакансии, и только если заявка находится в активном статусе (не `cancelled`, не `rejected*`, не `refunded*`).
 - **GUD-001**: Новые модули должны следовать структуре директорий, описанной в разделе 4.
 - **PAT-001**: Паттерн Repository — вынесен в `src/server/repositories/*.ts` для повторяющихся запросов; роутеры и команды могут использовать Prisma напрямую там, где слой репозитория ещё не введён.
@@ -78,8 +78,7 @@ referi/
 │   │       ├── trpc/[trpc]/route.ts # tRPC handler
 │   │       ├── auth/[...nextauth]/  # Auth.js handler
 │   │       ├── webhooks/
-│   │       │   ├── yookassa/        # POST /api/webhooks/yookassa
-│   │       │   └── telegram/        # POST /api/webhooks/telegram
+│   │       │   └── yookassa/        # POST /api/webhooks/yookassa
 │   │       └── cron/                # Служебные endpoints для Railway Cron
 │   ├── server/
 │   │   ├── trpc/                    # tRPC router definitions
@@ -106,7 +105,6 @@ referi/
 │   │   │   └── submitApplication.ts
 │   │   ├── services/
 │   │   │   ├── paymentService.ts    # Абстракция PaymentProvider
-│   │   │   ├── telegramService.ts   # Отправка сообщений в Telegram
 │   │   │   ├── emailService.ts      # SMTP-отправка
 │   │   │   └── githubService.ts     # GitHub REST (age-check)
 │   │   └── workers/                 # BullMQ jobs
@@ -161,7 +159,7 @@ flowchart TB
     pD[EscrowTransaction, PaymentProvider, hold capture refund payout]
   end
   subgraph modC[Moderation context]
-    mD[ModeratorCase, AbuseReport, TelegramNotification]
+    mD[ModeratorCase, AbuseReport]
     mCmd[openDispute, resolveDispute, blockUser]
   end
   subgraph audC[Audit context]
@@ -184,14 +182,14 @@ sequenceDiagram
   participant R as applications.submit
   participant AR as applicationRepository
   participant AL as auditLogRepository
-  participant T as telegramService
+  participant E as emailService
   B->>H: POST /api/trpc/applications.submit
   H->>H: validateSession(ctx)
   H->>R: invoke
   R->>R: лимит заявок, vacancy ACTIVE, валидация контента
   R->>AR: create(data)
   R->>AL: append(submitted, seekerId)
-  R-->>T: notifyReferrer (async)
+  R-->>E: notifyReferrer by email async when FEATURE_EMAIL
   R-->>B: applicationId, status submitted
 ```
 
@@ -272,8 +270,8 @@ flowchart TB
 ### Third-Party Services
 - **SVC-001**: ЮKassa **безопасная сделка (Safe deal)** — сделки между заказчиком и исполнителем, удержание, [возвраты](https://yookassa.ru/developers/solutions-for-platforms/safe-deal/integration/refunds), выплата исполнителю; обычные платежи — через Payments API. SLA ответа API ≤ 3 с.
 - **SVC-002**: ЮKassa Payouts API — выплаты на карты и поддерживаемые способы в составе сделки и отдельные сценарии.
-- **SVC-003**: Telegram Bot API — отправка сообщений, получение команд от модераторов, приём жалоб.
-- **SVC-004**: SMTP-провайдер (Mailgun / SendPulse) — транзакционные email-уведомления.
+- **SVC-003**: SMTP-провайдер (Mailgun / SendPulse) — транзакционные email-уведомления.
+- **SVC-004**: Публичная ссылка контакта модерации (`NEXT_PUBLIC_MODERATION_CONTACT_URL`) — только клиентский UI, без серверной интеграции с мессенджерами; см. [spec-moderation-contact.md](spec-moderation-contact.md).
 
 ### Infrastructure Dependencies
 - **INF-001**: PostgreSQL 16 — основная реляционная БД.
@@ -365,4 +363,4 @@ export async function confirmReferralIntent(
 - [spec-data-payments-escrow.md](spec-data-payments-escrow.md) — платежи и безопасная сделка ЮKassa
 - [spec-design-api.md](spec-design-api.md) — API контракты
 - [spec-tool-github-auth.md](spec-tool-github-auth.md) — GitHub OAuth
-- [spec-tool-telegram-bot.md](spec-tool-telegram-bot.md) — Telegram-бот
+- [spec-moderation-contact.md](spec-moderation-contact.md) — контакт модерации в UI

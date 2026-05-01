@@ -10,8 +10,6 @@ import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { refundEscrowOrThrow } from "@/server/services/paymentService";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
-import { telegramService } from "@/server/services/telegramService";
-import { telegramMessages } from "@/shared/telegram/messages";
 
 export type SLAJobType =
   | "reaction-sla"
@@ -299,12 +297,12 @@ async function handleCompanyDecisionSLA(applicationId: string) {
   });
   if (existingCase) return;
 
-  const moderatorCase = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.application.update({
       where: { id: applicationId },
       data: { status: "DISPUTED", companyDecisionDeadline: null },
     });
-    const mc = await tx.moderatorCase.create({
+    await tx.moderatorCase.create({
       data: { applicationId },
     });
     await tx.auditLog.create({
@@ -316,29 +314,8 @@ async function handleCompanyDecisionSLA(applicationId: string) {
         metadata: { reason: "company_decision_sla_expired" },
       },
     });
-    return mc;
   });
-
-  void (async () => {
-    try {
-      const ref = await prisma.user.findUnique({
-        where: { id: app.vacancy.referrerId },
-        select: { displayName: true },
-      });
-      await telegramService.sendMessage({
-        chatId: process.env.TELEGRAM_MODERATOR_CHAT_ID ?? "",
-        text: telegramMessages.newDispute({
-          caseId: moderatorCase.id,
-          appId: applicationId,
-          referrerName: ref?.displayName ?? app.vacancy.referrerId,
-        }),
-      });
-    } catch (e) {
-      console.error("[SLA] company-decision: telegram failed", e);
-    }
-  })();
 }
-
 async function handleCancelAckSLA(applicationId: string) {
   const app = await prisma.application.findUnique({
     where: { id: applicationId },

@@ -3,6 +3,7 @@ import {
   applyEscrowPaymentSucceeded,
   applyRegistrationPaymentSucceeded,
   applySubscriptionPaymentSucceeded,
+  applySubscriptionRenewalSucceeded,
   applyPaidTokenPaymentSucceeded,
 } from "@/server/services/yookassaWebhookHandlers";
 import { prisma } from "@/lib/prisma";
@@ -27,8 +28,17 @@ export async function POST(request: Request) {
     const parts = paymentId.split(":");
     const userId = parts[1];
     if (userId) {
-      await applySubscriptionPaymentSucceeded(userId, null);
+      await applySubscriptionPaymentSucceeded(userId, null, paymentId);
       return NextResponse.json({ ok: true, type: "subscription" as const });
+    }
+  }
+
+  if (paymentId.startsWith("mock_sub_renew:")) {
+    const parts = paymentId.split(":");
+    const userId = parts[1];
+    if (userId) {
+      await applySubscriptionRenewalSucceeded(userId, paymentId, null);
+      return NextResponse.json({ ok: true, type: "subscription_renewal" as const });
     }
   }
 

@@ -18,6 +18,19 @@ export interface CreatePaymentResult {
   status: "pending";
 }
 
+export interface CreatePaymentWithSavedMethodOptions {
+  idempotencyKey: string;
+  amountKopecks: bigint;
+  description: string;
+  metadata: Record<string, string>;
+  paymentMethodId: string;
+}
+
+export interface CreatePaymentWithSavedMethodResult {
+  paymentId: string;
+  status: PaymentStatus;
+}
+
 export interface CaptureOptions {
   idempotencyKey: string;
   paymentId: string;
@@ -87,6 +100,9 @@ export type PaymentStatus = "pending" | "waiting_for_capture" | "succeeded" | "c
 
 export interface PaymentProvider {
   createPayment(options: CreatePaymentOptions): Promise<CreatePaymentResult>;
+  createPaymentWithSavedMethod(
+    options: CreatePaymentWithSavedMethodOptions,
+  ): Promise<CreatePaymentWithSavedMethodResult>;
   capturePayment(options: CaptureOptions): Promise<void>;
   refundPayment(options: RefundOptions): Promise<RefundResult>;
   refundDealPayment(options: RefundDealOptions): Promise<RefundResult>;
@@ -117,6 +133,15 @@ export class MockPaymentProvider implements PaymentProvider {
       confirmationUrl: `http://localhost:3000/pay/mock?paymentId=${paymentId}`,
       status: "pending",
     };
+  }
+
+  async createPaymentWithSavedMethod(
+    options: CreatePaymentWithSavedMethodOptions,
+  ): Promise<CreatePaymentWithSavedMethodResult> {
+    const uid = options.metadata.userId ?? "unknown";
+    const paymentId = `mock_sub_renew:${uid}:${options.idempotencyKey}`;
+    mockStorage.set(paymentId, { status: "succeeded" });
+    return { paymentId, status: "succeeded" };
   }
 
   async capturePayment(options: CaptureOptions): Promise<void> {
@@ -351,6 +376,33 @@ export class YookassaPaymentProvider implements PaymentProvider {
       paymentId: response.id,
       confirmationUrl: response.confirmation.confirmation_url,
       status: "pending",
+    };
+  }
+
+  async createPaymentWithSavedMethod(
+    options: CreatePaymentWithSavedMethodOptions,
+  ): Promise<CreatePaymentWithSavedMethodResult> {
+    const body = {
+      amount: {
+        value: kopecksToAmountString(options.amountKopecks),
+        currency: "RUB",
+      },
+      capture: true,
+      payment_method_id: options.paymentMethodId,
+      description: options.description,
+      metadata: options.metadata,
+    };
+
+    const response = await this.request<{ id: string; status: string }>(
+      "/payments",
+      "POST",
+      body,
+      options.idempotencyKey,
+    );
+
+    return {
+      paymentId: response.id,
+      status: response.status as PaymentStatus,
     };
   }
 

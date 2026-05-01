@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
+import { ModerationContactLink } from "@/components/ModerationContactLink";
 
 interface Props {
   applicationId: string;
@@ -14,6 +15,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
   const [abuseReason, setAbuseReason] = useState("");
   const [showAbuse, setShowAbuse] = useState(false);
   const [abuseError, setAbuseError] = useState<string | null>(null);
+  const [abuseSuccess, setAbuseSuccess] = useState(false);
 
   function onSuccess() {
     router.refresh();
@@ -27,8 +29,10 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
   });
   const abuseReportMutation = trpcReact.reports.submitAbuseReport.useMutation({
     onSuccess() {
+      setAbuseSuccess(true);
       setShowAbuse(false);
       setAbuseReason("");
+      setAbuseError(null);
     },
     onError(err) {
       setAbuseError(err.message);
@@ -81,13 +85,26 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
 
         {!["CANCELLED", "REJECTED_BY_REFERRER", "OFFER_ACCEPTED"].includes(status) && (
           <button
-            onClick={() => setShowAbuse((v) => !v)}
+            onClick={() => {
+              setShowAbuse((v) => !v);
+              setAbuseSuccess(false);
+            }}
             className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
           >
             Пожаловаться
           </button>
         )}
       </div>
+
+      {abuseSuccess && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-gray-700">
+          <p className="font-medium text-green-900">Жалоба зарегистрирована.</p>
+          <p className="mt-1 text-xs">При необходимости уточнений можно связаться с модерацией по ссылке ниже.</p>
+          <div className="mt-2">
+            <ModerationContactLink />
+          </div>
+        </div>
+      )}
 
       {showAbuse && (
         <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">

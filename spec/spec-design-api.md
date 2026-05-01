@@ -86,10 +86,9 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 
 | Процедура                          | Тип      | Auth   | Входные данные                             | Описание                                      |
 | ---------------------------------- | -------- | ------ | ------------------------------------------ | --------------------------------------------- |
-| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + профиль (контакты/bio/email) + роли + подписка + `availableAttempts` |
+| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + профиль + роли; объект `subscription` (если есть): период, статус, `autoRenewEnabled` для автопродления при `ACTIVE`; `availableAttempts` |
 | `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo?, bio?, roles? }` | Обновить профиль пользователя                     |
 | `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                               | Создать платёж за регистрацию (молодой GitHub); сумма — `BUSINESS_RULES.REGISTRATION_FEE_KOP`; `confirmationUrl` |
-| `auth.generateTelegramLinkToken`   | mutation | isAuth | —                                          | Одноразовый токен привязки Telegram; `deepLink`, `expiresAt` |
 
 ### 4.3 Router: `vacancies`
 
@@ -158,9 +157,9 @@ type VacancyListItem = {
 
 | Процедура                   | Тип      | Auth   | Входные данные | Описание                                            |
 | --------------------------- | -------- | ------ | -------------- | --------------------------------------------------- |
-| `subscriptions.me`          | query    | isAuth | —              | Текущая подписка соискателя (период, статус)        |
-| `subscriptions.initiatePro` | mutation | isAuth | —              | Оплата подписки «Соискатель PRO»; `confirmationUrl` |
-| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить активную подписку                          |
+| `subscriptions.me`          | query    | isAuth | —              | Текущая подписка (период, статус, `autoRenewEnabled` — автопродление для статуса `ACTIVE`) |
+| `subscriptions.initiatePro` | mutation | isAuth | —              | Оплата подписки «Соискатель PRO»; `confirmationUrl` (блокируется, если уже есть активный оплаченный период) |
+| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить подписку PRO (лимит откликов 2 для новых заявок; автоплатежи прекращаются)                          |
 
 ### 4.7 Router: `moderation` (только MODERATOR / ADMIN)
 
@@ -185,19 +184,13 @@ type VacancyListItem = {
 | Путь                      | Метод    | Описание                             |
 | ------------------------- | -------- | ------------------------------------ |
 | `/api/webhooks/yookassa`  | POST     | Входящие события ЮKassa (платежи, сделки) |
-| `/api/webhooks/telegram`  | POST     | Входящие обновления Telegram Bot API |
 | `/api/auth/[...nextauth]` | GET/POST | Auth.js handler                      |
 
 **Верификация `/api/webhooks/yookassa`**:
 ```
 Header: Authorization: Basic {base64(shopId:secretKey)}
 или
-Проверка HMAC-SHA256 тела запроса с секретом
-```
-
-**Верификация `/api/webhooks/telegram`**:
-```
-Header: X-Telegram-Bot-Api-Secret-Token: {TELEGRAM_WEBHOOK_SECRET}
+Проверка HMAC-SHA256 тела запроса с секретом (альтернатива в спецификации провайдера).
 ```
 
 ### 4.10 Rate Limits
@@ -213,9 +206,9 @@ Header: X-Telegram-Bot-Api-Secret-Token: {TELEGRAM_WEBHOOK_SECRET}
 
 Отдельных лимитов на `applications.submit` и `reports.submitAbuseReport` в коде нет.
 
-| Вебхуки          | Политика                                                                            |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| ЮKassa, Telegram | Не проходят через общий tRPC rate-limit handler; защита — Basic Auth / secret token |
+| Вебхуки | Политика                                                             |
+| ------- | -------------------------------------------------------------------- |
+| ЮKassa  | Не проходит через общий tRPC rate-limit handler; защита — Basic Auth |
 
 ---
 
@@ -316,4 +309,4 @@ const t = initTRPC.context<Context>().create({
 - [spec-process-application-lifecycle.md](spec-process-application-lifecycle.md)
 - [spec-data-payments-escrow.md](spec-data-payments-escrow.md)
 - [spec-tool-github-auth.md](spec-tool-github-auth.md)
-- [spec-tool-telegram-bot.md](spec-tool-telegram-bot.md)
+- [spec-moderation-contact.md](spec-moderation-contact.md) — публичная ссылка контакта модерации в UI

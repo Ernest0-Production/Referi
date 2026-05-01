@@ -1,44 +1,19 @@
 /**
- * Payment Worker — эскроу Safe deal (выплата), возвраты, проверка регистрации.
+ * Payment Worker — эскроу Safe deal (выплата), возвраты, проверка регистрации, продление PRO.
  */
 
-import { Queue, Worker, type Job } from "bullmq";
+import { randomUUID } from "crypto";
+import { Worker, type Job } from "bullmq";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentService";
+import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { getPaymentQueue, type PaymentJobData } from "@/server/workers/paymentQueue";
+import {
+  scheduleSubscriptionRenewRetry,
+} from "@/server/workers/subscriptionRenewalScheduler";
 
-export type PaymentJobType =
-  | "offer-accepted"
-  | "refund-seeker"
-  | "registration-payment-check"
-  | "refund-paid-token";
-
-export interface PaymentJobData {
-  type: PaymentJobType;
-  applicationId?: string;
-  userId?: string;
-  yookassaPaymentId?: string;
-  amountKopecks?: string;
-  idempotencyKey: string;
-  tokenId?: string;
-}
-
-let _paymentQueue: Queue<PaymentJobData> | null = null;
-
-function getPaymentQueue() {
-  if (!_paymentQueue) {
-    _paymentQueue = new Queue<PaymentJobData>("payments", {
-      connection: redis,
-      defaultJobOptions: {
-        removeOnComplete: { count: 200 },
-        removeOnFail: { count: 100 },
-        attempts: 5,
-        backoff: { type: "exponential", delay: 3000 },
-      },
-    });
-  }
-  return _paymentQueue;
-}
+export type { PaymentJobData, PaymentJobType } from "@/server/workers/paymentQueue";
 
 async function getReferrerPayoutDestination(referrerId: string): Promise<string> {
   const u = await prisma.user.findUnique({
@@ -232,6 +207,110 @@ async function processJob(job: Job<PaymentJobData>) {
           },
           data: { paidAt: new Date() },
         });
+      }
+      break;
+    }
+
+    case "subscription-renewal": {
+      const userId = job.data.userId;
+      const periodEndMs = job.data.periodEndMs;
+      if (!userId || periodEndMs === undefined) {
+        throw new Error("subscription-renewal: missing params");
+      }
+
+      const sub = await prisma.seekerSubscription.findUnique({ where: { userId } });
+      if (!sub || sub.status === "CANCELLED") return;
+      if (sub.status !== "ACTIVE") return;
+
+      const tol = BUSINESS_RULES.SUBSCRIPTION_RENEWAL_ANCHOR_TOLERANCE_MS;
+      if (Math.abs(sub.currentPeriodEnd.getTime() - periodEndMs) > tol) {
+        console.log(`[paymentWorker] subscription-renewal: stale anchor for ${userId}`);
+        return;
+      }
+
+      const pm = sub.yookassaPaymentMethodId?.trim();
+      if (!pm) {
+        await prisma.seekerSubscription.update({
+          where: { userId },
+          data: { status: "PAST_DUE" },
+        });
+        await scheduleSubscriptionRenewRetry(userId, 1);
+        return;
+      }
+
+      try {
+        const chargeKey = randomUUID();
+        const result = await paymentProvider.createPaymentWithSavedMethod({
+          idempotencyKey: chargeKey,
+          amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,
+          description: "Продление Referi PRO на 1 месяц",
+          metadata: { userId, type: "subscription_renewal" },
+          paymentMethodId: pm,
+        });
+
+        if (process.env.FEATURE_REAL_PAYMENTS !== "true") {
+          const st = await paymentProvider.getPaymentStatus(result.paymentId);
+          if (st === "succeeded") {
+            const { applySubscriptionRenewalSucceeded } = await import(
+              "@/server/services/yookassaWebhookHandlers"
+            );
+            await applySubscriptionRenewalSucceeded(userId, result.paymentId, pm);
+          }
+        }
+      } catch (err) {
+        console.error("[paymentWorker] subscription-renewal charge failed", err);
+        await prisma.seekerSubscription.update({
+          where: { userId },
+          data: { status: "PAST_DUE" },
+        });
+        await scheduleSubscriptionRenewRetry(userId, 1);
+      }
+      break;
+    }
+
+    case "subscription-renew-retry": {
+      const userId = job.data.userId;
+      const attempt = job.data.attempt ?? 1;
+      if (!userId) throw new Error("subscription-renew-retry: missing userId");
+
+      const sub = await prisma.seekerSubscription.findUnique({ where: { userId } });
+      if (!sub || sub.status === "CANCELLED") return;
+      if (sub.status === "ACTIVE" && sub.currentPeriodEnd.getTime() > Date.now()) {
+        return;
+      }
+
+      const pm = sub.yookassaPaymentMethodId?.trim();
+      if (!pm) {
+        if (attempt < BUSINESS_RULES.SUBSCRIPTION_RETRY_MAX_ATTEMPTS) {
+          await scheduleSubscriptionRenewRetry(userId, attempt + 1);
+        }
+        return;
+      }
+
+      try {
+        const chargeKey = randomUUID();
+        const result = await paymentProvider.createPaymentWithSavedMethod({
+          idempotencyKey: chargeKey,
+          amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,
+          description: "Продление Referi PRO на 1 месяц",
+          metadata: { userId, type: "subscription_renewal" },
+          paymentMethodId: pm,
+        });
+
+        if (process.env.FEATURE_REAL_PAYMENTS !== "true") {
+          const st = await paymentProvider.getPaymentStatus(result.paymentId);
+          if (st === "succeeded") {
+            const { applySubscriptionRenewalSucceeded } = await import(
+              "@/server/services/yookassaWebhookHandlers"
+            );
+            await applySubscriptionRenewalSucceeded(userId, result.paymentId, pm);
+          }
+        }
+      } catch (err) {
+        console.error("[paymentWorker] subscription-renew-retry charge failed", err);
+        if (attempt < BUSINESS_RULES.SUBSCRIPTION_RETRY_MAX_ATTEMPTS) {
+          await scheduleSubscriptionRenewRetry(userId, attempt + 1);
+        }
       }
       break;
     }

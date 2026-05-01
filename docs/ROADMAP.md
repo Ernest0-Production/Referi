@@ -66,7 +66,6 @@ flowchart LR
 | Страница `/login`                  | `[CORE]` | Кнопка «Войти через GitHub», обработка ошибок                |
 | Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                             |
 | `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC **public** mutation `{ userId }`; ЮКасса / MockPaymentProvider |
-| `auth.generateTelegramLinkToken`   | `[MOD]`  | Deep-link привязки Telegram (`TelegramLinkToken`)              |
 | Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`              |
 | Профиль пользователя               | `[CORE]` | Страница `/dashboard/profile`; `auth.updateProfile` mutation |
 | Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                    |
@@ -160,16 +159,16 @@ flowchart LR
 | `YookassaPaymentProvider`                 | `[PAY]` | Реализация `PaymentProvider`; целевой объём — API Safe deal + Payments |
 | `payments.initiateEscrow` mutation        | `[PAY]` | Старт оплаты соискателя по заявке; `confirmationUrl` / `paymentId`              |
 | Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация Basic Auth (`shopId:secretKey`); диспетчеризация по `metadata.type` |
-| `paymentWorker`                           | `[PAY]` | BullMQ обработчик webhook-событий; идемпотентность     |
+| `paymentWorker`                           | `[PAY]` | BullMQ: выплаты по сделке, возвраты, продление PRO (`subscription-renewal`, `subscription-renew-retry`) |
 | Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)   |
 | `refundPayment` при всех refund-переходах | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator |
 | `payments.addPayoutCard` (бэклог)         | `[PAY]` | Отдельная tRPC-процедура не реализована; выплаты — воркер + `User.yookassaPayoutDestination` |
 | `payments.initiatePaidApplicationToken`   | `[PAY]` | Покупка разового токена отклика через Payments API |
 | `PaidApplicationToken` использование      | `[PAY]` | При submit с токеном (`paidTokenId`) бесплатный лимит не проверяется |
-| `subscriptions.initiatePro`               | `[PAY]` | Подписка PRO (499 ₽/мес); платёж ЮКасса                |
-| `subscriptions.cancel`                    | `[PAY]` | Отмена подписки                                        |
-| `subscriptions.me`                        | `[PAY]` | Текущий статус подписки                                |
-| Лимит 5 откликов с PRO                    | `[PAY]` | Guard в `applications.submit` проверяет подписку       |
+| `subscriptions.initiatePro`               | `[PAY]` | Подписка PRO (499 ₽/мес); первый платёж через ЮКасса + сохранение метода; автопродление через автоплатежи (`subscription_renewal`) и джобы очереди |
+| `subscriptions.cancel`                    | `[PAY]` | Отмена PRO; автосписания прекращаются                                       |
+| `subscriptions.me`                        | `[PAY]` | Статус подписки, `autoRenewEnabled`                                         |
+| Лимит 5 откликов с PRO                    | `[PAY]` | Guard в `applications.submit`: PRO при `ACTIVE` и неистёкшем `currentPeriodEnd` (`subscriptionGrantsProFeatures`) |
 | Polling fallback                          | `[PAY]` | BullMQ job если webhook не пришёл за 5 мин             |
 | `calculateCommission`                     | `[PAY]` | Утилита + unit-тесты на граничные значения             |
 | Страница оплаты (`/pay/[applicationId]`)  | `[PAY]` | Редирект на ЮКасса + обратный редирект                 |
@@ -216,35 +215,28 @@ flowchart LR
 
 ---
 
-## Phase 6 — Disputes, Moderation & Telegram Bot
+## Phase 6 — Disputes & Moderation
 
-**Цель**: модераторы могут разрешать споры; жалобы принимаются и обрабатываются.
+**Цель**: модераторы разрешают споры и жалобы через admin-панель; пользователи при необходимости связываются с модерацией по публичной ссылке (`NEXT_PUBLIC_MODERATION_CONTACT_URL`).
 
 ### Deliverables
 
 | Задача                                    | Флаг    | Описание                                                  |
 | ----------------------------------------- | ------- | --------------------------------------------------------- |
-| `TelegramService` + `setWebhook`          | `[MOD]` | Интеграция Telegram Bot API                               |
-| Webhook `/api/webhooks/telegram`          | `[MOD]` | Верификация + очередь обработки                           |
-| Команды бота `/link`, `/start`, `/status` | `[MOD]` | Привязка Telegram к аккаунту Referi                       |
-| Уведомления модераторам о спорах          | `[MOD]` | При переходе в `DISPUTED`                                 |
-| Уведомления пользователям                 | `[MOD]` | По всем ключевым событиям (таблица 4.6 из spec-telegram)  |
-| `moderation.*` роутеры                    | `[MOD]` | Все процедуры из spec-design-api (resolve, abuse reports) |
+| `moderation.*` роутеры                    | `[MOD]` | Процедуры из spec-design-api (resolve, abuse reports)    |
 | Admin-панель `/admin`                     | `[MOD]` | Список споров + жалоб + кнопки разрешения                 |
-| `reports.submitAbuseReport`               | `[MOD]` | tRPC mutation + уведомление модераторам                   |
-| Команды бота `/dispute`, `/resolve_*`     | `[MOD]` | Модераторские текстовые команды в чате (без inline-кнопок) |
+| `reports.submitAbuseReport`               | `[MOD]` | tRPC mutation; запись `AbuseReport`                       |
 | `moderation.resolveForReferrer`           | `[MOD]` | постановка выплаты по Safe deal (воркер) → закрыть `ModeratorCase` |
 | `moderation.resolveForSeeker`             | `[MOD]` | refund → закрыть `ModeratorCase`                          |
 | Страница `/dashboard/applications/[id]`   | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                 |
 | Блокировка пользователя / вакансии        | `[MOD]` | `moderation.blockUser`; вакансия — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
+| UI контакта модерации                     | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` после жалобы и в настройках |
 
 ### Definition of Done
 
-- [ ] Webhook `/api/webhooks/telegram` без секрета возвращает 401
-- [ ] `/link {token}` в боте создаёт `TelegramLink`; пользователь получает подтверждение
-- [ ] При создании спора модераторы получают уведомление с командами разрешения
+- [ ] Спор в статусе `DISPUTED` виден модератору в admin-панели
 - [ ] Модератор через admin-панель разрешает спор → деньги уходят корректной стороне
-- [ ] Жалоба отправленная через UI поступает в `TELEGRAM_MODERATOR_CHAT_ID`
+- [ ] Жалоба из UI сохраняется и отображается модераторам в admin-панели
 
 ---
 
@@ -260,7 +252,7 @@ flowchart LR
 | Email-шаблоны                  | `[CORE]` | HTML-письма (React Email или MJML)                                 |
 | Rate limiting (tRPC)           | `[CORE]` | `FEATURE_RATE_LIMITING` + Redis в `src/lib/rateLimiter.ts`, проверка в `src/app/api/trpc/[trpc]/route.ts` (см. spec-design-api §4.10) |
 | Полировка UI                   | `[CORE]` | Адаптивность, accessibility (Lighthouse ≥ 95), темизация           |
-| Страница настроек пользователя | `[CORE]` | Профиль, подписка, карта для выплат, привязка Telegram             |
+| Страница настроек пользователя | `[CORE]` | Профиль, подписка; опционально блок «Связь с модерацией» по `NEXT_PUBLIC_MODERATION_CONTACT_URL` |
 | Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                      |
 | Дашборд реферальщика           | `[CORE]` | Вакансия, список кандидатов, пул попыток                           |
 | E2E-тесты Playwright           | `[CORE]` | Сценарии: регистрация, создание вакансии, полный цикл заявки, спор |
@@ -285,8 +277,7 @@ flowchart LR
 
 | Фича                              | Описание                                                              |
 | --------------------------------- | --------------------------------------------------------------------- |
-| Telegram-уведомления по умолчанию | Уведомления в Telegram для всех пользователей (не только с привязкой) |
-| Inline Keyboard в спорах          | Кнопки в Telegram вместо текстовых команд                             |
+| Push-уведомления / доп. каналы    | По продуктовому решению (email, сторонние сервисы)                     |
 | Базовый антифрод                  | Детектор аномального поведения (множество откликов с одного IP)       |
 | Расширенная аналитика             | Дашборд для реферальщика: конверсия, среднее время цикла              |
 | Уведомления о дедлайнах           | Напоминания соискателю/реферальщику за 24 часа до дедлайна            |
@@ -309,7 +300,6 @@ flowchart LR
 ```typescript
 export const FEATURE_FLAGS = {
   REAL_PAYMENTS: process.env.FEATURE_REAL_PAYMENTS === "true",
-  TELEGRAM: process.env.FEATURE_TELEGRAM === "true",
   EMAIL: process.env.FEATURE_EMAIL === "true",
   RATE_LIMITING: process.env.FEATURE_RATE_LIMITING === "true",
 } as const;

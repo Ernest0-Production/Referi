@@ -1,6 +1,14 @@
-import type { PrismaClient, ApplicationStatus } from "@prisma/client";
+import type { PrismaClient, ApplicationStatus, SubscriptionStatus } from "@prisma/client";
 import { ACTIVE_STATUSES, REFERRER_ACTIVE_REVIEW_STATUSES } from "@/shared/types/applicationStatus";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+
+export function subscriptionGrantsProFeatures(sub: {
+  status: SubscriptionStatus;
+  currentPeriodEnd: Date;
+}): boolean {
+  const now = new Date();
+  return sub.status === "ACTIVE" && sub.currentPeriodEnd > now;
+}
 
 export function createApplicationRepository(db: PrismaClient) {
   async function findByIdForUpdate(id: string) {
@@ -30,7 +38,7 @@ export function createApplicationRepository(db: PrismaClient) {
     const subscription = await db.seekerSubscription.findUnique({
       where: { userId: seekerId },
     });
-    if (subscription?.status === "ACTIVE") {
+    if (subscription && subscriptionGrantsProFeatures(subscription)) {
       return BUSINESS_RULES.PRO_ACTIVE_APPLICATIONS;
     }
     return BUSINESS_RULES.FREE_ACTIVE_APPLICATIONS;

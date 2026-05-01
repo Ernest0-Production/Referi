@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
+import { ModerationContactLink } from "@/components/ModerationContactLink";
 
 const REASONS = [
   { value: "FAKE_VACANCY", label: "Подозрение в фейковой вакансии" },
@@ -18,7 +19,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
 
   const submit = trpcReact.reports.submitAbuseReport.useMutation({
     onSuccess() {
-      setMsg("Жалоба отправлена модераторам.");
+      setMsg("registered");
       setOpen(false);
       setComment("");
     },
@@ -37,7 +38,13 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
         >
           Пожаловаться на вакансию
         </button>
-        {msg && <p className="mt-2 text-xs text-gray-600">{msg}</p>}
+        {msg === "registered" && (
+          <div className="mt-2 space-y-2 text-xs text-gray-600">
+            <p>Жалоба зарегистрирована. Модераторы увидят её в системе.</p>
+            <ModerationContactLink />
+          </div>
+        )}
+        {msg && msg !== "registered" && <p className="mt-2 text-xs text-gray-600">{msg}</p>}
       </div>
     );
   }
@@ -82,7 +89,13 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
           Отмена
         </button>
       </div>
-      {msg && <p className="text-xs text-red-600">{msg}</p>}
+      {msg === "registered" && (
+        <div className="space-y-2 text-xs text-gray-600">
+          <p>Жалоба зарегистрирована.</p>
+          <ModerationContactLink />
+        </div>
+      )}
+      {msg && msg !== "registered" && <p className="text-xs text-red-600">{msg}</p>}
     </div>
   );
 }

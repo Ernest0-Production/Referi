@@ -96,7 +96,7 @@ export function UpdateProfileForm({
 
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-600">
-          Контактная информация (Telegram / email / ссылка)
+          Контактная информация (мессенджер, email, ссылка)
         </label>
         <input
           type="text"
@@ -104,7 +104,7 @@ export function UpdateProfileForm({
           onChange={(e) => setContactInfo(e.target.value)}
           maxLength={500}
           className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="@telegram / email / ссылка"
+          placeholder="@username / email / ссылка"
         />
       </div>
 

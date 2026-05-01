@@ -115,4 +115,19 @@ export const emailTemplates = {
       <p>Выплата в размере <b>${data.amountRub} ₽</b> инициирована на вашу карту.</p>
     `,
   }),
+
+  seekerRequestedCancel: (data: {
+    referrerName: string;
+    vacancyTitle: string;
+    seekerName: string;
+    deadlineMoscow: string;
+  }) => ({
+    subject: `Запрос отмены заявки — «${data.vacancyTitle}»`,
+    html: `
+      <h2>Запрос отмены от соискателя</h2>
+      <p>${data.referrerName}, соискатель <b>${data.seekerName}</b> запросил отмену по заявке на вакансию «<b>${data.vacancyTitle}</b>».</p>
+      <p>Срок для подтверждения или отклонения запроса (МСК): <b>${data.deadlineMoscow}</b>.</p>
+      <p>Откройте личный кабинет Referi, чтобы ответить.</p>
+    `,
+  }),
 };

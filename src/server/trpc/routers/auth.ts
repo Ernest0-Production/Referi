@@ -6,8 +6,6 @@ import { paymentProvider } from "@/server/services/paymentService";
 import type { UserRole } from "@prisma/client";
 import { randomUUID } from "crypto";
 
-const LINK_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
-
 export const authRouter = router({
   /** Current user + roles + attempt count */
   me: protectedProcedure.query(async ({ ctx }) => {
@@ -22,7 +20,7 @@ export const authRouter = router({
           },
         },
         seekerSubscription: {
-          select: { status: true, currentPeriodEnd: true },
+          select: { status: true, currentPeriodEnd: true, currentPeriodStart: true },
         },
       },
     });
@@ -62,7 +60,9 @@ export const authRouter = router({
       subscription: user.seekerSubscription
         ? {
             status: user.seekerSubscription.status,
+            currentPeriodStart: user.seekerSubscription.currentPeriodStart,
             currentPeriodEnd: user.seekerSubscription.currentPeriodEnd,
+            autoRenewEnabled: user.seekerSubscription.status === "ACTIVE",
           }
         : null,
       availableAttempts: Math.max(0, availableAttempts),
@@ -159,21 +159,4 @@ export const authRouter = router({
 
       return { confirmationUrl: payment.confirmationUrl };
     }),
-
-  /**
-   * Generate a one-time token used to link the user's Telegram account.
-   * Returns a deep-link URL: https://t.me/<BOT_USERNAME>?start=<token>
-   */
-  generateTelegramLinkToken: protectedProcedure.mutation(async ({ ctx }) => {
-    const token = randomUUID();
-    const expiresAt = new Date(Date.now() + LINK_TOKEN_TTL_MS);
-
-    await ctx.db.telegramLinkToken.create({
-      data: { userId: ctx.userId, token, expiresAt },
-    });
-
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? "referi_bot";
-    const deepLink = `https://t.me/${botUsername}?start=${token}`;
-    return { deepLink, token, expiresAt };
-  }),
 });

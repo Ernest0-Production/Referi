@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { router, moderatorProcedure, protectedProcedure } from "../trpc";
 import type { Prisma } from "@prisma/client";
 
-import { telegramService } from "@/server/services/telegramService";
 import { refundEscrowOrThrow } from "@/server/services/paymentService";
 import { scheduleOfferAcceptedPayout } from "@/server/workers/paymentWorker";
 
@@ -221,18 +220,6 @@ export const moderationRouter = router({
         });
       }
 
-      if (process.env.FEATURE_TELEGRAM === "true") {
-        const reporterLink = await ctx.db.telegramLink.findUnique({
-          where: { userId: report.reporterId },
-        });
-        if (reporterLink) {
-          void telegramService.sendMessage({
-            chatId: reporterLink.chatId.toString(),
-            text: `Жалоба №${report.id} рассмотрена. Решение: ${input.resolution}`,
-          });
-        }
-      }
-
       return { success: true };
     }),
 
@@ -279,29 +266,6 @@ export const reportsRouter = router({
           vacancy: { select: { title: true } },
         },
       });
-
-      // Notify moderators via Telegram
-      const { telegramMessages } = await import("@/shared/telegram/messages");
-      void telegramService.sendMessage({
-        chatId: process.env.TELEGRAM_MODERATOR_CHAT_ID ?? "",
-        text: telegramMessages.newAbuseReport({
-          reportId: report.id,
-          reason: input.reason,
-          vacancyTitle: report.vacancy?.title,
-        }),
-      });
-
-      if (process.env.FEATURE_TELEGRAM === "true") {
-        const link = await ctx.db.telegramLink.findUnique({
-          where: { userId: ctx.userId },
-        });
-        if (link) {
-          void telegramService.sendMessage({
-            chatId: link.chatId.toString(),
-            text: `Жалоба №${report.id} принята. Решение модератора будет отправлено в этот чат.`,
-          });
-        }
-      }
 
       return { reportId: report.id };
     }),

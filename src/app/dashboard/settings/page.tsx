@@ -3,15 +3,15 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileForm } from "@/app/dashboard/profile/UpdateProfileForm";
-import { TelegramLinkSection } from "./TelegramLinkSection";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const userId = session.user.id;
+  const moderationContactUrl = process.env.NEXT_PUBLIC_MODERATION_CONTACT_URL?.trim() || null;
 
-  const [user, telegramLink, subscription] = await Promise.all([
+  const [user, subscription] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -21,10 +21,6 @@ export default async function SettingsPage() {
         bio: true,
         roles: true,
       },
-    }),
-    prisma.telegramLink.findUnique({
-      where: { userId },
-      select: { telegramUsername: true, createdAt: true },
     }),
     prisma.seekerSubscription.findUnique({
       where: { userId },
@@ -100,8 +96,22 @@ export default async function SettingsPage() {
           )}
         </section>
 
-        {/* Telegram section */}
-        <TelegramLinkSection telegramLink={telegramLink} />
+        {moderationContactUrl ? (
+          <section className="space-y-3 rounded-2xl border border-gray-100 bg-white p-6">
+            <h2 className="font-semibold text-gray-800">Связь с модерацией</h2>
+            <p className="text-sm text-gray-600">
+              Вопросы и дополнения к жалобам — через указанный контакт вне приложения.
+            </p>
+            <a
+              href={moderationContactUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex text-sm font-medium text-blue-600 hover:underline"
+            >
+              Открыть контакт модерации
+            </a>
+          </section>
+        ) : null}
 
         {/* Roles section */}
         <section className="space-y-2 rounded-2xl border border-gray-100 bg-white p-6">

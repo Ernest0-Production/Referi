@@ -51,25 +51,6 @@ test.describe("Authentication flow", () => {
 });
 
 test.describe("Webhook security", () => {
-  test("Telegram webhook returns 401 without secret token", async ({ request }) => {
-    const response = await request.post("/api/webhooks/telegram", {
-      data: { update_id: 1 },
-      headers: { "Content-Type": "application/json" },
-    });
-    expect(response.status()).toBe(401);
-  });
-
-  test("Telegram webhook returns 401 with wrong secret token", async ({ request }) => {
-    const response = await request.post("/api/webhooks/telegram", {
-      data: { update_id: 1 },
-      headers: {
-        "Content-Type": "application/json",
-        "X-Telegram-Bot-Api-Secret-Token": "wrong-secret",
-      },
-    });
-    expect(response.status()).toBe(401);
-  });
-
   test("Mock complete endpoint requires paymentId", async ({ request }) => {
     const response = await request.post("/api/pay/mock-complete", {
       data: {},

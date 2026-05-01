@@ -2,6 +2,10 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { cancelSLAJob, scheduleResumeHandoffSLA } from "@/server/workers/slaWorker";
+import {
+  scheduleSubscriptionRenewal,
+  scheduleSubscriptionRenewRetry,
+} from "@/server/workers/subscriptionRenewalScheduler";
 
 export async function applyEscrowPaymentSucceeded(yookassaPaymentId: string): Promise<void> {
   const escrow = await prisma.escrowTransaction.findFirst({
@@ -62,28 +66,113 @@ export async function applyRegistrationPaymentSucceeded(yookassaPaymentId: strin
 
 export async function applySubscriptionPaymentSucceeded(
   userId: string,
-  paymentMethodId?: string | null,
+  paymentMethodId: string | null | undefined,
+  yookassaPaymentId: string,
 ): Promise<void> {
-  const periodMs = 30 * 24 * 60 * 60 * 1000;
+  const dup = await prisma.subscriptionPayment.findUnique({
+    where: { yookassaPaymentId },
+  });
+  if (dup) return;
+
+  const periodMs = BUSINESS_RULES.SUBSCRIPTION_PERIOD_MS;
   const start = new Date();
   const end = new Date(Date.now() + periodMs);
 
-  await prisma.seekerSubscription.upsert({
-    where: { userId },
-    create: {
-      userId,
-      status: "ACTIVE",
-      currentPeriodStart: start,
-      currentPeriodEnd: end,
-      yookassaPaymentMethodId: paymentMethodId ?? undefined,
-    },
-    update: {
-      status: "ACTIVE",
-      currentPeriodStart: start,
-      currentPeriodEnd: end,
-      ...(paymentMethodId ? { yookassaPaymentMethodId: paymentMethodId } : {}),
-    },
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.seekerSubscription.upsert({
+      where: { userId },
+      create: {
+        userId,
+        status: "ACTIVE",
+        currentPeriodStart: start,
+        currentPeriodEnd: end,
+        yookassaPaymentMethodId:
+          paymentMethodId?.trim() ||
+          (process.env.FEATURE_REAL_PAYMENTS === "true" ? undefined : `mock_saved_pm:${userId}`),
+      },
+      update: {
+        status: "ACTIVE",
+        currentPeriodStart: start,
+        currentPeriodEnd: end,
+        ...(paymentMethodId?.trim()
+          ? { yookassaPaymentMethodId: paymentMethodId.trim() }
+          : {}),
+      },
+    });
+    await tx.subscriptionPayment.create({
+      data: {
+        userId,
+        yookassaPaymentId,
+        kind: "INITIAL",
+      },
+    });
   });
+
+  await scheduleSubscriptionRenewal(userId, end);
+}
+
+export async function applySubscriptionRenewalSucceeded(
+  userId: string,
+  yookassaPaymentId: string,
+  paymentMethodId: string | null | undefined,
+): Promise<void> {
+  const dup = await prisma.subscriptionPayment.findUnique({
+    where: { yookassaPaymentId },
+  });
+  if (dup) return;
+
+  const sub = await prisma.seekerSubscription.findUnique({
+    where: { userId },
+  });
+  if (!sub || sub.status === "CANCELLED") return;
+
+  const periodMs = BUSINESS_RULES.SUBSCRIPTION_PERIOD_MS;
+  const now = Date.now();
+
+  let newStart: Date;
+  let newEnd: Date;
+  if (sub.status === "PAST_DUE") {
+    newStart = new Date();
+    newEnd = new Date(now + periodMs);
+  } else {
+    newStart = sub.currentPeriodEnd;
+    newEnd = new Date(sub.currentPeriodEnd.getTime() + periodMs);
+  }
+
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.seekerSubscription.update({
+      where: { userId },
+      data: {
+        status: "ACTIVE",
+        currentPeriodStart: newStart,
+        currentPeriodEnd: newEnd,
+        ...(paymentMethodId ? { yookassaPaymentMethodId: paymentMethodId } : {}),
+      },
+    });
+    await tx.subscriptionPayment.create({
+      data: {
+        userId,
+        yookassaPaymentId,
+        kind: "RENEWAL",
+      },
+    });
+  });
+
+  await scheduleSubscriptionRenewal(userId, newEnd);
+}
+
+export async function applySubscriptionRenewalCanceled(userId: string): Promise<void> {
+  const sub = await prisma.seekerSubscription.findUnique({
+    where: { userId },
+  });
+  if (!sub || sub.status !== "ACTIVE") return;
+
+  await prisma.seekerSubscription.update({
+    where: { userId },
+    data: { status: "PAST_DUE" },
+  });
+
+  await scheduleSubscriptionRenewRetry(userId, 1);
 }
 
 export async function applyPaidTokenPaymentSucceeded(yookassaPaymentId: string): Promise<void> {

@@ -152,6 +152,30 @@ export interface PaymentProvider {
 }
 ```
 
+**Автоплатёж подписки PRO** (повторное списание по сохранённому методу ЮKassa): отдельный контракт и метод провайдера — см. реализацию в [`src/server/services/paymentService.ts`](../../src/server/services/paymentService.ts).
+
+```typescript
+type PaymentStatus = 'pending' | 'waiting_for_capture' | 'succeeded' | 'canceled';
+
+export interface CreatePaymentWithSavedMethodOptions {
+  idempotencyKey: string;
+  amountKopecks: bigint;
+  description: string;
+  metadata: Record<string, string>;
+  paymentMethodId: string;
+}
+
+export interface CreatePaymentWithSavedMethodResult {
+  paymentId: string;
+  status: PaymentStatus;
+}
+
+// Дополнение к PaymentProvider:
+createPaymentWithSavedMethod(
+  options: CreatePaymentWithSavedMethodOptions,
+): Promise<CreatePaymentWithSavedMethodResult>;
+```
+
 ### 4.2 Полный денежный поток (безопасная сделка)
 
 Пользовательский сценарий ЮKassa:
@@ -214,6 +238,13 @@ flowchart TD
 | `refund.succeeded`            | Возврат заказчику выполнен          | Обновить `EscrowTransaction.refundedAt`           |
 | `payout.succeeded`            | Выплата исполнителю выполнена       | Обновить `EscrowTransaction.payoutId` + уведомить |
 | `payout.canceled`             | Выплата не выполнена                | Создать retry job; уведомить модератора           |
+
+**Подписка «Соискатель PRO» (Payments API, не Safe deal)**:
+
+- Первый платёж: `metadata.type = subscription`, `metadata.userId`, при необходимости `save_payment_method`; после `payment.succeeded` создаётся/обновляется `SeekerSubscription`, строка `SubscriptionPayment` с `kind = INITIAL`, планируется джоб очереди `payments` с типом `subscription-renewal` на момент `currentPeriodEnd`.
+- Автопродление: платёж создаётся через API с `payment_method_id` (автоплатёж); `metadata.type = subscription_renewal`. Идемпотентность обработки успешного события — уникальный `yookassaPaymentId` в `subscription_payments`.
+- Отмена автосписания пользователем: статус `CANCELLED`, будущие автоплатежи не создаются.
+- Неуспех автоплатежа: `payment.canceled` при `metadata.type = subscription_renewal` → `PAST_DUE`, отложенные повторы через джоб `subscription-renew-retry` (константы в `src/shared/constants/businessRules.ts`).
 
 ### 4.4 Обработка webhook (псевдокод)
 
