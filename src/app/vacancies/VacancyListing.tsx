@@ -73,8 +73,8 @@ export async function VacancyListing({
       <PublicHeaderNav session={session} />
 
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-80 lg:self-start">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start">
+          <aside className="w-full shrink-0 md:sticky md:top-20 md:w-80 md:self-start">
             <VacancyFilters
               key={[
                 flat.query,
