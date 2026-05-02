@@ -50,6 +50,10 @@ export async function VacancyListing({
     excludeIds,
   });
 
+  const activeSeekerVacancyIds = session?.user?.id
+    ? new Set(await trpc.applications.activeVacancyIds())
+    : new Set<string>();
+
   let presets: { id: string; name: string; params: unknown }[] = [];
   if (session?.user?.id) {
     presets = await trpc.vacancySearchPresets.list();
@@ -90,7 +94,12 @@ export async function VacancyListing({
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col gap-6">
-            <VacancyListChrome currentParams={flat} listPath={listPath} total={total} />
+            <VacancyListChrome
+              key={`q:${flat.query ?? ""}|p:${flat.page ?? "1"}`}
+              currentParams={flat}
+              listPath={listPath}
+              total={total}
+            />
 
             {items.length === 0 ? (
               <div className="rounded-2xl border border-border bg-card p-8 text-center">
@@ -100,7 +109,11 @@ export async function VacancyListing({
             ) : (
               <div className="flex flex-col gap-3">
                 {items.map((vacancy) => (
-                  <VacancyCard key={vacancy.id} vacancy={vacancy} />
+                  <VacancyCard
+                    key={vacancy.id}
+                    vacancy={vacancy}
+                    hasActiveSeekerApplication={activeSeekerVacancyIds.has(vacancy.id)}
+                  />
                 ))}
               </div>
             )}

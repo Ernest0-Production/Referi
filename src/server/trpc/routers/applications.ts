@@ -23,6 +23,18 @@ function handleBusinessError(err: unknown): never {
 }
 
 export const applicationsRouter = router({
+  /** Vacancy ids where the current seeker has a non-terminal application (counts toward limits). */
+  activeVacancyIds: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.db.application.findMany({
+      where: {
+        seekerId: ctx.userId,
+        status: { in: ACTIVE_STATUSES },
+      },
+      select: { vacancyId: true },
+    });
+    return rows.map((r) => r.vacancyId);
+  }),
+
   submit: protectedProcedure
     .input(
       z.object({

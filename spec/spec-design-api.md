@@ -127,6 +127,7 @@ type VacancyListItem = {
 | `applications.cancel`            | mutation | isAuth | `{ applicationId }`                             | Отозвать отклик (SUBMITTED / AWAITING_PAYMENT)                      |
 | `applications.requestCancel`     | mutation | isAuth | `{ applicationId }`                             | Запросить отмену (AWAITING_RESUME_HANDOFF)                          |
 | `applications.myList`            | query    | isAuth | `{ status? }`                                   | Мои заявки как соискателя                                           |
+| `applications.activeVacancyIds` | query    | isAuth | —                                               | `vacancyId[]` с незавершёнными заявками текущего соискателя (лимиты) |
 | `applications.getById`           | query    | isAuth | `{ applicationId }`                             | Детали заявки (для соискателя или реферальщика)                     |
 | `applications.confirmIntent`     | mutation | isAuth | `{ applicationId }`                             | Реферальщик: подтвердить намерение рефералить                       |
 | `applications.reject`            | mutation | isAuth | `{ applicationId }`                             | Реферальщик: отклонить кандидата                                    |

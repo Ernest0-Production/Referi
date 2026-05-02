@@ -69,7 +69,13 @@ function formatUpdatedRelative(updatedAt: Date): string {
   return `обновлено ${rtf.format(Math.round(diffSec / 86400), "day")}`;
 }
 
-export function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
+export function VacancyCard({
+  vacancy,
+  hasActiveSeekerApplication = false,
+}: {
+  vacancy: Vacancy;
+  hasActiveSeekerApplication?: boolean;
+}) {
   const salary = formatSalary(vacancy.salaryFromKopecks, vacancy.salaryToKopecks);
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
 
@@ -87,6 +93,14 @@ export function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
                 <Badge variant="secondary" className="font-normal">
                   {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
                 </Badge>
+                {hasActiveSeekerApplication ? (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/60 font-medium text-primary dark:border-primary/50"
+                  >
+                    Активная заявка
+                  </Badge>
+                ) : null}
               </div>
             </div>
             <time

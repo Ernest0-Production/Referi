@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,9 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
 import { mergeVacancyListQueryParams, type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
-import { cn } from "@/lib/utils";
 
 export function VacancyListChrome({
   currentParams,
@@ -27,11 +33,18 @@ export function VacancyListChrome({
 }) {
   const router = useRouter();
   const [queryDraft, setQueryDraft] = useState(currentParams.query ?? "");
+  const [isPending, startTransition] = useTransition();
 
   function pushMerged(patch: Partial<VacancyListFlatSearchParams>) {
     const q = mergeVacancyListQueryParams(currentParams, patch);
     const qs = q.toString();
     router.push(`${listPath}${qs ? `?${qs}` : ""}`);
+  }
+
+  function runSearch() {
+    startTransition(() => {
+      pushMerged({ query: queryDraft.trim() || undefined });
+    });
   }
 
   const hideViewedOn = currentParams.hideViewed === "1";
@@ -47,30 +60,34 @@ export function VacancyListChrome({
         </p>
       </header>
 
-      <InputGroup className="h-11 rounded-xl border-border bg-card shadow-sm md:h-12">
+      <InputGroup className="h-11 w-full min-w-0 rounded-xl border-border bg-card shadow-sm md:h-12">
         <InputGroupInput
           placeholder="Название вакансии или компании"
           value={queryDraft}
           onChange={(e) => setQueryDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              pushMerged({ query: queryDraft.trim() || undefined });
+              e.preventDefault();
+              runSearch();
             }
           }}
           className="h-full min-h-10 text-base md:text-sm"
         />
-        <InputGroupAddon align="inline-end" className="pr-1.5">
+        <InputGroupAddon>
+          {isPending ? <Spinner /> : <Search />}
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-end" className="gap-2 pr-2">
+          <InputGroupText className="hidden shrink-0 whitespace-nowrap sm:inline-flex">
+            Найдено: {total}
+          </InputGroupText>
           <InputGroupButton
             type="button"
-            size="icon-sm"
-            className={cn(
-              "rounded-lg font-semibold",
-              "bg-[var(--app-search-accent-bg)] text-[var(--app-search-accent-fg)] hover:bg-[var(--app-search-accent-hover)]",
-            )}
-            onClick={() => pushMerged({ query: queryDraft.trim() || undefined })}
-            aria-label="Искать"
+            variant="secondary"
+            size="sm"
+            disabled={isPending}
+            onClick={runSearch}
           >
-            <Search />
+            Искать
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
@@ -102,7 +119,7 @@ export function VacancyListChrome({
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground">Найдено: {total}</p>
+        <p className="text-sm text-muted-foreground sm:hidden">Найдено: {total}</p>
       </div>
     </div>
   );
