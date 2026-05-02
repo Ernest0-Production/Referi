@@ -4,7 +4,7 @@
  */
 
 import { Queue, Worker, type Job } from "bullmq";
-import type { Prisma } from "@prisma/client"
+import type { Prisma } from "@prisma/client";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";

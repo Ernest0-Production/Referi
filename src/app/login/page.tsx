@@ -3,7 +3,14 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { LoginButton } from "./LoginButton";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -25,11 +32,13 @@ export default async function LoginPage() {
             <CardDescription>Реферальная платформа для разработчиков</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <p className="text-center text-sm text-muted-foreground">Войдите через GitHub, чтобы продолжить</p>
+            <p className="text-muted-foreground text-center text-sm">
+              Войдите через GitHub, чтобы продолжить
+            </p>
             <LoginButton />
           </CardContent>
           <CardFooter>
-            <p className="w-full text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground w-full text-center text-xs">
               Для регистрации требуется GitHub аккаунт старше 1 года
             </p>
           </CardFooter>

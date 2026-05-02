@@ -17,8 +17,8 @@ export default async function DashboardVacancyPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">Моя вакансия</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-foreground text-2xl font-bold">Моя вакансия</h1>
+          <p className="text-muted-foreground text-sm">
             Доступных попыток: {me.availableAttempts} из 3
           </p>
         </div>

@@ -38,8 +38,8 @@ export default async function SettingsPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">Настройки аккаунта</h1>
-          <p className="text-sm text-muted-foreground">Профиль, подписка и ссылки</p>
+          <h1 className="text-foreground text-2xl font-bold">Настройки аккаунта</h1>
+          <p className="text-muted-foreground text-sm">Профиль, подписка и ссылки</p>
         </div>
 
         <Card>
@@ -49,8 +49,8 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <p className="text-xs text-muted-foreground">GitHub аккаунт</p>
-              <p className="text-sm text-foreground">{session.user.name ?? "—"}</p>
+              <p className="text-muted-foreground text-xs">GitHub аккаунт</p>
+              <p className="text-foreground text-sm">{session.user.name ?? "—"}</p>
             </div>
             <UpdateProfileForm
               currentName={user.displayName ?? ""}
@@ -71,7 +71,7 @@ export default async function SettingsPage() {
                   {subscription.status === "ACTIVE" ? "PRO" : subscription.status}
                 </Badge>
                 {subscription.currentPeriodEnd ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Действует до:{" "}
                     {new Date(subscription.currentPeriodEnd).toLocaleDateString("ru-RU", {
                       day: "2-digit",
@@ -83,7 +83,7 @@ export default async function SettingsPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-muted-foreground">У вас нет активной подписки PRO.</p>
+                <p className="text-muted-foreground text-sm">У вас нет активной подписки PRO.</p>
                 <Button asChild>
                   <Link href="/subscribe">Оформить PRO подписку</Link>
                 </Button>

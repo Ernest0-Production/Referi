@@ -102,9 +102,9 @@ export async function VacancyListing({
             />
 
             {items.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-card p-8 text-center">
+              <div className="border-border bg-card rounded-2xl border p-8 text-center">
                 <p className="text-muted-foreground">Вакансии не найдены</p>
-                <p className="mt-1 text-sm text-muted-foreground">Попробуйте изменить фильтры</p>
+                <p className="text-muted-foreground mt-1 text-sm">Попробуйте изменить фильтры</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -123,18 +123,18 @@ export async function VacancyListing({
                 {page > 1 ? (
                   <a
                     href={buildPageLink(page - 1)}
-                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                    className="border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium"
                   >
                     Назад
                   </a>
                 ) : null}
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   Страница {page} из {totalPages}
                 </span>
                 {page < totalPages ? (
                   <a
                     href={buildPageLink(page + 1)}
-                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                    className="border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium"
                   >
                     Вперёд
                   </a>

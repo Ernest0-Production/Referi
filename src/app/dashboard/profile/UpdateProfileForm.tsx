@@ -58,7 +58,9 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="profile-contact">Контактная информация (мессенджер, email, ссылка)</FieldLabel>
+          <FieldLabel htmlFor="profile-contact">
+            Контактная информация (мессенджер, email, ссылка)
+          </FieldLabel>
           <Input
             id="profile-contact"
             type="text"
@@ -85,9 +87,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
           <Button type="submit" disabled={update.isPending || name.trim().length < 2}>
             {update.isPending ? "Сохранение…" : "Сохранить"}
           </Button>
-          {saved ? (
-            <p className="text-xs text-muted-foreground">Сохранено</p>
-          ) : null}
+          {saved ? <p className="text-muted-foreground text-xs">Сохранено</p> : null}
           {error ? (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>

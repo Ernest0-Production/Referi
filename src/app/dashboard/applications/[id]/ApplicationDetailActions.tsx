@@ -74,7 +74,11 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
 
         {status === "AWAITING_COMPANY_DECISION" && (
           <>
-            <Button size="sm" disabled={acceptOfferMutation.isPending} onClick={() => acceptOfferMutation.mutate({ applicationId: id })}>
+            <Button
+              size="sm"
+              disabled={acceptOfferMutation.isPending}
+              onClick={() => acceptOfferMutation.mutate({ applicationId: id })}
+            >
               {acceptOfferMutation.isPending ? "…" : "Принять оффер"}
             </Button>
             <Button
@@ -89,7 +93,14 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
         )}
 
         {!["CANCELLED", "REJECTED_BY_REFERRER", "OFFER_ACCEPTED"].includes(status) && (
-          <Button variant="ghost" size="sm" onClick={() => { setShowAbuse((v) => !v); setAbuseSuccess(false); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setShowAbuse((v) => !v);
+              setAbuseSuccess(false);
+            }}
+          >
             Пожаловаться
           </Button>
         )}

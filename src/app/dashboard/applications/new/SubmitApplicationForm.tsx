@@ -41,7 +41,9 @@ export function SubmitApplicationForm({
     onError(err) {
       const msg = err.message;
       if (msg === "ACTIVE_APPLICATION_LIMIT_REACHED") {
-        setError("Достигнут лимит активных откликов. Купите дополнительный токен или дождитесь завершения заявки.");
+        setError(
+          "Достигнут лимит активных откликов. Купите дополнительный токен или дождитесь завершения заявки.",
+        );
       } else if (msg === "DUPLICATE_APPLICATION") {
         setError("Вы уже откликались на эту вакансию.");
       } else if (msg === "VACANCY_NOT_ACTIVE") {
@@ -125,7 +127,9 @@ export function SubmitApplicationForm({
           {contactError ? (
             <FieldDescription className="text-destructive">{contactError}</FieldDescription>
           ) : (
-            <FieldDescription>Видно реферальщику только в активных статусах заявки</FieldDescription>
+            <FieldDescription>
+              Видно реферальщику только в активных статусах заявки
+            </FieldDescription>
           )}
         </Field>
 
@@ -171,7 +175,7 @@ export function SubmitApplicationForm({
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {tokenId ? (
-              <p className="text-xs text-muted-foreground">Токен активирован для текущей заявки.</p>
+              <p className="text-muted-foreground text-xs">Токен активирован для текущей заявки.</p>
             ) : (
               <Button
                 type="button"

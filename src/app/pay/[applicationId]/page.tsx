@@ -41,17 +41,17 @@ export default async function PayPage({ params }: PageProps) {
         <Card className="w-full max-w-lg shadow-sm">
           <CardHeader className="flex flex-col gap-1">
             <CardTitle>Оплата заявки</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {application.vacancy.title} · {application.vacancy.companyName}
             </p>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/50 p-4">
+            <div className="border-border bg-muted/50 flex flex-col gap-2 rounded-xl border p-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Сумма эскроу</span>
-                <span className="font-semibold text-foreground">{formatRubles(chargeAmount)}</span>
+                <span className="text-foreground font-semibold">{formatRubles(chargeAmount)}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Средства замораживаются до получения оффера. При отмене — полный возврат.
               </p>
             </div>

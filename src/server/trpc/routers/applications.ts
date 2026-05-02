@@ -433,8 +433,7 @@ export const applicationsRouter = router({
         select: { staffRoles: true },
       });
       const isModerator = Boolean(
-        viewer &&
-          (viewer.staffRoles.includes("MODERATOR") || viewer.staffRoles.includes("ADMIN")),
+        viewer && (viewer.staffRoles.includes("MODERATOR") || viewer.staffRoles.includes("ADMIN")),
       );
 
       if (!isSeeker && !isReferrer && !isModerator) {

@@ -117,9 +117,11 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
     router.push(`${listPath}${qs ? `?${qs}` : ""}`);
   }
 
-  const specialtyValues = parseCsvEnumParam(currentParams.specialty, VACANCY_LIST_SPECIALTY_VALUES) ?? [];
+  const specialtyValues =
+    parseCsvEnumParam(currentParams.specialty, VACANCY_LIST_SPECIALTY_VALUES) ?? [];
   const gradeValues = parseCsvEnumParam(currentParams.grade, VACANCY_LIST_GRADE_VALUES) ?? [];
-  const formatValues = parseCsvEnumParam(currentParams.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES) ?? [];
+  const formatValues =
+    parseCsvEnumParam(currentParams.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES) ?? [];
 
   return (
     <Card className="border-border shadow-sm">
@@ -132,15 +134,18 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
       <CardContent className="flex flex-col gap-5 px-4 pb-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <Label className="text-sm font-medium text-foreground">Ваши фильтры</Label>
+            <Label className="text-foreground text-sm font-medium">Ваши фильтры</Label>
             {presets.length > 0 ? (
-              <span className="text-xs text-muted-foreground">{presets.length} сохранённых</span>
+              <span className="text-muted-foreground text-xs">{presets.length} сохранённых</span>
             ) : null}
           </div>
           {!isLoggedIn ? (
             <Alert>
               <AlertDescription className="text-sm">
-                <Link href="/login" className="font-medium text-primary underline underline-offset-4">
+                <Link
+                  href="/login"
+                  className="text-primary font-medium underline underline-offset-4"
+                >
                   Войдите
                 </Link>
                 , чтобы сохранять наборы фильтров.
@@ -148,7 +153,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
             </Alert>
           ) : (
             <Select disabled={presets.length === 0} onValueChange={applyPresetSelection}>
-              <SelectTrigger className="h-9 w-full rounded-lg bg-card">
+              <SelectTrigger className="bg-card h-9 w-full rounded-lg">
                 <SelectValue placeholder={presets.length ? "Выберите фильтр" : "Нет сохранённых"} />
               </SelectTrigger>
               <SelectContent>
@@ -177,12 +182,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
               className="flex flex-wrap justify-start"
             >
               {SPECIALTIES.map((s) => (
-                <ToggleGroupItem
-                  key={s.value}
-                  value={s.value}
-                  variant="outline"
-                  size="sm"
-                >
+                <ToggleGroupItem key={s.value} value={s.value} variant="outline" size="sm">
                   {s.label}
                 </ToggleGroupItem>
               ))}
@@ -202,12 +202,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
             className="flex flex-wrap justify-start"
           >
             {GRADES.map((g) => (
-              <ToggleGroupItem
-                key={g.value}
-                value={g.value}
-                variant="outline"
-                size="sm"
-              >
+              <ToggleGroupItem key={g.value} value={g.value} variant="outline" size="sm">
                 {g.label}
               </ToggleGroupItem>
             ))}
@@ -226,12 +221,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
             className="flex flex-wrap justify-start"
           >
             {FORMATS.map((f) => (
-              <ToggleGroupItem
-                key={f.value}
-                value={f.value}
-                variant="outline"
-                size="sm"
-              >
+              <ToggleGroupItem key={f.value} value={f.value} variant="outline" size="sm">
                 {f.label}
               </ToggleGroupItem>
             ))}
@@ -254,7 +244,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
           </Field>
         </FieldGroup>
       </CardContent>
-      <CardFooter className="flex flex-col gap-3 border-t border-border px-4 py-4">
+      <CardFooter className="border-border flex flex-col gap-3 border-t px-4 py-4">
         <div className="flex w-full items-center gap-2">
           <Button
             type="button"

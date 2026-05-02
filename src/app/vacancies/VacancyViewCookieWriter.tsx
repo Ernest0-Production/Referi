@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { VACANCY_VIEWED_COOKIE, VACANCY_VIEWED_MAX, parseVacancyViewedCookie } from "@/lib/vacancyViewedCookie";
+import {
+  VACANCY_VIEWED_COOKIE,
+  VACANCY_VIEWED_MAX,
+  parseVacancyViewedCookie,
+} from "@/lib/vacancyViewedCookie";
 
 function buildCookieValue(ids: string[]): string {
   const json = JSON.stringify(ids);

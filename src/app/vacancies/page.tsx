@@ -1,4 +1,7 @@
-import { normalizeVacancyListSearchParams, vacancyListFlatToSearchParams } from "@/lib/vacancyListQuery";
+import {
+  normalizeVacancyListSearchParams,
+  vacancyListFlatToSearchParams,
+} from "@/lib/vacancyListQuery";
 import { redirect } from "next/navigation";
 import type { VacancyListSearchParams } from "./VacancyListing";
 

@@ -36,8 +36,8 @@ export default async function ApplicantsPage() {
       <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-bold text-foreground">Кандидаты</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-foreground text-2xl font-bold">Кандидаты</h1>
+            <p className="text-muted-foreground text-sm">
               {vacancy.title} · {applicants.length} откликов
             </p>
           </div>
@@ -48,7 +48,9 @@ export default async function ApplicantsPage() {
 
         {applicants.length === 0 ? (
           <Card>
-            <CardContent className="py-10 text-center text-muted-foreground">Откликов пока нет</CardContent>
+            <CardContent className="text-muted-foreground py-10 text-center">
+              Откликов пока нет
+            </CardContent>
           </Card>
         ) : (
           <div className="flex flex-col gap-3">
@@ -56,8 +58,8 @@ export default async function ApplicantsPage() {
               <Card key={app.id}>
                 <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0 pb-2">
                   <div className="flex flex-col gap-0.5">
-                    <p className="font-medium text-foreground">{app.seeker?.displayName ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-foreground font-medium">{app.seeker?.displayName ?? "—"}</p>
+                    <p className="text-muted-foreground text-xs">
                       {new Date(app.createdAt).toLocaleDateString("ru-RU")}
                     </p>
                   </div>
@@ -68,14 +70,14 @@ export default async function ApplicantsPage() {
                 <CardContent className="flex flex-col gap-3 pt-0">
                   {app.bio ? (
                     <div className="flex flex-col gap-1">
-                      <p className="text-xs font-medium text-muted-foreground">О себе</p>
-                      <p className="line-clamp-3 text-sm text-foreground">{app.bio}</p>
+                      <p className="text-muted-foreground text-xs font-medium">О себе</p>
+                      <p className="text-foreground line-clamp-3 text-sm">{app.bio}</p>
                     </div>
                   ) : null}
                   {app.contactInfo ? (
                     <div className="flex flex-col gap-1">
-                      <p className="text-xs font-medium text-muted-foreground">Контакты</p>
-                      <p className="text-sm text-foreground">{app.contactInfo}</p>
+                      <p className="text-muted-foreground text-xs font-medium">Контакты</p>
+                      <p className="text-foreground text-sm">{app.contactInfo}</p>
                     </div>
                   ) : null}
                   <div className="flex flex-wrap gap-2 pt-1">

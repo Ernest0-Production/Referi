@@ -16,8 +16,8 @@ export default async function ProfilePage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">Профиль</h1>
-          <p className="text-sm text-muted-foreground">Управление вашими данными</p>
+          <h1 className="text-foreground text-2xl font-bold">Профиль</h1>
+          <p className="text-muted-foreground text-sm">Управление вашими данными</p>
         </div>
 
         <Card>
@@ -26,27 +26,27 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-foreground">GitHub:</span>
+              <span className="text-foreground font-medium">GitHub:</span>
               <span className="text-muted-foreground">{me.githubLogin ?? "—"}</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-foreground">Email:</span>
+              <span className="text-foreground font-medium">Email:</span>
               <span className="text-muted-foreground">{me.email ?? "—"}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="font-medium text-foreground">Контакт:</span>
+              <span className="text-foreground font-medium">Контакт:</span>
               <p className="text-muted-foreground">{me.contactInfo ?? "—"}</p>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="font-medium text-foreground">Биография:</span>
-              <p className="whitespace-pre-wrap text-muted-foreground">{me.bio ?? "—"}</p>
+              <span className="text-foreground font-medium">Биография:</span>
+              <p className="text-muted-foreground whitespace-pre-wrap">{me.bio ?? "—"}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-foreground">Персонал:</span>
+              <span className="text-foreground font-medium">Персонал:</span>
               <span className="text-muted-foreground">{staffLabel}</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-foreground">Доступных попыток:</span>
+              <span className="text-foreground font-medium">Доступных попыток:</span>
               <span className="text-muted-foreground">{me.availableAttempts}</span>
             </div>
           </CardContent>

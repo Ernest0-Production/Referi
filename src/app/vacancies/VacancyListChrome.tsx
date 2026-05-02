@@ -20,7 +20,10 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
-import { mergeVacancyListQueryParams, type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
+import {
+  mergeVacancyListQueryParams,
+  type VacancyListFlatSearchParams,
+} from "@/lib/vacancyListQuery";
 
 export function VacancyListChrome({
   currentParams,
@@ -52,15 +55,16 @@ export function VacancyListChrome({
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+        <h1 className="font-heading text-foreground text-3xl font-bold tracking-tight md:text-4xl">
           Ваша следующая роль — с рефералом
         </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-          Вакансии от разработчиков внутри компаний: прозрачный процесс и защищённое вознаграждение рефереру.
+        <p className="text-muted-foreground max-w-2xl text-sm md:text-base">
+          Вакансии от разработчиков внутри компаний: прозрачный процесс и защищённое вознаграждение
+          рефереру.
         </p>
       </header>
 
-      <InputGroup className="h-11 w-full min-w-0 rounded-xl border-border bg-card shadow-sm md:h-12">
+      <InputGroup className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12">
         <InputGroupInput
           placeholder="Название вакансии или компании"
           value={queryDraft}
@@ -73,9 +77,7 @@ export function VacancyListChrome({
           }}
           className="h-full min-h-10 text-base md:text-sm"
         />
-        <InputGroupAddon>
-          {isPending ? <Spinner /> : <Search />}
-        </InputGroupAddon>
+        <InputGroupAddon>{isPending ? <Spinner /> : <Search />}</InputGroupAddon>
         <InputGroupAddon align="inline-end" className="gap-2 pr-2">
           <InputGroupText className="hidden shrink-0 whitespace-nowrap sm:inline-flex">
             Найдено: {total}
@@ -98,7 +100,7 @@ export function VacancyListChrome({
             value={currentParams.sort ?? "created_desc"}
             onValueChange={(v) => pushMerged({ sort: v || undefined })}
           >
-            <SelectTrigger className="h-9 w-[200px] rounded-lg border-border bg-card">
+            <SelectTrigger className="border-border bg-card h-9 w-[200px] rounded-lg">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} align="start">
@@ -113,13 +115,16 @@ export function VacancyListChrome({
               checked={hideViewedOn}
               onCheckedChange={(c) => pushMerged({ hideViewed: c === true ? "1" : undefined })}
             />
-            <Label htmlFor="hide-viewed" className="cursor-pointer text-sm font-normal text-muted-foreground">
+            <Label
+              htmlFor="hide-viewed"
+              className="text-muted-foreground cursor-pointer text-sm font-normal"
+            >
               Скрыть просмотренные
             </Label>
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground sm:hidden">Найдено: {total}</p>
+        <p className="text-muted-foreground text-sm sm:hidden">Найдено: {total}</p>
       </div>
     </div>
   );

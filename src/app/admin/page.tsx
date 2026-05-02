@@ -9,8 +9,8 @@ export default async function AdminDisputesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-foreground">Открытые споры</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-foreground text-2xl font-bold">Открытые споры</h1>
+        <p className="text-muted-foreground text-sm">
           {cases.length === 0
             ? "Нет открытых споров."
             : `${cases.length} спор(ов) ожидают решения.`}
@@ -21,16 +21,17 @@ export default async function AdminDisputesPage() {
         <Card key={c.id}>
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
             <div className="flex flex-col gap-1">
-              <p className="font-semibold text-foreground">
+              <p className="text-foreground font-semibold">
                 {c.application.vacancy.title} — {c.application.vacancy.companyName}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Соискатель: {c.application.seeker.displayName ?? c.application.seeker.id}
               </p>
-              <p className="text-xs text-muted-foreground">
-                Заявка: <code className="rounded bg-muted px-1 font-mono text-xs">{c.application.id}</code>
+              <p className="text-muted-foreground text-xs">
+                Заявка:{" "}
+                <code className="bg-muted rounded px-1 font-mono text-xs">{c.application.id}</code>
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Спор открыт:{" "}
                 {new Date(c.createdAt).toLocaleDateString("ru-RU", {
                   day: "2-digit",

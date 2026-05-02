@@ -11,7 +11,13 @@ export const VACANCY_LIST_SPECIALTY_VALUES = [
   "OTHER",
 ] as const;
 
-export const VACANCY_LIST_GRADE_VALUES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"] as const;
+export const VACANCY_LIST_GRADE_VALUES = [
+  "JUNIOR",
+  "MIDDLE",
+  "SENIOR",
+  "LEAD",
+  "PRINCIPAL",
+] as const;
 
 export const VACANCY_LIST_WORK_FORMAT_VALUES = ["REMOTE", "HYBRID", "OFFICE"] as const;
 
@@ -73,7 +79,9 @@ function scalarSearchParam(raw: string | string[] | undefined): string | undefin
   return typeof raw === "string" ? raw : raw.filter(Boolean).join(",");
 }
 
-export function normalizeVacancyListSearchParams(raw: VacancyListSearchParamsInput): VacancyListFlatSearchParams {
+export function normalizeVacancyListSearchParams(
+  raw: VacancyListSearchParamsInput,
+): VacancyListFlatSearchParams {
   const hideRaw = scalarSearchParam(raw.hideViewed);
   const hideOn =
     hideRaw === "1" || hideRaw?.toLowerCase() === "true" || hideRaw?.toLowerCase() === "yes";
@@ -89,7 +97,9 @@ export function normalizeVacancyListSearchParams(raw: VacancyListSearchParamsInp
   };
 }
 
-export function vacancyListFlatToSearchParams(params: VacancyListFlatSearchParams): URLSearchParams {
+export function vacancyListFlatToSearchParams(
+  params: VacancyListFlatSearchParams,
+): URLSearchParams {
   const q = new URLSearchParams();
   if (params.query?.trim()) q.set("query", params.query.trim());
   if (params.sort) q.set("sort", params.sort);
@@ -133,7 +143,12 @@ export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Reco
 
 export function presetParamsFromJson(
   raw: unknown,
-): Partial<Pick<VacancyListFlatSearchParams, "specialty" | "grade" | "workFormat" | "salaryFrom" | "sort" | "query">> {
+): Partial<
+  Pick<
+    VacancyListFlatSearchParams,
+    "specialty" | "grade" | "workFormat" | "salaryFrom" | "sort" | "query"
+  >
+> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const o = raw as Record<string, unknown>;
   const s = (k: keyof typeof o) => (typeof o[k] === "string" ? o[k] : undefined);

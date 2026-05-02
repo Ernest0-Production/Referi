@@ -44,7 +44,12 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
   if (!open) {
     return (
       <div className="flex w-full flex-col gap-3 border-t pt-4">
-        <Button type="button" variant="link" className="h-auto self-start p-0" onClick={() => setOpen(true)}>
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto self-start p-0"
+          onClick={() => setOpen(true)}
+        >
           Пожаловаться на вакансию
         </Button>
         {msg === "registered" ? (
@@ -56,7 +61,9 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
             </AlertDescription>
           </Alert>
         ) : null}
-        {msg && msg !== "registered" ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
+        {msg && msg !== "registered" ? (
+          <p className="text-muted-foreground text-xs">{msg}</p>
+        ) : null}
       </div>
     );
   }
@@ -70,7 +77,10 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
         <FieldGroup className="gap-4">
           <Field>
             <FieldLabel htmlFor="report-reason">Причина</FieldLabel>
-            <Select value={reason} onValueChange={(v) => setReason(v as (typeof REASONS)[number]["value"])}>
+            <Select
+              value={reason}
+              onValueChange={(v) => setReason(v as (typeof REASONS)[number]["value"])}
+            >
               <SelectTrigger id="report-reason" className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -99,7 +109,9 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
             <Button
               type="button"
               disabled={submit.isPending}
-              onClick={() => submit.mutate({ vacancyId, reason, comment: comment.trim() || undefined })}
+              onClick={() =>
+                submit.mutate({ vacancyId, reason, comment: comment.trim() || undefined })
+              }
             >
               Отправить
             </Button>
@@ -109,12 +121,12 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
           </div>
         </FieldGroup>
         {msg === "registered" ? (
-          <div className="flex flex-col gap-2 border-t pt-3 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex flex-col gap-2 border-t pt-3 text-sm">
             <span className="text-foreground">Жалоба зарегистрирована.</span>
             <ModerationContactLink />
           </div>
         ) : null}
-        {msg && msg !== "registered" ? <p className="text-xs text-destructive">{msg}</p> : null}
+        {msg && msg !== "registered" ? <p className="text-destructive text-xs">{msg}</p> : null}
       </CardContent>
     </Card>
   );

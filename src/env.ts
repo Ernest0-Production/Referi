@@ -24,7 +24,9 @@ const envSchema = z
       .string()
       .transform((s) => s.trim())
       .pipe(z.string().min(1, "GITHUB_SECRET is required")),
-    GITHUB_TOKEN_ENCRYPTION_KEY: z.string().min(32, "GITHUB_TOKEN_ENCRYPTION_KEY must be at least 32 characters"),
+    GITHUB_TOKEN_ENCRYPTION_KEY: z
+      .string()
+      .min(32, "GITHUB_TOKEN_ENCRYPTION_KEY must be at least 32 characters"),
     NEXT_PUBLIC_URL: z.url(),
     NEXT_PUBLIC_MODERATION_CONTACT_URL: z
       .string()

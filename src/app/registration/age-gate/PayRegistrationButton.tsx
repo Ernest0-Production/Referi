@@ -24,7 +24,12 @@ export function PayRegistrationButton({ userId, feeDisplay }: Props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <Button type="button" className="w-full" disabled={initiate.isPending} onClick={() => initiate.mutate({ userId })}>
+      <Button
+        type="button"
+        className="w-full"
+        disabled={initiate.isPending}
+        onClick={() => initiate.mutate({ userId })}
+      >
         {initiate.isPending ? "Создание платежа…" : `Оплатить ${feeDisplay} и зарегистрироваться`}
       </Button>
       {error ? (

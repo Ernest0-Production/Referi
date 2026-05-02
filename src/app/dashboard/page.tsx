@@ -97,7 +97,7 @@ export default async function DashboardPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-foreground text-2xl font-bold">
             Добро пожаловать{user?.displayName ? `, ${user.displayName}` : ""}!
           </h1>
           {user && user.staffRoles.length > 0 ? (
@@ -114,29 +114,33 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
             <Link href="/dashboard/applications">
-              <span className="text-lg font-bold text-foreground">{activeApplications.length}</span>
-              <span className="text-xs text-muted-foreground">Активных заявок</span>
+              <span className="text-foreground text-lg font-bold">{activeApplications.length}</span>
+              <span className="text-muted-foreground text-xs">Активных заявок</span>
             </Link>
           </Button>
           <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
             <Link href="/dashboard/vacancy">
-              <span className="text-lg font-bold text-foreground">
+              <span className="text-foreground text-lg font-bold">
                 {vacancyData ? vacancyData._count.applications : "—"}
               </span>
-              <span className="text-xs text-muted-foreground">Откликов</span>
+              <span className="text-muted-foreground text-xs">Откликов</span>
             </Link>
           </Button>
           <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
             <Link href="/dashboard/attempts">
-              <span className="text-lg font-bold text-primary">{availableAttempts}</span>
-              <span className="text-xs text-muted-foreground">Попыток</span>
+              <span className="text-primary text-lg font-bold">{availableAttempts}</span>
+              <span className="text-muted-foreground text-xs">Попыток</span>
             </Link>
           </Button>
           {isStaff ? (
-            <Button variant="outline" className="h-auto flex-col gap-1 border-destructive/30 py-4 font-normal" asChild>
+            <Button
+              variant="outline"
+              className="border-destructive/30 h-auto flex-col gap-1 py-4 font-normal"
+              asChild
+            >
               <Link href="/admin">
-                <span className="text-lg font-bold text-destructive">Admin</span>
-                <span className="text-xs text-muted-foreground">Панель</span>
+                <span className="text-destructive text-lg font-bold">Admin</span>
+                <span className="text-muted-foreground text-xs">Панель</span>
               </Link>
             </Button>
           ) : null}
@@ -144,7 +148,7 @@ export default async function DashboardPage() {
 
         {activeApplications.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
               Активные заявки
             </h2>
             {activeApplications.map((app) => {
@@ -152,17 +156,17 @@ export default async function DashboardPage() {
               const days = deadline ? daysLeft(deadline) : null;
               return (
                 <Link key={app.id} href={`/dashboard/applications/${app.id}`}>
-                  <Card className="transition-colors hover:border-primary/40">
+                  <Card className="hover:border-primary/40 transition-colors">
                     <CardContent className="flex items-start justify-between gap-4 p-4">
                       <div className="flex flex-col gap-0.5">
-                        <p className="font-medium text-foreground">{app.vacancy.title}</p>
-                        <p className="text-sm text-muted-foreground">{app.vacancy.companyName}</p>
+                        <p className="text-foreground font-medium">{app.vacancy.title}</p>
+                        <p className="text-muted-foreground text-sm">{app.vacancy.companyName}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1 text-right">
                         <Badge variant="secondary">{STATUS_LABELS[app.status] ?? app.status}</Badge>
                         {days !== null ? (
                           <p
-                            className={`text-xs ${days <= 1 ? "font-semibold text-destructive" : "text-muted-foreground"}`}
+                            className={`text-xs ${days <= 1 ? "text-destructive font-semibold" : "text-muted-foreground"}`}
                           >
                             {days === 0 ? "Дедлайн сегодня" : `${days} дн. до дедлайна`}
                           </p>
@@ -180,21 +184,25 @@ export default async function DashboardPage() {
         )}
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Моя вакансия</h2>
+          <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+            Моя вакансия
+          </h2>
           {vacancyData ? (
             <Link href="/dashboard/vacancy">
-              <Card className="transition-colors hover:border-primary/40">
+              <Card className="hover:border-primary/40 transition-colors">
                 <CardContent className="flex flex-col gap-2 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-0.5">
-                      <p className="font-medium text-foreground">{vacancyData.title}</p>
-                      <p className="text-sm text-muted-foreground">{vacancyData.companyName}</p>
+                      <p className="text-foreground font-medium">{vacancyData.title}</p>
+                      <p className="text-muted-foreground text-sm">{vacancyData.companyName}</p>
                     </div>
                     <Badge variant={vacancyData.status === "ACTIVE" ? "default" : "secondary"}>
                       {vacancyData.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">{vacancyData._count.applications} откликов</p>
+                  <p className="text-muted-foreground text-sm">
+                    {vacancyData._count.applications} откликов
+                  </p>
                 </CardContent>
               </Card>
             </Link>
@@ -204,7 +212,9 @@ export default async function DashboardPage() {
                 <CardTitle className="text-base">Нет активной вакансии</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
-                <p className="text-center text-sm text-muted-foreground">Создайте вакансию, чтобы получать отклики.</p>
+                <p className="text-muted-foreground text-center text-sm">
+                  Создайте вакансию, чтобы получать отклики.
+                </p>
                 <Button asChild>
                   <Link href="/dashboard/vacancy">Создать вакансию</Link>
                 </Button>

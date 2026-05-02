@@ -11,7 +11,9 @@ export default async function PayMockPage() {
         <Suspense
           fallback={
             <Card className="w-full max-w-md">
-              <CardContent className="py-10 text-center text-muted-foreground">Загрузка…</CardContent>
+              <CardContent className="text-muted-foreground py-10 text-center">
+                Загрузка…
+              </CardContent>
             </Card>
           }
         >
