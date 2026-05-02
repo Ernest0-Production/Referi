@@ -37,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
@@ -91,6 +91,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
   const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
   const [saveOpen, setSaveOpen] = useState(false);
   const [presetName, setPresetName] = useState("");
+  const [presetNameInvalid, setPresetNameInvalid] = useState(false);
   const utils = trpcReact.useUtils();
 
   const createPreset = trpcReact.vacancySearchPresets.create.useMutation({
@@ -98,6 +99,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
       toast.success("Фильтр сохранён");
       setSaveOpen(false);
       setPresetName("");
+      setPresetNameInvalid(false);
       await utils.vacancySearchPresets.list.invalidate();
       router.refresh();
     },
@@ -291,22 +293,35 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
         </div>
       </CardFooter>
 
-      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+      <Dialog
+        open={saveOpen}
+        onOpenChange={(open) => {
+          setSaveOpen(open);
+          setPresetNameInvalid(false);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Сохранить фильтры</DialogTitle>
           </DialogHeader>
           <FieldGroup>
-            <Field>
+            <Field data-invalid={presetNameInvalid ? true : undefined}>
               <FieldLabel htmlFor="preset-name">Название</FieldLabel>
               <Input
                 id="preset-name"
                 value={presetName}
-                onChange={(e) => setPresetName(e.target.value)}
+                onChange={(e) => {
+                  setPresetName(e.target.value);
+                  setPresetNameInvalid(false);
+                }}
                 maxLength={80}
                 placeholder="Например: Удалённый бэкенд"
                 className="h-9"
+                aria-invalid={presetNameInvalid}
               />
+              {presetNameInvalid ? (
+                <FieldDescription className="text-destructive">Введите название</FieldDescription>
+              ) : null}
             </Field>
           </FieldGroup>
           <DialogFooter className="flex flex-row gap-2 sm:justify-end">
@@ -318,7 +333,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
               onClick={() => {
                 const name = presetName.trim();
                 if (!name) {
-                  toast.error("Введите название");
+                  setPresetNameInvalid(true);
                   return;
                 }
                 createPreset.mutate({
