@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc";
+import { env } from "@/env";
 import { paymentProvider } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { kopecksToString } from "@/shared/utils/money";
@@ -59,7 +60,7 @@ export const paymentsRouter = router({
       }
       const chargeAmount = amountKopecks;
 
-      const returnUrl = `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/dashboard/applications/${app.id}`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}/dashboard/applications/${app.id}`;
 
       const { calculateCommission } = await import("@/shared/utils/money");
       const { commission, netPayout } = calculateCommission(chargeAmount);
@@ -128,7 +129,7 @@ export const paymentsRouter = router({
         },
       });
 
-      const returnUrl = `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/dashboard/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}/dashboard/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}`;
 
       const payment = await paymentProvider.createPayment({
         idempotencyKey,

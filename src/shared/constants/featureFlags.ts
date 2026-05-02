@@ -1,10 +1,11 @@
+import { env } from "@/env";
+
 /**
- * Feature flags read from environment variables at runtime.
- * All flags default to false (safe off).
+ * Feature flags from validated environment (see `src/env.ts`).
  */
 export const FEATURE_FLAGS = {
   /** Enable real YooKassa payments (vs MockPaymentProvider) */
-  REAL_PAYMENTS: process.env.FEATURE_REAL_PAYMENTS === "true",
+  REAL_PAYMENTS: env.FEATURE_REAL_PAYMENTS === "true",
   /** Enable request rate limiting */
-  RATE_LIMITING: process.env.FEATURE_RATE_LIMITING === "true",
+  RATE_LIMITING: env.FEATURE_RATE_LIMITING === "true",
 } as const;

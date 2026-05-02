@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
+import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import { encryptToken } from "@/lib/crypto";
 import { isGitHubAccountOldEnough } from "@/shared/utils/ageCheck";
@@ -65,8 +66,8 @@ async function upsertUserFromGitHub(data: {
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     GitHub({
-      clientId: process.env.GITHUB_ID ?? "",
-      clientSecret: process.env.GITHUB_SECRET ?? "",
+      clientId: env.GITHUB_ID,
+      clientSecret: env.GITHUB_SECRET,
       authorization: {
         params: { scope: "read:user user:email" },
       },
@@ -133,5 +134,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login/error",
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET,
 });

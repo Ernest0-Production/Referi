@@ -1,4 +1,5 @@
 import IORedis from "ioredis";
+import { env } from "@/env";
 
 const globalForRedis = globalThis as unknown as {
   redis: IORedis | undefined;
@@ -6,7 +7,7 @@ const globalForRedis = globalThis as unknown as {
 
 export const redis =
   globalForRedis.redis ??
-  new IORedis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+  new IORedis(env.REDIS_URL, {
     maxRetriesPerRequest: null, // Required for BullMQ
     enableReadyCheck: false,
     lazyConnect: true,

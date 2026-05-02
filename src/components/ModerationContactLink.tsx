@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { publicEnv } from "@/publicEnv";
 
 /**
  * Публичная ссылка для связи с модерацией (NEXT_PUBLIC_MODERATION_CONTACT_URL).
@@ -12,7 +13,7 @@ export function ModerationContactLink({
   className?: string;
   children?: ReactNode;
 }) {
-  const url = process.env.NEXT_PUBLIC_MODERATION_CONTACT_URL?.trim();
+  const url = publicEnv.NEXT_PUBLIC_MODERATION_CONTACT_URL;
   if (!url) return null;
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className={className}>

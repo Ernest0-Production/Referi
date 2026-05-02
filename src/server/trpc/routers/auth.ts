@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { env } from "@/env";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { paymentProvider } from "@/server/services/paymentService";
 import type { UserRole } from "@prisma/client";
@@ -137,7 +138,7 @@ export const authRouter = router({
       }
 
       const idempotencyKey = randomUUID();
-      const returnUrl = `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/login?registered=1`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}/login?registered=1`;
       const feeKopecks = BUSINESS_RULES.REGISTRATION_FEE_KOP;
 
       const payment = await paymentProvider.createPayment({

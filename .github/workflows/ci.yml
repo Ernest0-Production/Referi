@@ -10,6 +10,21 @@ jobs:
   lint-and-test:
     name: Lint, Typecheck & Test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://test:test@127.0.0.1:5432/test
+      REDIS_URL: redis://127.0.0.1:6379
+      NEXTAUTH_SECRET: "0123456789abcdef0123456789abcdef"
+      NEXTAUTH_URL: http://localhost:3000
+      GITHUB_ID: ci-github-oauth-id-placeholder
+      GITHUB_SECRET: ci-github-oauth-secret-placeholder
+      GITHUB_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef"
+      NEXT_PUBLIC_URL: http://localhost:3000
+      YOOKASSA_SHOP_ID: ""
+      YOOKASSA_SECRET_KEY: ""
+      YOOKASSA_PAYOUT_MOCK_WALLET: ci_mock_payout_wallet
+      FEATURE_REAL_PAYMENTS: "false"
+      FEATURE_RATE_LIMITING: "false"
+      ENABLE_BULLMQ_WORKERS: "false"
 
     steps:
       - name: Checkout

@@ -4,6 +4,7 @@
 
 import { randomUUID } from "crypto";
 import { Worker, type Job } from "bullmq";
+import { env } from "@/env";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentService";
@@ -22,7 +23,7 @@ async function getReferrerPayoutDestination(referrerId: string): Promise<string>
   });
   const d = u?.yookassaPayoutDestination?.trim();
   if (d) return d;
-  return process.env.YOOKASSA_PAYOUT_MOCK_WALLET?.trim() ?? "mock_payout_referrer_dev";
+  return env.YOOKASSA_PAYOUT_MOCK_WALLET;
 }
 
 export async function scheduleRefundSeeker(
@@ -211,7 +212,7 @@ async function processJob(job: Job<PaymentJobData>) {
           paymentMethodId: pm,
         });
 
-        if (process.env.FEATURE_REAL_PAYMENTS !== "true") {
+        if (env.FEATURE_REAL_PAYMENTS !== "true") {
           const st = await paymentProvider.getPaymentStatus(result.paymentId);
           if (st === "succeeded") {
             const { applySubscriptionRenewalSucceeded } = await import(
@@ -260,7 +261,7 @@ async function processJob(job: Job<PaymentJobData>) {
           paymentMethodId: pm,
         });
 
-        if (process.env.FEATURE_REAL_PAYMENTS !== "true") {
+        if (env.FEATURE_REAL_PAYMENTS !== "true") {
           const st = await paymentProvider.getPaymentStatus(result.paymentId);
           if (st === "succeeded") {
             const { applySubscriptionRenewalSucceeded } = await import(

@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { cancelSLAJob, scheduleResumeHandoffSLA } from "@/server/workers/slaWorker";
@@ -88,7 +89,7 @@ export async function applySubscriptionPaymentSucceeded(
         currentPeriodEnd: end,
         yookassaPaymentMethodId:
           paymentMethodId?.trim() ||
-          (process.env.FEATURE_REAL_PAYMENTS === "true" ? undefined : `mock_saved_pm:${userId}`),
+          (env.FEATURE_REAL_PAYMENTS === "true" ? undefined : `mock_saved_pm:${userId}`),
       },
       update: {
         status: "ACTIVE",

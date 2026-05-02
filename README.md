@@ -9,7 +9,14 @@ Next.js-приложение: Prisma (PostgreSQL), Redis/BullMQ, Auth.js, tRPC.
 
 ## Окружение
 
-Скопируйте `.env.example` в `.env` и заполните переменные под свою машину. Комментарии внутри `.env.example` описывают назначение полей.
+Скопируйте [`.env.example`](.env.example) в `.env` и заполните значения. Приложение и Prisma CLI при старте читают [`src/env.ts`](src/env.ts): обязательные переменные проверяются через Zod, без «тихих» подстановок по умолчанию — при ошибке процесс завершается сразу (fail-fast).
+
+- **`FEATURE_REAL_PAYMENTS` / `FEATURE_RATE_LIMITING` / `ENABLE_BULLMQ_WORKERS`** — только строки `true` или `false`.
+- При **`FEATURE_REAL_PAYMENTS=true`** в окружении должны быть непустые **`YOOKASSA_SHOP_ID`** и **`YOOKASSA_SECRET_KEY`**.
+- **`npm run build`** / **`next start`** требуют того же полного набора переменных, что и `next dev`. Плагин Sentry в [`next.config.ts`](next.config.ts) использует те же провалидированные поля (`SENTRY_*`), без подстановки имени проекта по умолчанию.
+- **Playwright** (`npm run test:e2e`): в `.env` обязательна **`PLAYWRIGHT_BASE_URL`** (см. `playwright.config.ts`).
+
+Комментарии внутри `.env.example` описывают назначение полей.
 
 ## Запуск
 
@@ -35,7 +42,7 @@ docker compose up --build
 После первого подъёма с пустой БД примените миграции:
 `docker compose exec app npm run db:migrate:deploy`
 
-Сервис `app` читает `.env`; в compose уже заданы `DATABASE_URL` и `REDIS_URL` для контейнеров. Для воркеров BullMQ в образе задано `ENABLE_BULLMQ_WORKERS=true` (см. `src/instrumentation.ts`).
+Сервис `app` читает `.env` через `env_file`; в compose заданы только переопределения `DATABASE_URL` и `REDIS_URL` для сети контейнеров. Остальные ключи из списка в `.env.example` должны присутствовать в `.env` — иначе приложение не пройдёт валидацию в `src/env.ts`. Для воркеров BullMQ в образе задано `ENABLE_BULLMQ_WORKERS=true` (см. `src/instrumentation.ts`).
 
 ## Полезные команды
 

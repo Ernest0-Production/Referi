@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc";
+import { env } from "@/env";
 import { paymentProvider } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { kopecksToString } from "@/shared/utils/money";
@@ -45,8 +46,7 @@ export const subscriptionsRouter = router({
 
       const idempotencyKey = randomUUID();
       const returnUrl =
-        input.returnUrl ??
-        `${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/dashboard/profile`;
+        input.returnUrl ?? `${env.NEXT_PUBLIC_URL}/dashboard/profile`;
 
       const payment = await paymentProvider.createPayment({
         idempotencyKey,

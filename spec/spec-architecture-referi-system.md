@@ -273,6 +273,7 @@ flowchart TB
 - **INF-001**: PostgreSQL 16 — основная реляционная БД.
 - **INF-002**: Redis 7+ — хранилище очередей BullMQ, кэш сессий.
 - **INF-003**: Node.js 20+ LTS — среда исполнения сервера.
+- **CFG-001**: Конфигурация окружения валидируется в [`src/env.ts`](../src/env.ts) (Zod) при первом импорте модуля; отсутствие или неверный формат обязательных переменных — немедленная ошибка (fail-fast). Контракт переменных — [`.env.example`](../.env.example). Тот же модуль подключает [`next.config.ts`](../next.config.ts) для полей Sentry при сборке; для клиентского бандла без секретов — [`src/publicEnv.ts`](../src/publicEnv.ts). `sentry.client.config.ts` / `sentry.edge.config.ts` остаются на `process.env` (ограничения Edge/браузера).
 
 ### Technology Platform Dependencies
 - **PLT-001**: Next.js с App Router (текущая ветка — 16.x); закреплять major-версию в `package.json`.

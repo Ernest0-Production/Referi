@@ -1,11 +1,12 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { env } from "@/env";
 import { appRouter } from "@/server/trpc/root";
 import { createTRPCContext } from "@/server/trpc/context";
 import { checkRateLimit, RATE_LIMIT_RULES } from "@/lib/rateLimiter";
 import { auth } from "@/lib/auth";
 
 async function handler(req: Request) {
-  if (process.env.FEATURE_RATE_LIMITING === "true") {
+  if (env.FEATURE_RATE_LIMITING === "true") {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??

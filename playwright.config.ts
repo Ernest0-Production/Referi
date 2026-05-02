@@ -1,4 +1,10 @@
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
+
+const baseURL = process.env.PLAYWRIGHT_BASE_URL?.trim();
+if (!baseURL) {
+  throw new Error("PLAYWRIGHT_BASE_URL must be set (e.g. in .env from .env.example) to run Playwright");
+}
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -8,7 +14,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "html",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -18,12 +24,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  // Start local dev server for E2E tests if not in CI
   webServer: process.env.CI
     ? undefined
     : {
         command: "npm run dev",
-        url: "http://localhost:3000",
+        url: baseURL,
         reuseExistingServer: true,
         timeout: 120_000,
       },

@@ -2,6 +2,8 @@
  * PaymentProvider — обычные платежи ЮKassa + безопасная сделка (Safe deal) для эскроу по заявкам.
  */
 
+import { env } from "@/env";
+
 export interface CreatePaymentOptions {
   idempotencyKey: string;
   amountKopecks: bigint;
@@ -130,7 +132,7 @@ export class MockPaymentProvider implements PaymentProvider {
     mockStorage.set(paymentId, { status });
     return {
       paymentId,
-      confirmationUrl: `http://localhost:3000/pay/mock?paymentId=${paymentId}`,
+      confirmationUrl: `${env.NEXT_PUBLIC_URL}/pay/mock?paymentId=${paymentId}`,
       status: "pending",
     };
   }
@@ -178,7 +180,7 @@ export class MockPaymentProvider implements PaymentProvider {
     mockStorage.set(paymentId, { status: "waiting_for_capture" });
     return {
       paymentId,
-      confirmationUrl: `http://localhost:3000/pay/mock?paymentId=${paymentId}`,
+      confirmationUrl: `${env.NEXT_PUBLIC_URL}/pay/mock?paymentId=${paymentId}`,
       status: "pending",
     };
   }
@@ -201,8 +203,8 @@ export class YookassaPaymentProvider implements PaymentProvider {
   private readonly secretKey: string;
 
   constructor() {
-    this.shopId = process.env.YOOKASSA_SHOP_ID ?? "";
-    this.secretKey = process.env.YOOKASSA_SECRET_KEY ?? "";
+    this.shopId = env.YOOKASSA_SHOP_ID.trim();
+    this.secretKey = env.YOOKASSA_SECRET_KEY.trim();
   }
 
   private get authHeader(): string {
@@ -473,7 +475,7 @@ export class YookassaPaymentProvider implements PaymentProvider {
 }
 
 export function createPaymentProvider(): PaymentProvider {
-  if (process.env.FEATURE_REAL_PAYMENTS === "true") {
+  if (env.FEATURE_REAL_PAYMENTS === "true") {
     return new YookassaPaymentProvider();
   }
   return new MockPaymentProvider();

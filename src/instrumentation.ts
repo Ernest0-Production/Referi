@@ -1,8 +1,9 @@
 /**
  * Start BullMQ workers once per Node.js process (not during CI, build, or Edge).
- * Set ENABLE_BULLMQ_WORKERS=false to disable. Set to true in Docker/production
- * when NODE_ENV=production so workers run outside next dev.
+ * `ENABLE_BULLMQ_WORKERS` must be `"true"` or `"false"` in environment (see `src/env.ts`).
  */
+
+import { env } from "@/env";
 
 const globalWorkers = globalThis as unknown as {
   __referiBullmqWorkers?: { close: () => Promise<void> }[];
@@ -11,9 +12,7 @@ const globalWorkers = globalThis as unknown as {
 function shouldStartWorkers(): boolean {
   if (process.env.NEXT_RUNTIME !== "nodejs") return false;
   if (process.env.CI === "true") return false;
-  if (process.env.ENABLE_BULLMQ_WORKERS === "false") return false;
-  if (process.env.ENABLE_BULLMQ_WORKERS === "true") return true;
-  return process.env.NODE_ENV === "development";
+  return env.ENABLE_BULLMQ_WORKERS === "true";
 }
 
 export async function register() {

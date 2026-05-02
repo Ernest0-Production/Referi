@@ -1,17 +1,11 @@
 /**
  * Key-prefixed base64 encoding for stored GitHub access tokens.
- * In production, set GITHUB_TOKEN_ENCRYPTION_KEY to a string of at least 32 characters.
  */
 
+import { env } from "@/env";
+
 function getKey(): string {
-  const key = process.env.GITHUB_TOKEN_ENCRYPTION_KEY;
-  if (!key || key.length < 32) {
-    if (process.env.NODE_ENV !== "production") {
-      return "dev-placeholder-key-not-for-production!";
-    }
-    throw new Error("GITHUB_TOKEN_ENCRYPTION_KEY must be set and at least 32 chars");
-  }
-  return key;
+  return env.GITHUB_TOKEN_ENCRYPTION_KEY;
 }
 
 export function encryptToken(plaintext: string): string {

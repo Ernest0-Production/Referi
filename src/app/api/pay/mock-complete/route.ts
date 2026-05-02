@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { env } from "@/env";
 import {
   applyEscrowPaymentSucceeded,
   applyRegistrationPaymentSucceeded,
@@ -8,7 +9,7 @@ import {
 } from "@/server/services/yookassaWebhookHandlers";
 import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
-  if (process.env.FEATURE_REAL_PAYMENTS === "true") {
+  if (env.FEATURE_REAL_PAYMENTS === "true") {
     return NextResponse.json({ error: "Not available with real payments" }, { status: 403 });
   }
 

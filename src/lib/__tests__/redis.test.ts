@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { env } from "@/env";
 
 vi.mock("ioredis", () => ({
   default: vi.fn().mockImplementation(function (
@@ -26,33 +27,11 @@ describe("Redis client", () => {
     await import("../redis");
 
     expect(IORedis).toHaveBeenCalledWith(
-      expect.any(String),
+      env.REDIS_URL,
       expect.objectContaining({
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
       }),
     );
-  });
-
-  it("uses REDIS_URL env variable when set", async () => {
-    vi.stubEnv("REDIS_URL", "redis://custom-host:6380");
-    const IORedis = (await import("ioredis")).default;
-    vi.mocked(IORedis).mockClear();
-
-    await import("../redis");
-
-    expect(IORedis).toHaveBeenCalledWith("redis://custom-host:6380", expect.any(Object));
-    vi.unstubAllEnvs();
-  });
-
-  it("defaults to localhost:6379 when REDIS_URL is undefined", async () => {
-    vi.stubEnv("REDIS_URL", undefined as unknown as string);
-    const IORedis = (await import("ioredis")).default;
-    vi.mocked(IORedis).mockClear();
-
-    await import("../redis");
-
-    expect(IORedis).toHaveBeenCalledWith("redis://localhost:6379", expect.any(Object));
-    vi.unstubAllEnvs();
   });
 });

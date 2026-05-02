@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import {
   applyEscrowPaymentSucceeded,
@@ -27,10 +28,10 @@ interface YookassaWebhookEvent {
  * в HTTP-уведомлениях. IP-фильтрация в кабинете YooKassa — дополнительный слой.
  */
 function verifyYookassaSignature(_body: string, authHeader: string | null): boolean {
-  if (process.env.FEATURE_REAL_PAYMENTS !== "true") return true;
+  if (env.FEATURE_REAL_PAYMENTS !== "true") return true;
 
-  const shopId = process.env.YOOKASSA_SHOP_ID ?? "";
-  const secretKey = process.env.YOOKASSA_SECRET_KEY ?? "";
+  const shopId = env.YOOKASSA_SHOP_ID.trim();
+  const secretKey = env.YOOKASSA_SECRET_KEY.trim();
   if (!shopId || !secretKey) return false;
   const expected = `Basic ${Buffer.from(`${shopId}:${secretKey}`).toString("base64")}`;
   return authHeader === expected;

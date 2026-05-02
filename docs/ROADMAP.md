@@ -293,12 +293,12 @@ flowchart LR
 
 ## Фича-флаги (Feature Flags)
 
-В [`src/shared/constants/featureFlags.ts`](../src/shared/constants/featureFlags.ts):
+В [`src/shared/constants/featureFlags.ts`](../src/shared/constants/featureFlags.ts) значения берутся из провалидированного [`src/env.ts`](../src/env.ts) (`FEATURE_REAL_PAYMENTS` и `FEATURE_RATE_LIMITING` — строго `"true"` / `"false"` в окружении):
 
 ```typescript
 export const FEATURE_FLAGS = {
-  REAL_PAYMENTS: process.env.FEATURE_REAL_PAYMENTS === "true",
-  RATE_LIMITING: process.env.FEATURE_RATE_LIMITING === "true",
+  REAL_PAYMENTS: env.FEATURE_REAL_PAYMENTS === "true",
+  RATE_LIMITING: env.FEATURE_RATE_LIMITING === "true",
 } as const;
 ```
 

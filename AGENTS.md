@@ -15,7 +15,7 @@
 
 ## Learned Workspace Facts
 
-- Воркеры BullMQ (`startSLAWorker`, `startPaymentWorker`) стартуют из `src/instrumentation.ts` в `register()` при `NEXT_RUNTIME === "nodejs"`; при `CI=true` не поднимаются; включение/выключение задаётся `ENABLE_BULLMQ_WORKERS` (`true`/`false`), иначе в development воркеры включены по умолчанию; в `docker-compose.yml` для сервиса `app` задано `ENABLE_BULLMQ_WORKERS=true`.
+- Воркеры BullMQ (`startSLAWorker`, `startPaymentWorker`) стартуют из `src/instrumentation.ts` в `register()` при `NEXT_RUNTIME === "nodejs"`, `CI !== "true"` и **`ENABLE_BULLMQ_WORKERS === "true"`** (значение обязательно в окружении и валидируется в `src/env.ts`). В `docker-compose.yml` для сервиса `app` задано `ENABLE_BULLMQ_WORKERS=true`; в `.env.example` по умолчанию `false` — воркеры не поднимаются, пока не выставить `true`.
 - В `slaWorker` и `paymentWorker` используются ленивое создание очередей и в `src/lib/redis.ts` у IORedis включён `lazyConnect`, чтобы при `next build` не было подключения к Redis и ошибок `ECONNREFUSED`.
 - SLA в очереди завязаны на сценарии: первый отклик, дедлайн оплаты после подтверждения намерения, передача резюме, SLA подтверждения отмены соискателем, дедлайн решения компании.
 - Платёжная очередь обрабатывает capture после принятия оффера, возвраты, payout и автопродление PRO ЮKassa (`subscription-renewal` на конец оплаченного периода, `subscription-renew-retry` при неудаче; планирование в `subscriptionRenewalScheduler.ts`, обработка в `paymentWorker`); для выплат используется `User.yookassaPayoutDestination`, для локального мока — `YOOKASSA_PAYOUT_MOCK_WALLET`.

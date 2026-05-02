@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileForm } from "@/app/dashboard/profile/UpdateProfileForm";
 
@@ -9,7 +10,7 @@ export default async function SettingsPage() {
   if (!session?.user?.id) redirect("/login");
 
   const userId = session.user.id;
-  const moderationContactUrl = process.env.NEXT_PUBLIC_MODERATION_CONTACT_URL?.trim() || null;
+  const moderationContactUrl = env.NEXT_PUBLIC_MODERATION_CONTACT_URL || null;
 
   const [user, subscription] = await Promise.all([
     prisma.user.findUnique({
