@@ -41,7 +41,7 @@ export function VacancyListChrome({
   function pushMerged(patch: Partial<VacancyListFlatSearchParams>) {
     const q = mergeVacancyListQueryParams(currentParams, patch);
     const qs = q.toString();
-    router.push(`${listPath}${qs ? `?${qs}` : ""}`);
+    router.push(`${listPath}${qs ? `?${qs}` : ""}`, { scroll: false });
   }
 
   function runSearch() {

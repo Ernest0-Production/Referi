@@ -9,18 +9,18 @@ test.describe("Vacancies catalog", () => {
     ).toBeVisible();
   });
 
-  test("/vacancies redirects to / preserving query", async ({ page }) => {
+  test("/vacancies shows catalog preserving query", async ({ page }) => {
     await page.goto("/vacancies?page=2&sort=salary_desc");
     await expect(page).toHaveURL(/page=2/);
     await expect(page).toHaveURL(/sort=salary_desc/);
     const path = new URL(page.url()).pathname;
-    expect(path).toBe("/");
+    expect(path).toBe("/vacancies");
   });
 
   test("vacancies page is accessible without auth", async ({ page }) => {
     await page.goto("/vacancies");
     await expect(page).not.toHaveURL(/login/);
-    expect(new URL(page.url()).pathname).toBe("/");
+    expect(new URL(page.url()).pathname).toBe("/vacancies");
     await expect(
       page.getByRole("heading", { name: /Ваша следующая роль|Вакансии/i }),
     ).toBeVisible();

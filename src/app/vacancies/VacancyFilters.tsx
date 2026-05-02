@@ -39,10 +39,12 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+const SPECIALTY_SELECT_ANY = "__any__";
+const SPECIALTY_SELECT_MULTI = "__multi__";
 
 const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; label: string }[] = [
   { value: "FRONTEND", label: "Frontend" },
@@ -105,7 +107,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
   function apply(patch: Partial<VacancyListFlatSearchParams>) {
     const q = mergeVacancyListQueryParams(currentParams, patch);
     const qs = q.toString();
-    router.push(`${listPath}${qs ? `?${qs}` : ""}`);
+    router.push(`${listPath}${qs ? `?${qs}` : ""}`, { scroll: false });
   }
 
   function applyPresetSelection(presetId: string) {
@@ -114,11 +116,17 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
     const patch = presetParamsFromJson(p.params);
     const q = vacancyListFlatToSearchParams({ ...patch, page: "1" });
     const qs = q.toString();
-    router.push(`${listPath}${qs ? `?${qs}` : ""}`);
+    router.push(`${listPath}${qs ? `?${qs}` : ""}`, { scroll: false });
   }
 
   const specialtyValues =
     parseCsvEnumParam(currentParams.specialty, VACANCY_LIST_SPECIALTY_VALUES) ?? [];
+  const specialtySelectValue =
+    specialtyValues.length === 0
+      ? SPECIALTY_SELECT_ANY
+      : specialtyValues.length === 1
+        ? specialtyValues[0]
+        : SPECIALTY_SELECT_MULTI;
   const gradeValues = parseCsvEnumParam(currentParams.grade, VACANCY_LIST_GRADE_VALUES) ?? [];
   const formatValues =
     parseCsvEnumParam(currentParams.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES) ?? [];
@@ -171,23 +179,32 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
 
         <div className="flex flex-col gap-2">
           <Label className="text-sm font-medium">Специализация</Label>
-          <ScrollArea className="max-h-40 pr-2">
-            <ToggleGroup
-              type="multiple"
-              spacing={2}
-              value={specialtyValues}
-              onValueChange={(next) => {
-                apply({ specialty: next.length ? serializeCsvParam(next) : undefined });
-              }}
-              className="flex flex-wrap justify-start"
-            >
+          <Select
+            value={specialtySelectValue}
+            onValueChange={(next) => {
+              if (next === SPECIALTY_SELECT_MULTI) return;
+              if (next === SPECIALTY_SELECT_ANY) {
+                apply({ specialty: undefined });
+                return;
+              }
+              apply({ specialty: next });
+            }}
+          >
+            <SelectTrigger className="bg-card h-9 w-full rounded-lg">
+              <SelectValue placeholder="Специализация" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SPECIALTY_SELECT_ANY}>Любая</SelectItem>
+              {specialtyValues.length > 1 ? (
+                <SelectItem value={SPECIALTY_SELECT_MULTI}>Несколько выбрано</SelectItem>
+              ) : null}
               {SPECIALTIES.map((s) => (
-                <ToggleGroupItem key={s.value} value={s.value} variant="outline" size="sm">
+                <SelectItem key={s.value} value={s.value}>
                   {s.label}
-                </ToggleGroupItem>
+                </SelectItem>
               ))}
-            </ToggleGroup>
-          </ScrollArea>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -251,7 +268,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
             variant="outline"
             size="icon"
             className="size-10 shrink-0 rounded-full"
-            onClick={() => router.push(listPath)}
+            onClick={() => router.push(listPath, { scroll: false })}
             aria-label="Сбросить фильтры"
           >
             <RotateCcw />

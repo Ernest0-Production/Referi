@@ -1,9 +1,5 @@
-import {
-  normalizeVacancyListSearchParams,
-  vacancyListFlatToSearchParams,
-} from "@/lib/vacancyListQuery";
-import { redirect } from "next/navigation";
 import type { VacancyListSearchParams } from "./VacancyListing";
+import { VacancyListing } from "./VacancyListing";
 
 interface PageProps {
   searchParams: Promise<VacancyListSearchParams>;
@@ -11,8 +7,5 @@ interface PageProps {
 
 export default async function VacanciesPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const flat = normalizeVacancyListSearchParams(params);
-  const q = vacancyListFlatToSearchParams(flat);
-  const qs = q.toString();
-  redirect(qs ? `/?${qs}` : "/");
+  return <VacancyListing params={params} listPath="/vacancies" />;
 }

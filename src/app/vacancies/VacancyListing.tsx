@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import {
@@ -121,23 +122,23 @@ export async function VacancyListing({
             {totalPages > 1 ? (
               <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                 {page > 1 ? (
-                  <a
+                  <Link
                     href={buildPageLink(page - 1)}
                     className="border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium"
                   >
                     Назад
-                  </a>
+                  </Link>
                 ) : null}
                 <span className="text-muted-foreground text-sm">
                   Страница {page} из {totalPages}
                 </span>
                 {page < totalPages ? (
-                  <a
+                  <Link
                     href={buildPageLink(page + 1)}
                     className="border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium"
                   >
                     Вперёд
-                  </a>
+                  </Link>
                 ) : null}
               </div>
             ) : null}
