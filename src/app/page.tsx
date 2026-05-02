@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
-  return <VacancyListing params={params} listPath="/" />;
+  return <VacancyListing params={params} />;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -20,36 +19,29 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  mergeVacancyListQueryParams,
-  type VacancyListFlatSearchParams,
-} from "@/lib/vacancyListQuery";
+import { type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
 
 export function VacancyListChrome({
   currentParams,
-  listPath,
+  onApplyPatch,
   total,
+  listBusy,
 }: {
   currentParams: VacancyListFlatSearchParams;
-  listPath: string;
+  onApplyPatch: (patch: Partial<VacancyListFlatSearchParams>) => void;
   total: number;
+  listBusy: boolean;
 }) {
-  const router = useRouter();
   const [queryDraft, setQueryDraft] = useState(currentParams.query ?? "");
   const [isPending, startTransition] = useTransition();
 
-  function pushMerged(patch: Partial<VacancyListFlatSearchParams>) {
-    const q = mergeVacancyListQueryParams(currentParams, patch);
-    const qs = q.toString();
-    router.push(`${listPath}${qs ? `?${qs}` : ""}`, { scroll: false });
-  }
-
   function runSearch() {
     startTransition(() => {
-      pushMerged({ query: queryDraft.trim() || undefined });
+      onApplyPatch({ query: queryDraft.trim() || undefined });
     });
   }
 
+  const chromePending = listBusy || isPending;
   const hideViewedOn = currentParams.hideViewed === "1";
 
   return (
@@ -77,7 +69,7 @@ export function VacancyListChrome({
           }}
           className="h-full min-h-10 text-base md:text-sm"
         />
-        <InputGroupAddon>{isPending ? <Spinner /> : <Search />}</InputGroupAddon>
+        <InputGroupAddon>{chromePending ? <Spinner /> : <Search />}</InputGroupAddon>
         <InputGroupAddon align="inline-end" className="gap-2 pr-2">
           <InputGroupText className="hidden shrink-0 whitespace-nowrap sm:inline-flex">
             Найдено: {total}
@@ -86,7 +78,7 @@ export function VacancyListChrome({
             type="button"
             variant="secondary"
             size="sm"
-            disabled={isPending}
+            disabled={chromePending}
             onClick={runSearch}
           >
             Искать
@@ -98,7 +90,7 @@ export function VacancyListChrome({
         <div className="flex flex-wrap items-center gap-4">
           <Select
             value={currentParams.sort ?? "created_desc"}
-            onValueChange={(v) => pushMerged({ sort: v || undefined })}
+            onValueChange={(v) => onApplyPatch({ sort: v || undefined })}
           >
             <SelectTrigger className="border-border bg-card h-9 w-[200px] rounded-lg">
               <SelectValue placeholder="Сортировка" />
@@ -113,7 +105,7 @@ export function VacancyListChrome({
             <Checkbox
               id="hide-viewed"
               checked={hideViewedOn}
-              onCheckedChange={(c) => pushMerged({ hideViewed: c === true ? "1" : undefined })}
+              onCheckedChange={(c) => onApplyPatch({ hideViewed: c === true ? "1" : undefined })}
             />
             <Label
               htmlFor="hide-viewed"

@@ -112,10 +112,10 @@ export function vacancyListFlatToSearchParams(
   return q;
 }
 
-export function mergeVacancyListQueryParams(
+export function mergeVacancyListFlat(
   current: VacancyListFlatSearchParams,
   patch: Partial<VacancyListFlatSearchParams>,
-): URLSearchParams {
+): VacancyListFlatSearchParams {
   const merged: VacancyListFlatSearchParams = { ...current };
   for (const key of Object.keys(patch) as (keyof VacancyListFlatSearchParams)[]) {
     const v = patch[key];
@@ -126,7 +126,14 @@ export function mergeVacancyListQueryParams(
     }
   }
   merged.page = patch.page ?? "1";
-  return vacancyListFlatToSearchParams(merged);
+  return merged;
+}
+
+export function mergeVacancyListQueryParams(
+  current: VacancyListFlatSearchParams,
+  patch: Partial<VacancyListFlatSearchParams>,
+): URLSearchParams {
+  return vacancyListFlatToSearchParams(mergeVacancyListFlat(current, patch));
 }
 
 export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Record<string, string> {

@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { IconFilter } from "@tabler/icons-react";
 import { RotateCcw, Save } from "lucide-react";
 import {
-  mergeVacancyListQueryParams,
   parseCsvEnumParam,
   presetParamsFromJson,
   serializeCsvParam,
@@ -15,7 +14,6 @@ import {
   VACANCY_LIST_GRADE_VALUES,
   VACANCY_LIST_SPECIALTY_VALUES,
   VACANCY_LIST_WORK_FORMAT_VALUES,
-  vacancyListFlatToSearchParams,
 } from "@/lib/vacancyListQuery";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -81,12 +79,21 @@ interface PresetRow {
 
 interface Props {
   currentParams: VacancyListFlatSearchParams;
-  listPath?: string;
+  onApplyPatch: (patch: Partial<VacancyListFlatSearchParams>) => void;
+  onReplaceFromPreset: (next: VacancyListFlatSearchParams) => void;
+  onReset: () => void;
   presets: PresetRow[];
   isLoggedIn: boolean;
 }
 
-export function VacancyFilters({ currentParams, listPath = "/", presets, isLoggedIn }: Props) {
+export function VacancyFilters({
+  currentParams,
+  onApplyPatch,
+  onReplaceFromPreset,
+  onReset,
+  presets,
+  isLoggedIn,
+}: Props) {
   const router = useRouter();
   const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
   const [saveOpen, setSaveOpen] = useState(false);
@@ -107,18 +114,14 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
   });
 
   function apply(patch: Partial<VacancyListFlatSearchParams>) {
-    const q = mergeVacancyListQueryParams(currentParams, patch);
-    const qs = q.toString();
-    router.push(`${listPath}${qs ? `?${qs}` : ""}`, { scroll: false });
+    onApplyPatch(patch);
   }
 
   function applyPresetSelection(presetId: string) {
     const p = presets.find((x) => x.id === presetId);
     if (!p) return;
     const patch = presetParamsFromJson(p.params);
-    const q = vacancyListFlatToSearchParams({ ...patch, page: "1" });
-    const qs = q.toString();
-    router.push(`${listPath}${qs ? `?${qs}` : ""}`, { scroll: false });
+    onReplaceFromPreset({ page: "1", ...patch });
   }
 
   const specialtyValues =
@@ -270,7 +273,7 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
             variant="outline"
             size="icon"
             className="size-10 shrink-0 rounded-full"
-            onClick={() => router.push(listPath, { scroll: false })}
+            onClick={() => onReset()}
             aria-label="Сбросить фильтры"
           >
             <RotateCcw />
