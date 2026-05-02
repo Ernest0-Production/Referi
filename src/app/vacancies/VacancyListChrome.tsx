@@ -103,7 +103,7 @@ export function VacancyListChrome({
             <SelectTrigger className="border-border bg-card h-9 w-[200px] rounded-lg">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} align="start">
+            <SelectContent sideOffset={4} align="start">
               <SelectItem value="created_desc">Сначала новые</SelectItem>
               <SelectItem value="salary_desc">По зарплате</SelectItem>
             </SelectContent>
