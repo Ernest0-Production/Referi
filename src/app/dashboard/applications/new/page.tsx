@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
@@ -25,9 +26,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <a href="/dashboard" className="font-bold text-gray-900 hover:text-blue-600">
-          Referi
-        </a>
+        <ServiceBrandLink />
         <a href={`/vacancies/${vacancyId}`} className="text-sm text-gray-500 hover:text-blue-600">
           ← Назад к вакансии
         </a>

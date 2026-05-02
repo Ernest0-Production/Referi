@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
@@ -97,7 +98,7 @@ export default async function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <span className="font-bold text-gray-900">Referi</span>
+        <ServiceBrandLink />
         <div className="flex items-center gap-4">
           <Link href="/dashboard/settings" className="text-sm text-gray-500 hover:text-gray-900">
             Настройки
@@ -128,13 +129,6 @@ export default async function DashboardPage() {
 
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Link
-            href="/"
-            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-          >
-            <div className="text-lg font-bold text-blue-600">Вакансии</div>
-            <div className="text-xs text-gray-400">Каталог</div>
-          </Link>
           {isSeeker && (
             <Link
               href="/dashboard/applications"

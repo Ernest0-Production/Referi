@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { LoginButton } from "./LoginButton";
 
@@ -13,7 +14,9 @@ export default async function LoginPage() {
       <div className="mx-auto w-full max-w-md p-8">
         <div className="space-y-6 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Referi</h1>
+            <h1 className="text-2xl font-bold">
+              <ServiceBrandLink className="text-2xl text-gray-900" />
+            </h1>
             <p className="text-sm text-gray-500">Реферальная платформа для разработчиков</p>
           </div>
 

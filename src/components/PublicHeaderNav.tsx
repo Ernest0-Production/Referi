@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
+import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 
 export function PublicHeaderNav({ session }: { session: Session | null }) {
   return (
     <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-      <Link href="/" className="text-lg font-bold text-gray-900 hover:text-blue-600">
-        Referi
-      </Link>
+      <ServiceBrandLink className="text-lg" />
       <div className="flex min-w-0 items-center gap-3">
         {session?.user ? (
           <>

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
@@ -34,9 +35,7 @@ export default async function SettingsPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <Link href="/dashboard" className="font-bold text-gray-900 hover:text-blue-600">
-          Referi
-        </Link>
+        <ServiceBrandLink />
         <span className="text-sm text-gray-500">Настройки</span>
       </nav>
 

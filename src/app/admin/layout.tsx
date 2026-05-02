@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import type { ReactNode } from "react";
+import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -20,9 +21,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="flex items-center gap-6 border-b border-gray-100 bg-white px-6 py-4">
-        <a href="/dashboard" className="font-bold text-gray-900 hover:text-blue-600">
-          Referi
-        </a>
+        <ServiceBrandLink />
         <span className="text-xs font-semibold tracking-wide text-red-600 uppercase">Admin</span>
         <a href="/admin" className="text-sm text-gray-600 hover:text-gray-900">
           Споры
