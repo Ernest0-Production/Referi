@@ -25,6 +25,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -43,6 +44,7 @@ import { cn } from "@/lib/utils";
 
 const SPECIALTY_SELECT_ANY = "__any__";
 const SPECIALTY_SELECT_MULTI = "__multi__";
+const PRESET_SELECT_CLEAR = "__preset_clear__";
 
 const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; label: string }[] = [
   { value: "FRONTEND", label: "Frontend" },
@@ -96,6 +98,7 @@ export function VacancyFilters({
 }: Props) {
   const router = useRouter();
   const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
+  const [presetSelectNonce, setPresetSelectNonce] = useState(0);
   const [saveOpen, setSaveOpen] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [presetNameInvalid, setPresetNameInvalid] = useState(false);
@@ -122,6 +125,15 @@ export function VacancyFilters({
     if (!p) return;
     const patch = presetParamsFromJson(p.params);
     onReplaceFromPreset({ page: "1", ...patch });
+  }
+
+  function handlePresetSelectChange(value: string) {
+    if (value === PRESET_SELECT_CLEAR) {
+      onReset();
+      setPresetSelectNonce((n) => n + 1);
+      return;
+    }
+    applyPresetSelection(value);
   }
 
   const specialtyValues =
@@ -165,7 +177,11 @@ export function VacancyFilters({
               </AlertDescription>
             </Alert>
           ) : (
-            <Select disabled={presets.length === 0} onValueChange={applyPresetSelection}>
+            <Select
+              key={presetSelectNonce}
+              disabled={presets.length === 0}
+              onValueChange={handlePresetSelectChange}
+            >
               <SelectTrigger className="bg-card h-9 w-full rounded-lg">
                 <SelectValue placeholder={presets.length ? "Выберите фильтр" : "Нет сохранённых"} />
               </SelectTrigger>
@@ -175,6 +191,8 @@ export function VacancyFilters({
                     {pr.name}
                   </SelectItem>
                 ))}
+                <SelectSeparator />
+                <SelectItem value={PRESET_SELECT_CLEAR}>Очистить выбор</SelectItem>
               </SelectContent>
             </Select>
           )}
