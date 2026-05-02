@@ -165,11 +165,12 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
           <ScrollArea className="max-h-40 pr-2">
             <ToggleGroup
               type="multiple"
+              spacing={2}
               value={specialtyValues}
               onValueChange={(next) => {
                 apply({ specialty: next.length ? serializeCsvParam(next) : undefined });
               }}
-              className="flex flex-wrap justify-start gap-0"
+              className="flex flex-wrap justify-start"
             >
               {SPECIALTIES.map((s) => (
                 <ToggleGroupItem
@@ -189,11 +190,12 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
           <Label className="text-sm font-medium">Грейд</Label>
           <ToggleGroup
             type="multiple"
+            spacing={2}
             value={gradeValues}
             onValueChange={(next) => {
               apply({ grade: next.length ? serializeCsvParam(next) : undefined });
             }}
-            className="flex flex-wrap justify-start gap-0"
+            className="flex flex-wrap justify-start"
           >
             {GRADES.map((g) => (
               <ToggleGroupItem
@@ -212,11 +214,12 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
           <Label className="text-sm font-medium">Формат работы</Label>
           <ToggleGroup
             type="multiple"
+            spacing={2}
             value={formatValues}
             onValueChange={(next) => {
               apply({ workFormat: next.length ? serializeCsvParam(next) : undefined });
             }}
-            className="flex flex-wrap justify-start gap-0"
+            className="flex flex-wrap justify-start"
           >
             {FORMATS.map((f) => (
               <ToggleGroupItem
