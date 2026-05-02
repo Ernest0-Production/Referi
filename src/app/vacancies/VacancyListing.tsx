@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { VacancyCard } from "@/components/VacancyCard";
 import { VacancyFilters } from "./VacancyFilters";
@@ -24,6 +25,8 @@ export async function VacancyListing({
   const page = Number(params.page ?? 1);
   const salaryFrom = params.salaryFrom ? Number(params.salaryFrom) : undefined;
   const salaryTo = params.salaryTo ? Number(params.salaryTo) : undefined;
+
+  const session = await auth();
 
   const { items, total, totalPages } = await trpc.vacancies.list({
     specialty: params.specialty ? [params.specialty as never] : undefined,
@@ -57,9 +60,15 @@ export async function VacancyListing({
         <Link href="/" className="text-lg font-bold text-gray-900 hover:text-blue-600">
           Referi
         </Link>
-        <Link href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-          Войти
-        </Link>
+        {session?.user ? (
+          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-blue-600">
+            Дашборд
+          </Link>
+        ) : (
+          <Link href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+            Войти
+          </Link>
+        )}
       </nav>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
