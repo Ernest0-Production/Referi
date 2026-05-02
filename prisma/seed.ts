@@ -12,10 +12,10 @@ async function main() {
 
   // Create demo users
   const referrer = await prisma.user.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000001" },
+    where: { id: "00000000-0000-4000-8000-000000000001" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000001",
+      id: "00000000-0000-4000-8000-000000000001",
       displayName: "Алексей (Референт)",
       email: "alexey@example.test",
       contactInfo: "@alexey_ref",
@@ -33,10 +33,10 @@ async function main() {
   });
 
   const seeker = await prisma.user.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000002" },
+    where: { id: "00000000-0000-4000-8000-000000000002" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000002",
+      id: "00000000-0000-4000-8000-000000000002",
       displayName: "Мария (Соискатель)",
       email: "maria@example.test",
       contactInfo: "@maria_seek",
@@ -54,10 +54,10 @@ async function main() {
   });
 
   const moderator = await prisma.user.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000003" },
+    where: { id: "00000000-0000-4000-8000-000000000003" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000003",
+      id: "00000000-0000-4000-8000-000000000003",
       displayName: "Модератор",
       email: "moderator@example.test",
       staffRoles: ["MODERATOR", "ADMIN"],
@@ -75,10 +75,10 @@ async function main() {
 
   // Create demo vacancies
   const vacancy1 = await prisma.vacancy.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000010" },
+    where: { id: "00000000-0000-4000-8000-000000000010" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000010",
+      id: "00000000-0000-4000-8000-000000000010",
       referrerId: referrer.id,
       title: "Senior Backend Developer",
       companyName: "TechCorp",
@@ -96,10 +96,10 @@ async function main() {
   });
 
   const vacancy2 = await prisma.vacancy.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000011" },
+    where: { id: "00000000-0000-4000-8000-000000000011" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000011",
+      id: "00000000-0000-4000-8000-000000000011",
       referrerId: referrer.id,
       title: "Frontend Developer (React)",
       companyName: "StartupXYZ",
