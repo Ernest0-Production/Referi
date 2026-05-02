@@ -80,7 +80,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
             <div className="flex flex-col gap-1">
               <CardTitle className="text-2xl">{vacancy.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">{vacancy.companyName}</p>
+              <p className="text-muted-foreground text-sm">{vacancy.companyName}</p>
             </div>
             {reward > 0 ? (
               <Badge variant="secondary" className="shrink-0 text-sm font-medium">
@@ -90,15 +90,19 @@ export default async function VacancyDetailPage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}</Badge>
+              <Badge variant="outline">
+                {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
+              </Badge>
               <Badge variant="secondary">{GRADE_LABELS[vacancy.grade] ?? vacancy.grade}</Badge>
-              <Badge variant="secondary">{FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}</Badge>
+              <Badge variant="secondary">
+                {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+              </Badge>
             </div>
 
             {salaryFrom || salaryTo ? (
-              <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
-                <p className="text-sm text-muted-foreground">Зарплата</p>
-                <p className="font-semibold text-foreground">
+              <div className="border-border bg-muted/50 rounded-xl border px-4 py-3">
+                <p className="text-muted-foreground text-sm">Зарплата</p>
+                <p className="text-foreground font-semibold">
                   {salaryFrom && salaryTo
                     ? `${fmt(salaryFrom)} — ${fmt(salaryTo)}`
                     : salaryFrom
@@ -109,8 +113,8 @@ export default async function VacancyDetailPage({ params }: PageProps) {
             ) : null}
 
             <div className="flex flex-col gap-2">
-              <h2 className="font-semibold text-foreground">Описание</h2>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+              <h2 className="text-foreground font-semibold">Описание</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
                 {vacancy.description}
               </p>
             </div>
@@ -118,11 +122,15 @@ export default async function VacancyDetailPage({ params }: PageProps) {
           <CardFooter className="flex flex-col items-stretch gap-4 border-t pt-6">
             {session?.user ? (
               <Button asChild className="w-full sm:w-auto">
-                <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>Откликнуться</Link>
+                <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
+                  Откликнуться
+                </Link>
               </Button>
             ) : (
               <Button asChild className="w-full sm:w-auto">
-                <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>Войти чтобы откликнуться</Link>
+                <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>
+                  Войти чтобы откликнуться
+                </Link>
               </Button>
             )}
             {session?.user ? <ReportVacancyForm vacancyId={vacancy.id} /> : null}

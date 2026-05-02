@@ -28,7 +28,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
   });
 
   if (resolved) {
-    return <p className="text-sm font-medium text-muted-foreground">Жалоба закрыта.</p>;
+    return <p className="text-muted-foreground text-sm font-medium">Жалоба закрыта.</p>;
   }
 
   return (
@@ -52,7 +52,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
             onCheckedChange={(v) => setBlockVacancy(v === true)}
             disabled={resolve.isPending}
           />
-          <Label htmlFor="block-vacancy" className="text-sm font-normal text-muted-foreground">
+          <Label htmlFor="block-vacancy" className="text-muted-foreground text-sm font-normal">
             Заблокировать вакансию
           </Label>
         </div>

@@ -39,9 +39,12 @@ function initialsFromLabel(label: string): string {
 
 export function AdminHeaderNav({ session }: { session: Session }) {
   return (
-    <nav className="flex items-center justify-between gap-4 border-b border-border bg-card px-4 py-3 md:px-6">
+    <nav className="border-border bg-card flex items-center justify-between gap-4 border-b px-4 py-3 md:px-6">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 md:gap-6">
-        <Link href="/admin" className="flex shrink-0 items-center gap-2 font-bold tracking-tight text-foreground">
+        <Link
+          href="/admin"
+          className="text-foreground flex shrink-0 items-center gap-2 font-bold tracking-tight"
+        >
           <span
             className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[var(--app-search-accent-bg)] text-[var(--app-search-accent-fg)]"
             aria-hidden
@@ -54,16 +57,16 @@ export function AdminHeaderNav({ session }: { session: Session }) {
           Admin
         </Badge>
         <div className="hidden items-center gap-1 md:flex">
-          <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+          <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href="/admin">
               <Shield data-icon="inline-start" />
               Споры
             </Link>
           </Button>
-          <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+          <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href="/admin/reports">Жалобы</Link>
           </Button>
-          <Button variant="ghost" className="h-9 font-normal text-muted-foreground" asChild>
+          <Button variant="ghost" className="text-muted-foreground h-9 font-normal" asChild>
             <Link href="/dashboard">Кабинет</Link>
           </Button>
         </div>

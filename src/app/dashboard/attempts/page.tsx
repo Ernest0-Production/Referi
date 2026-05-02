@@ -35,8 +35,8 @@ export default async function AttemptsPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-3xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">Пул попыток</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-foreground text-2xl font-bold">Пул попыток</h1>
+          <p className="text-muted-foreground text-sm">
             Каждая публикация вакансии расходует 1 попытку. Попытки восстанавливаются через 60 дней.
           </p>
         </div>
@@ -44,34 +44,36 @@ export default async function AttemptsPage() {
         <div className="grid grid-cols-3 gap-4">
           <Card>
             <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
-              <p className="text-3xl font-bold text-primary">{available}</p>
-              <p className="text-xs text-muted-foreground">Доступно</p>
+              <p className="text-primary text-3xl font-bold">{available}</p>
+              <p className="text-muted-foreground text-xs">Доступно</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
-              <p className="text-3xl font-bold text-foreground">{activeConsumed.length}</p>
-              <p className="text-xs text-muted-foreground">Использовано</p>
+              <p className="text-foreground text-3xl font-bold">{activeConsumed.length}</p>
+              <p className="text-muted-foreground text-xs">Использовано</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
-              <p className="text-3xl font-bold text-foreground">{BUSINESS_RULES.MAX_REFERRER_ATTEMPTS}</p>
-              <p className="text-xs text-muted-foreground">Максимум</p>
+              <p className="text-foreground text-3xl font-bold">
+                {BUSINESS_RULES.MAX_REFERRER_ATTEMPTS}
+              </p>
+              <p className="text-muted-foreground text-xs">Максимум</p>
             </CardContent>
           </Card>
         </div>
 
         {activeConsumed.length > 0 ? (
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
               Использованные попытки
             </h2>
             {activeConsumed.map((e) => (
               <Card key={e.id}>
                 <CardContent className="flex items-center justify-between gap-4 py-4">
                   <div className="flex flex-col gap-0.5">
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-foreground text-sm font-medium">
                       Потрачена{" "}
                       {new Date(e.createdAt).toLocaleDateString("ru-RU", {
                         day: "2-digit",
@@ -80,14 +82,14 @@ export default async function AttemptsPage() {
                       })}
                     </p>
                     {e.applicationId ? (
-                      <p className="text-xs text-muted-foreground">Заявка: {e.applicationId}</p>
+                      <p className="text-muted-foreground text-xs">Заявка: {e.applicationId}</p>
                     ) : null}
                   </div>
                   {e.regeneratesAt ? (
                     <div className="flex flex-col items-end gap-0.5 text-right">
-                      <p className="text-xs text-muted-foreground">Восстановится через</p>
-                      <p className="font-semibold text-primary">{daysUntil(e.regeneratesAt)} дн.</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">Восстановится через</p>
+                      <p className="text-primary font-semibold">{daysUntil(e.regeneratesAt)} дн.</p>
+                      <p className="text-muted-foreground text-xs">
                         {new Date(e.regeneratesAt).toLocaleDateString("ru-RU")}
                       </p>
                     </div>
@@ -100,13 +102,16 @@ export default async function AttemptsPage() {
 
         {ledger.length > 0 ? (
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
               История ({ledger.length} записей)
             </h2>
             <Card>
-              <CardContent className="flex flex-col divide-y divide-border p-0">
+              <CardContent className="divide-border flex flex-col divide-y p-0">
                 {ledger.slice(0, 20).map((e) => (
-                  <div key={e.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                  <div
+                    key={e.id}
+                    className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+                  >
                     <div className="flex items-center gap-3">
                       <span
                         className={`inline-block size-2 shrink-0 rounded-full ${
@@ -125,13 +130,15 @@ export default async function AttemptsPage() {
                             : "Восстановлена"}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {new Date(e.createdAt).toLocaleDateString("ru-RU")}
                     </span>
                   </div>
                 ))}
                 {ledger.length > 20 ? (
-                  <p className="px-4 py-2 text-xs text-muted-foreground">+ ещё {ledger.length - 20} записей</p>
+                  <p className="text-muted-foreground px-4 py-2 text-xs">
+                    + ещё {ledger.length - 20} записей
+                  </p>
                 ) : null}
               </CardContent>
             </Card>
@@ -142,20 +149,20 @@ export default async function AttemptsPage() {
           <CardHeader>
             <CardTitle className="text-base">Статистика</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground flex flex-col gap-2 text-sm">
             <div className="flex justify-between gap-4">
               <span>Всего потрачено</span>
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {ledger.filter((e) => e.event === "CONSUMED").length}
               </span>
             </div>
             <div className="flex justify-between gap-4">
               <span>Возвращено</span>
-              <span className="font-medium text-foreground">{returned.length}</span>
+              <span className="text-foreground font-medium">{returned.length}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span>Восстановлено по истечении срока</span>
-              <span className="font-medium text-foreground">{regenerated.length}</span>
+              <span className="text-foreground font-medium">{regenerated.length}</span>
             </div>
           </CardContent>
         </Card>

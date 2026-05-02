@@ -49,12 +49,17 @@ export function PayMockContent() {
         <CardTitle>Тестовая оплата (mock)</CardTitle>
         <CardDescription>
           Нажмите кнопку, чтобы зачислить тестовый платёж и перейти дальше. Доступно при{" "}
-          <code className="rounded bg-muted px-1 font-mono text-xs">FEATURE_REAL_PAYMENTS=false</code>.
+          <code className="bg-muted rounded px-1 font-mono text-xs">
+            FEATURE_REAL_PAYMENTS=false
+          </code>
+          .
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {paymentId ? (
-          <p className="break-all font-mono text-xs text-muted-foreground">paymentId: {paymentId}</p>
+          <p className="text-muted-foreground font-mono text-xs break-all">
+            paymentId: {paymentId}
+          </p>
         ) : null}
         <Button type="button" disabled={loading || !paymentId} onClick={() => void complete()}>
           {loading ? "…" : "Зачислить тестовый платёж"}

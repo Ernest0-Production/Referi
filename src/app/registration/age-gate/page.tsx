@@ -25,9 +25,12 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
               🔒
             </div>
             <CardTitle>Аккаунт GitHub слишком новый</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Для защиты от спама и фейков требуется, чтобы ваш GitHub аккаунт существовал минимум{" "}
-              <strong className="text-foreground">{BUSINESS_RULES.GITHUB_ACCOUNT_MIN_AGE_DAYS} дней</strong>.
+              <strong className="text-foreground">
+                {BUSINESS_RULES.GITHUB_ACCOUNT_MIN_AGE_DAYS} дней
+              </strong>
+              .
             </p>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
@@ -43,7 +46,7 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
               {uid ? (
                 <PayRegistrationButton userId={uid} feeDisplay={feeDisplay} />
               ) : (
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-center text-xs">
                   Сессия не найдена. Вернитесь на страницу входа и попробуйте снова.
                 </p>
               )}

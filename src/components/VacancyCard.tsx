@@ -81,11 +81,13 @@ export function VacancyCard({
 
   return (
     <Link href={`/vacancies/${vacancy.id}`} className="block transition-shadow hover:shadow-md">
-      <Card className="overflow-hidden border-border bg-card shadow-sm">
-        <CardHeader className="flex flex-col gap-3 space-y-0 pb-3 pt-5">
+      <Card className="border-border bg-card overflow-hidden shadow-sm">
+        <CardHeader className="flex flex-col gap-3 space-y-0 pt-5 pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <span className="truncate text-sm font-medium text-muted-foreground">{vacancy.companyName}</span>
+              <span className="text-muted-foreground truncate text-sm font-medium">
+                {vacancy.companyName}
+              </span>
               <div className="flex flex-wrap gap-1.5">
                 <Badge variant="secondary" className="font-normal">
                   {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
@@ -96,7 +98,7 @@ export function VacancyCard({
                 {hasActiveSeekerApplication ? (
                   <Badge
                     variant="outline"
-                    className="border-primary/60 font-medium text-primary dark:border-primary/50"
+                    className="border-primary/60 text-primary dark:border-primary/50 font-medium"
                   >
                     Активная заявка
                   </Badge>
@@ -104,17 +106,17 @@ export function VacancyCard({
               </div>
             </div>
             <time
-              className="shrink-0 text-xs text-muted-foreground"
+              className="text-muted-foreground shrink-0 text-xs"
               dateTime={vacancy.updatedAt.toISOString()}
             >
               {formatUpdatedRelative(vacancy.updatedAt)}
             </time>
           </div>
-          <h3 className="text-lg font-bold leading-snug tracking-tight text-foreground md:text-xl">
+          <h3 className="text-foreground text-lg leading-snug font-bold tracking-tight md:text-xl">
             {vacancy.title}
           </h3>
         </CardHeader>
-        <CardContent className="pb-4 pt-0">
+        <CardContent className="pt-0 pb-4">
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="font-normal">
               {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
@@ -126,7 +128,10 @@ export function VacancyCard({
             ) : null}
             {reward > 0 ? (
               <Badge
-                className={cn("border-transparent font-medium", "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200")}
+                className={cn(
+                  "border-transparent font-medium",
+                  "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200",
+                )}
               >
                 Бонус:{" "}
                 {new Intl.NumberFormat("ru-RU", {

@@ -34,10 +34,7 @@ export const subscriptionsRouter = router({
         where: { userId: ctx.userId },
       });
       const now = new Date();
-      if (
-        existing?.status === "ACTIVE" &&
-        existing.currentPeriodEnd > now
-      ) {
+      if (existing?.status === "ACTIVE" && existing.currentPeriodEnd > now) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "SUBSCRIPTION_ALREADY_ACTIVE",
@@ -45,8 +42,7 @@ export const subscriptionsRouter = router({
       }
 
       const idempotencyKey = randomUUID();
-      const returnUrl =
-        input.returnUrl ?? `${env.NEXT_PUBLIC_URL}/dashboard/profile`;
+      const returnUrl = input.returnUrl ?? `${env.NEXT_PUBLIC_URL}/dashboard/profile`;
 
       const payment = await paymentProvider.createPayment({
         idempotencyKey,

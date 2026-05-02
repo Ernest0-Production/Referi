@@ -50,7 +50,7 @@ export default async function ApplicationsPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Мои заявки</h1>
+          <h1 className="text-foreground text-2xl font-bold">Мои заявки</h1>
           <Button variant="outline" size="sm" asChild>
             <Link href="/">Найти вакансии</Link>
           </Button>
@@ -69,15 +69,15 @@ export default async function ApplicationsPage() {
 
         {active.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
               Активные ({active.length})
             </h2>
             {active.map((app) => (
               <Card key={app.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
                   <div className="flex flex-col gap-0.5">
-                    <p className="font-semibold text-foreground">{app.vacancy.title}</p>
-                    <p className="text-sm text-muted-foreground">{app.vacancy.companyName}</p>
+                    <p className="text-foreground font-semibold">{app.vacancy.title}</p>
+                    <p className="text-muted-foreground text-sm">{app.vacancy.companyName}</p>
                   </div>
                   <Badge variant="secondary" className="shrink-0">
                     {STATUS_LABELS[app.status] ?? app.status}
@@ -109,15 +109,15 @@ export default async function ApplicationsPage() {
 
         {closed.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
               Завершённые ({closed.length})
             </h2>
             {closed.map((app) => (
               <Card key={app.id} className="opacity-80">
                 <CardContent className="flex items-center justify-between gap-4 py-5">
                   <div className="flex flex-col gap-0.5">
-                    <p className="font-medium text-foreground">{app.vacancy.title}</p>
-                    <p className="text-sm text-muted-foreground">{app.vacancy.companyName}</p>
+                    <p className="text-foreground font-medium">{app.vacancy.title}</p>
+                    <p className="text-muted-foreground text-sm">{app.vacancy.companyName}</p>
                   </div>
                   <Badge variant="outline" className="shrink-0">
                     {STATUS_LABELS[app.status] ?? app.status}

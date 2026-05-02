@@ -55,7 +55,7 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
         <div className="flex flex-col gap-1">
           <CardTitle className="text-lg">{vacancy.title}</CardTitle>
-          <p className="text-sm text-muted-foreground">{vacancy.companyName}</p>
+          <p className="text-muted-foreground text-sm">{vacancy.companyName}</p>
         </div>
         <Badge variant={vacancy.status === "ACTIVE" ? "default" : "secondary"}>
           {vacancy.status === "ACTIVE" ? "Активна" : "Заморожена"}
@@ -63,7 +63,9 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}</Badge>
+          <Badge variant="outline">
+            {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
+          </Badge>
           <Badge variant="secondary">{vacancy.grade}</Badge>
           <Badge variant="secondary">{vacancy.workFormat}</Badge>
         </div>
@@ -74,12 +76,16 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
           </Button>
 
           {!confirmDelete ? (
-            <Button variant="outline" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+            <Button
+              variant="outline"
+              className="text-destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
               Удалить вакансию
             </Button>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Подтвердить?</span>
+              <span className="text-muted-foreground text-sm">Подтвердить?</span>
               <Button
                 variant="destructive"
                 size="sm"

@@ -3,7 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL?.trim();
 if (!baseURL) {
-  throw new Error("PLAYWRIGHT_BASE_URL must be set (e.g. in .env from .env.example) to run Playwright");
+  throw new Error(
+    "PLAYWRIGHT_BASE_URL must be set (e.g. in .env from .env.example) to run Playwright",
+  );
 }
 
 export default defineConfig({

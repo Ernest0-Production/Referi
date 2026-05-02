@@ -10,9 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { getPaymentQueue, type PaymentJobData } from "@/server/workers/paymentQueue";
-import {
-  scheduleSubscriptionRenewRetry,
-} from "@/server/workers/subscriptionRenewalScheduler";
+import { scheduleSubscriptionRenewRetry } from "@/server/workers/subscriptionRenewalScheduler";
 
 export type { PaymentJobData, PaymentJobType } from "@/server/workers/paymentQueue";
 
@@ -72,7 +70,9 @@ async function processJob(job: Job<PaymentJobData>) {
         include: { escrowTx: true, vacancy: { select: { referrerId: true } } },
       });
       if (!app?.escrowTx?.yookassaPaymentId) {
-        console.log(`[paymentWorker] offer-accepted: no escrow payment for ${applicationId}, skipping`);
+        console.log(
+          `[paymentWorker] offer-accepted: no escrow payment for ${applicationId}, skipping`,
+        );
         return;
       }
       const dealId = app.escrowTx.yookassaDealId;
@@ -215,9 +215,8 @@ async function processJob(job: Job<PaymentJobData>) {
         if (env.FEATURE_REAL_PAYMENTS !== "true") {
           const st = await paymentProvider.getPaymentStatus(result.paymentId);
           if (st === "succeeded") {
-            const { applySubscriptionRenewalSucceeded } = await import(
-              "@/server/services/yookassaWebhookHandlers"
-            );
+            const { applySubscriptionRenewalSucceeded } =
+              await import("@/server/services/yookassaWebhookHandlers");
             await applySubscriptionRenewalSucceeded(userId, result.paymentId, pm);
           }
         }
@@ -264,9 +263,8 @@ async function processJob(job: Job<PaymentJobData>) {
         if (env.FEATURE_REAL_PAYMENTS !== "true") {
           const st = await paymentProvider.getPaymentStatus(result.paymentId);
           if (st === "succeeded") {
-            const { applySubscriptionRenewalSucceeded } = await import(
-              "@/server/services/yookassaWebhookHandlers"
-            );
+            const { applySubscriptionRenewalSucceeded } =
+              await import("@/server/services/yookassaWebhookHandlers");
             await applySubscriptionRenewalSucceeded(userId, result.paymentId, pm);
           }
         }

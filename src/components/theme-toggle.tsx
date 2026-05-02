@@ -17,7 +17,14 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button type="button" variant="ghost" size="icon" className="size-9 shrink-0" aria-hidden disabled>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="size-9 shrink-0"
+        aria-hidden
+        disabled
+      >
         <Moon />
       </Button>
     );

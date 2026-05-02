@@ -95,9 +95,7 @@ export async function applySubscriptionPaymentSucceeded(
         status: "ACTIVE",
         currentPeriodStart: start,
         currentPeriodEnd: end,
-        ...(paymentMethodId?.trim()
-          ? { yookassaPaymentMethodId: paymentMethodId.trim() }
-          : {}),
+        ...(paymentMethodId?.trim() ? { yookassaPaymentMethodId: paymentMethodId.trim() } : {}),
       },
     });
     await tx.subscriptionPayment.create({

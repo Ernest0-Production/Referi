@@ -63,7 +63,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
             <div className="flex flex-col gap-1">
               <CardTitle className="text-xl">{application.vacancy.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">{application.vacancy.companyName}</p>
+              <p className="text-muted-foreground text-sm">{application.vacancy.companyName}</p>
             </div>
             <Badge variant="secondary" className="shrink-0">
               {STATUS_LABELS[application.status] ?? application.status}
@@ -91,16 +91,18 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             </div>
 
             {application.content?.contactInfo ? (
-              <div className="rounded-xl border border-border bg-muted/50 p-3">
-                <p className="text-xs font-medium text-muted-foreground">Контакты соискателя</p>
-                <p className="mt-0.5 text-sm text-foreground">{application.content.contactInfo}</p>
+              <div className="border-border bg-muted/50 rounded-xl border p-3">
+                <p className="text-muted-foreground text-xs font-medium">Контакты соискателя</p>
+                <p className="text-foreground mt-0.5 text-sm">{application.content.contactInfo}</p>
               </div>
             ) : null}
 
             {isSeeker && application.content?.bio ? (
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium text-muted-foreground">О себе</p>
-                <p className="whitespace-pre-wrap text-sm text-foreground">{application.content.bio}</p>
+                <p className="text-muted-foreground text-xs font-medium">О себе</p>
+                <p className="text-foreground text-sm whitespace-pre-wrap">
+                  {application.content.bio}
+                </p>
               </div>
             ) : null}
 
@@ -116,9 +118,9 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             <CardContent className="flex flex-col gap-4">
               {auditLog.map((entry) => (
                 <div key={entry.id} className="flex items-start gap-3 text-sm">
-                  <div className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                  <div className="bg-primary mt-1.5 size-2 shrink-0 rounded-full" />
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {new Date(entry.createdAt).toLocaleString("ru-RU")}
                     </span>
                     <p className="text-foreground">

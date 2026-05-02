@@ -38,12 +38,14 @@ export const vacancySearchPresetsRouter = router({
       });
     }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
-    const result = await ctx.db.vacancySearchPreset.deleteMany({
-      where: { id: input.id, userId: ctx.userId },
-    });
-    if (result.count === 0) {
-      throw new TRPCError({ code: "NOT_FOUND" });
-    }
-  }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db.vacancySearchPreset.deleteMany({
+        where: { id: input.id, userId: ctx.userId },
+      });
+      if (result.count === 0) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+    }),
 });

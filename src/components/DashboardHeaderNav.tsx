@@ -73,9 +73,12 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
   const SecondaryIcon = secondaryNav.icon;
 
   return (
-    <nav className="flex items-center justify-between gap-4 border-b border-border bg-card px-4 py-3 md:px-6">
+    <nav className="border-border bg-card flex items-center justify-between gap-4 border-b px-4 py-3 md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight text-foreground">
+        <Link
+          href="/"
+          className="text-foreground flex shrink-0 items-center gap-2 font-bold tracking-tight"
+        >
           <span
             className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[var(--app-search-accent-bg)] text-[var(--app-search-accent-fg)]"
             aria-hidden
@@ -87,7 +90,10 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="secondary" className="hidden h-9 gap-1.5 rounded-lg px-3 font-medium sm:inline-flex">
+            <Button
+              variant="secondary"
+              className="hidden h-9 gap-1.5 rounded-lg px-3 font-medium sm:inline-flex"
+            >
               Вакансии
               <span className="text-muted-foreground" aria-hidden>
                 ▾
@@ -105,19 +111,19 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
         </DropdownMenu>
 
         <div className="hidden items-center gap-1 md:flex">
-          <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+          <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href={primaryNav.href}>
               <PrimaryIcon data-icon="inline-start" />
               {primaryNav.label}
             </Link>
           </Button>
-          <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+          <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href={secondaryNav.href}>
               <SecondaryIcon data-icon="inline-start" />
               {secondaryNav.label}
             </Link>
           </Button>
-          <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+          <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href="/dashboard/settings">
               <Settings data-icon="inline-start" />
               Настройки
@@ -141,7 +147,12 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
         ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-9 rounded-full" aria-label="Меню профиля">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 rounded-full"
+              aria-label="Меню профиля"
+            >
               <Avatar className="size-8">
                 <AvatarFallback className="text-xs font-medium">
                   {initialsFromLabel(sessionDisplayLabel(session.user!))}

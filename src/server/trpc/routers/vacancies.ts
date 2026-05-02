@@ -62,7 +62,8 @@ function serializeVacancy<
 
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
-    const { specialty, grade, workFormat, salaryFrom, query, sort, page, limit, excludeIds } = input;
+    const { specialty, grade, workFormat, salaryFrom, query, sort, page, limit, excludeIds } =
+      input;
     const q = query?.trim();
     let ftsIds: string[] | undefined;
 

@@ -33,7 +33,7 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
 
   if (resolved) {
     return (
-      <p className="text-sm font-medium text-muted-foreground">
+      <p className="text-muted-foreground text-sm font-medium">
         Спор закрыт. Обновите страницу для актуального списка.
       </p>
     );
@@ -77,8 +77,8 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
           <AlertDescription>{errMsg}</AlertDescription>
         </Alert>
       ) : null}
-      <p className="text-xs text-muted-foreground">
-        Заявка: <code className="rounded bg-muted px-1 font-mono">{applicationId}</code>
+      <p className="text-muted-foreground text-xs">
+        Заявка: <code className="bg-muted rounded px-1 font-mono">{applicationId}</code>
       </p>
     </FieldGroup>
   );

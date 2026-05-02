@@ -107,7 +107,9 @@ export function CreateVacancyForm() {
             <FieldLabel>Специальность</FieldLabel>
             <Select
               value={form.specialty}
-              onValueChange={(v) => setForm((f) => ({ ...f, specialty: v as (typeof SPECIALTIES)[number] }))}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, specialty: v as (typeof SPECIALTIES)[number] }))
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -147,7 +149,9 @@ export function CreateVacancyForm() {
             <FieldLabel>Формат</FieldLabel>
             <Select
               value={form.workFormat}
-              onValueChange={(v) => setForm((f) => ({ ...f, workFormat: v as (typeof FORMATS)[number] }))}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, workFormat: v as (typeof FORMATS)[number] }))
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
