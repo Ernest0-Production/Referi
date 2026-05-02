@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { IconFilter } from "@tabler/icons-react";
 import { RotateCcw, Save } from "lucide-react";
 import {
   mergeVacancyListQueryParams,
@@ -123,7 +124,10 @@ export function VacancyFilters({ currentParams, listPath = "/", presets, isLogge
   return (
     <Card className="border-border shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Фильтры</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
+          Фильтры
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-5 px-4 pb-4">
         <div className="flex flex-col gap-2">
