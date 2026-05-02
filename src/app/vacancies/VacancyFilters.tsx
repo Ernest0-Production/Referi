@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter } from "@tabler/icons-react";
 import { RotateCcw, Save } from "lucide-react";
 import {
   parseCsvEnumParam,
+  findMatchingVacancySearchPresetId,
   presetParamsFromJson,
   serializeCsvParam,
   flatParamsForPresetSave,
@@ -98,7 +99,6 @@ export function VacancyFilters({
 }: Props) {
   const router = useRouter();
   const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
-  const [presetSelectNonce, setPresetSelectNonce] = useState(0);
   const [saveOpen, setSaveOpen] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [presetNameInvalid, setPresetNameInvalid] = useState(false);
@@ -130,11 +130,15 @@ export function VacancyFilters({
   function handlePresetSelectChange(value: string) {
     if (value === PRESET_SELECT_CLEAR) {
       onReset();
-      setPresetSelectNonce((n) => n + 1);
       return;
     }
     applyPresetSelection(value);
   }
+
+  const matchedPresetId = useMemo(
+    () => findMatchingVacancySearchPresetId(currentParams, presets),
+    [currentParams, presets],
+  );
 
   const specialtyValues =
     parseCsvEnumParam(currentParams.specialty, VACANCY_LIST_SPECIALTY_VALUES) ?? [];
@@ -178,7 +182,7 @@ export function VacancyFilters({
             </Alert>
           ) : (
             <Select
-              key={presetSelectNonce}
+              value={matchedPresetId}
               disabled={presets.length === 0}
               onValueChange={handlePresetSelectChange}
             >

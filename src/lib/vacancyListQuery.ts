@@ -168,3 +168,42 @@ export function presetParamsFromJson(
     query: s("query"),
   };
 }
+
+const PRESET_SAVE_KEYS = [
+  "specialty",
+  "grade",
+  "workFormat",
+  "salaryFrom",
+  "sort",
+  "query",
+] as const;
+
+function presetSaveRecordsEqual(
+  a: Record<string, string>,
+  b: Record<string, string>,
+): boolean {
+  for (const k of PRESET_SAVE_KEYS) {
+    if ((a[k] ?? "") !== (b[k] ?? "")) return false;
+  }
+  return true;
+}
+
+/** Нормализованные поля пресета в том же виде, что при сохранении (`flatParamsForPresetSave`). */
+export function normalizedPresetParamsRecord(raw: unknown): Record<string, string> {
+  const partial = presetParamsFromJson(raw);
+  return flatParamsForPresetSave(partial);
+}
+
+/** Первый пресет из списка, чьи параметры совпадают с текущим набором фильтров каталога. */
+export function findMatchingVacancySearchPresetId(
+  flat: VacancyListFlatSearchParams,
+  presets: readonly { id: string; params: unknown }[],
+): string | undefined {
+  const current = flatParamsForPresetSave(flat);
+  for (const p of presets) {
+    if (presetSaveRecordsEqual(current, normalizedPresetParamsRecord(p.params))) {
+      return p.id;
+    }
+  }
+  return undefined;
+}
