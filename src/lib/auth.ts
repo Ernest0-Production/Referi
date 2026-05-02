@@ -111,20 +111,64 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
       }
       if (token.roles) {
-        (session.user as typeof session.user & { roles: UserRole[] }).roles =
-          token.roles as UserRole[];
+        session.user.roles = token.roles as UserRole[];
+      }
+      if (typeof token.githubLogin === "string" && token.githubLogin.length > 0) {
+        session.user.githubLogin = token.githubLogin;
       }
       return session;
     },
 
-    async jwt({ token, user }) {
-      if (user?.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { roles: true },
-        });
-        token.roles = dbUser?.roles ?? [];
+    async jwt({ token, account }) {
+      if (account?.provider === "github" && typeof account.providerAccountId === "string") {
+        const githubId = Number(account.providerAccountId);
+        if (Number.isFinite(githubId)) {
+          const dbUser = await prisma.user.findFirst({
+            where: { githubProfile: { githubId } },
+            select: {
+              id: true,
+              roles: true,
+              githubProfile: { select: { githubLogin: true } },
+            },
+          });
+          if (dbUser) {
+            token.sub = dbUser.id;
+            token.roles = dbUser.roles;
+            token.githubLogin = dbUser.githubProfile?.githubLogin ?? "";
+            token.userClaimsLoaded = true;
+          }
+        }
+        return token;
       }
+
+      if (typeof token.sub !== "string") {
+        return token;
+      }
+
+      const needsDbRefresh =
+        !token.userClaimsLoaded &&
+        (!Array.isArray(token.roles) ||
+          token.roles.length === 0 ||
+          token.githubLogin === undefined);
+
+      if (needsDbRefresh) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            roles: true,
+            githubProfile: { select: { githubLogin: true } },
+          },
+        });
+        if (dbUser) {
+          token.roles = dbUser.roles;
+          token.githubLogin = dbUser.githubProfile?.githubLogin ?? "";
+        } else {
+          token.roles = [];
+          token.githubLogin = "";
+        }
+        token.userClaimsLoaded = true;
+      }
+
       return token;
     },
   },

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
 import Link from "next/link";
 import { ReportVacancyForm } from "./ReportVacancyForm";
@@ -63,20 +64,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <Link href="/" className="text-lg font-bold text-gray-900 hover:text-blue-600">
-          Referi
-        </Link>
-        {session?.user ? (
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-blue-600">
-            Дашборд
-          </Link>
-        ) : (
-          <Link href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-            Войти
-          </Link>
-        )}
-      </nav>
+      <PublicHeaderNav session={session} />
 
       <div className="mx-auto max-w-3xl space-y-6 px-6 py-8">
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">

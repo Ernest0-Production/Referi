@@ -211,17 +211,53 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
         session.user.roles = token.roles as UserRole[];
       }
+      if (typeof token.githubLogin === 'string' && token.githubLogin.length > 0) {
+        session.user.githubLogin = token.githubLogin;
+      }
       return session;
     },
 
-    async jwt({ token, user }) {
-      if (user) {
-        const dbUser = await db.user.findUnique({
-          where: { id: user.id },
-          select: { roles: true },
-        });
-        token.roles = dbUser?.roles ?? [];
+    async jwt({ token, account }) {
+      if (account?.provider === 'github' && typeof account.providerAccountId === 'string') {
+        const githubId = Number(account.providerAccountId);
+        if (Number.isFinite(githubId)) {
+          const dbUser = await db.user.findFirst({
+            where: { githubProfile: { githubId } },
+            select: { id: true, roles: true, githubProfile: { select: { githubLogin: true } } },
+          });
+          if (dbUser) {
+            token.sub = dbUser.id;
+            token.roles = dbUser.roles;
+            token.githubLogin = dbUser.githubProfile?.githubLogin ?? '';
+            token.userClaimsLoaded = true;
+          }
+        }
+        return token;
       }
+
+      if (typeof token.sub !== 'string') return token;
+
+      const needsDbRefresh =
+        !token.userClaimsLoaded &&
+        (!Array.isArray(token.roles) ||
+          token.roles.length === 0 ||
+          token.githubLogin === undefined);
+
+      if (needsDbRefresh) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.sub },
+          select: { roles: true, githubProfile: { select: { githubLogin: true } } },
+        });
+        if (dbUser) {
+          token.roles = dbUser.roles;
+          token.githubLogin = dbUser.githubProfile?.githubLogin ?? '';
+        } else {
+          token.roles = [];
+          token.githubLogin = '';
+        }
+        token.userClaimsLoaded = true;
+      }
+
       return token;
     },
   },
@@ -232,6 +268,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 });
 ```
+
+В JWT для OAuth Auth.js задаёт `user.id` как случайный UUID, не совпадающий с `users.id` в БД; числовой id GitHub приходит в `account.providerAccountId`. Колбэк `jwt` сопоставляет его с `GitHubProfile.githubId`, выставляет `token.sub` равным `User.id` в Prisma и подмешивает `roles` и `githubLogin` из БД. После одного запроса по `token.sub` в JWT выставляется `userClaimsLoaded`, чтобы не повторять `findUnique` на каждом HTTP-запросе при пустом ответе (это не схема БД, только поле в подписанном токене).
 
 ### 4.5 Переменные окружения
 
