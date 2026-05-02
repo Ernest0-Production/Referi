@@ -1,19 +1,19 @@
 import { auth } from "@/lib/auth";
+import {
+  normalizeVacancyListSearchParams,
+  parseCsvEnumParam,
+  vacancyListFlatToSearchParams,
+  VACANCY_LIST_GRADE_VALUES,
+  VACANCY_LIST_SPECIALTY_VALUES,
+  VACANCY_LIST_WORK_FORMAT_VALUES,
+  type VacancyListSearchParamsInput,
+} from "@/lib/vacancyListQuery";
 import { trpc } from "@/trpc/server";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { VacancyCard } from "@/components/VacancyCard";
 import { VacancyFilters } from "./VacancyFilters";
 
-export type VacancyListSearchParams = {
-  specialty?: string;
-  grade?: string;
-  workFormat?: string;
-  salaryFrom?: string;
-  salaryTo?: string;
-  sort?: "created_desc" | "salary_desc";
-  query?: string;
-  page?: string;
-};
+export type VacancyListSearchParams = VacancyListSearchParamsInput;
 
 export async function VacancyListing({
   params,
@@ -22,34 +22,32 @@ export async function VacancyListing({
   params: VacancyListSearchParams;
   listPath: string;
 }) {
-  const page = Number(params.page ?? 1);
-  const salaryFrom = params.salaryFrom ? Number(params.salaryFrom) : undefined;
-  const salaryTo = params.salaryTo ? Number(params.salaryTo) : undefined;
+  const flat = normalizeVacancyListSearchParams(params);
+  const page = Number(flat.page ?? 1);
+  const salaryFrom = flat.salaryFrom ? Number(flat.salaryFrom) : undefined;
+
+  const specialtyParsed = parseCsvEnumParam(flat.specialty, VACANCY_LIST_SPECIALTY_VALUES);
+  const gradeParsed = parseCsvEnumParam(flat.grade, VACANCY_LIST_GRADE_VALUES);
+  const workFormatParsed = parseCsvEnumParam(flat.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
 
   const session = await auth();
 
   const { items, total, totalPages } = await trpc.vacancies.list({
-    specialty: params.specialty ? [params.specialty as never] : undefined,
-    grade: params.grade ? [params.grade as never] : undefined,
-    workFormat: params.workFormat ? [params.workFormat as never] : undefined,
+    specialty: specialtyParsed,
+    grade: gradeParsed,
+    workFormat: workFormatParsed,
     salaryFrom: Number.isFinite(salaryFrom) ? salaryFrom : undefined,
-    salaryTo: Number.isFinite(salaryTo) ? salaryTo : undefined,
-    sort: params.sort ?? "created_desc",
-    query: params.query,
+    sort: (flat.sort as "created_desc" | "salary_desc") ?? "created_desc",
+    query: flat.query,
     page,
     limit: 20,
   });
 
   const buildPageLink = (nextPage: number) => {
-    const q = new URLSearchParams();
-    q.set("page", String(nextPage));
-    if (params.specialty) q.set("specialty", params.specialty);
-    if (params.grade) q.set("grade", params.grade);
-    if (params.workFormat) q.set("workFormat", params.workFormat);
-    if (params.salaryFrom) q.set("salaryFrom", params.salaryFrom);
-    if (params.salaryTo) q.set("salaryTo", params.salaryTo);
-    if (params.sort) q.set("sort", params.sort);
-    if (params.query) q.set("query", params.query);
+    const q = vacancyListFlatToSearchParams({
+      ...flat,
+      page: String(nextPage),
+    });
     const qs = q.toString();
     return qs ? `${listPath}?${qs}` : listPath;
   };
@@ -68,7 +66,19 @@ export async function VacancyListing({
 
         <div className="flex flex-col gap-6 lg:flex-row">
           <aside className="w-full shrink-0 lg:w-64">
-            <VacancyFilters currentParams={params} listPath={listPath} />
+            <VacancyFilters
+              key={[
+                flat.query,
+                flat.specialty,
+                flat.grade,
+                flat.workFormat,
+                flat.salaryFrom,
+                flat.sort,
+                flat.page,
+              ].join("|")}
+              currentParams={flat}
+              listPath={listPath}
+            />
           </aside>
 
           <div className="flex-1 space-y-4">

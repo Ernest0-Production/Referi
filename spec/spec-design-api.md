@@ -94,7 +94,7 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 
 | Процедура              | Тип      | Auth   | Входные данные                                                                                             | Описание                                                    |
 | ---------------------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `vacancies.list`       | query    | public | `{ specialty?, grade?, workFormat?, salaryFrom?, salaryTo?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами                         |
+| `vacancies.list`       | query    | public | `{ specialty?: Specialty[], grade?: Grade[], workFormat?: WorkFormat[], salaryFrom?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами                         |
 | `vacancies.getById`    | query    | public | `{ id }`                                                                                                   | Детальная страница вакансии (без данных реферальщика)       |
 | `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия                |
 | `vacancies.delete`     | mutation | isAuth | `{ id }`                                                                                                   | Удалить вакансию; cascade refund                            |
@@ -216,7 +216,7 @@ Header: Authorization: Basic {base64(shopId:secretKey)}
 
 - **AC-001**: Given неавторизованный пользователь вызывает `applications.submit`, When запрос отправлен, Then tRPC возвращает код `UNAUTHORIZED`.
 - **AC-002**: Given авторизованный пользователь вызывает `applications.confirmIntent` по чужой вакансии, When запрос отправлен, Then tRPC возвращает `FORBIDDEN`.
-- **AC-003**: Given `vacancies.list` вызван с `specialty: 'BACKEND'`, When в БД есть 5 BACKEND вакансий и 3 FRONTEND, Then возвращаются только 5.
+- **AC-003**: Given `vacancies.list` вызван с `specialty: ['BACKEND']`, When в БД есть 5 BACKEND вакансий и 3 FRONTEND, Then возвращаются только 5.
 - **AC-004**: Given `vacancies.getById` для активной вакансии, When возвращён ответ, Then в нём отсутствуют поля `referrerName`, `referrerContact`, `referrerId`.
 - **AC-005**: Given включён `FEATURE_RATE_LIMITING`, авторизованный пользователь исчерпал лимит `authedApi` (120 запросов за 60 с к `/api/trpc`), When отправляет следующий запрос, Then HTTP 429 и заголовок `Retry-After`.
 - **AC-006**: Given `applications.getById` для реферальщика и статус заявки `SUBMITTED`, When запрос выполнен, Then поле `contactInfo` присутствует в ответе.

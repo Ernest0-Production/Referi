@@ -38,7 +38,6 @@ const vacancyListSchema = z.object({
   grade: z.array(gradeEnum).optional(),
   workFormat: z.array(workFormatEnum).optional(),
   salaryFrom: z.number().int().positive().optional(),
-  salaryTo: z.number().int().positive().optional(),
   query: z.string().max(200).optional(),
   sort: z.enum(["created_desc", "salary_desc"]).default("created_desc"),
   page: z.number().int().min(1).default(1),
@@ -62,7 +61,7 @@ function serializeVacancy<
 
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
-    const { specialty, grade, workFormat, salaryFrom, salaryTo, query, sort, page, limit } = input;
+    const { specialty, grade, workFormat, salaryFrom, query, sort, page, limit } = input;
     const q = query?.trim();
     let ftsIds: string[] | undefined;
 
@@ -92,7 +91,6 @@ export const vacanciesRouter = router({
       ...(salaryFrom && {
         salaryToKopecks: { gte: BigInt(salaryFrom * 100) },
       }),
-      ...(salaryTo && { salaryFromKopecks: { lte: BigInt(salaryTo * 100) } }),
     };
 
     const orderBy: Prisma.VacancyOrderByWithRelationInput[] =
