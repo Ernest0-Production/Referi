@@ -30,6 +30,8 @@ export function SubmitApplicationForm({
     coverLetter: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [bioError, setBioError] = useState<string | null>(null);
   const [tokenId, setTokenId] = useState<string | undefined>(paidTokenId);
 
   const submit = trpcReact.applications.submit.useMutation({
@@ -67,44 +69,85 @@ export function SubmitApplicationForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setContactError(null);
+    setBioError(null);
+
+    const contact = form.contactInfo.trim();
+    if (contact.length < 1) {
+      setContactError("Укажите контакт (минимум 1 символ).");
+      return;
+    }
+    if (contact.length > 500) {
+      setContactError("Не больше 500 символов.");
+      return;
+    }
+
+    const bio = form.bio.trim();
+    if (bio.length < 10) {
+      setBioError(`Минимум 10 символов. Сейчас: ${bio.length}.`);
+      return;
+    }
+    if (bio.length > 1000) {
+      setBioError("Не больше 1000 символов.");
+      return;
+    }
+
+    if (form.coverLetter.length > 300) {
+      setError("Сопроводительное письмо: не больше 300 символов.");
+      return;
+    }
+
     submit.mutate({
       vacancyId,
-      contactInfo: form.contactInfo,
-      bio: form.bio,
-      coverLetter: form.coverLetter || undefined,
+      contactInfo: contact,
+      bio,
+      coverLetter: form.coverLetter.trim() || undefined,
       paidTokenId: tokenId,
     });
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} noValidate>
       <FieldGroup>
-        <Field>
+        <Field data-invalid={contactError ? "true" : undefined}>
           <FieldLabel htmlFor="app-contact">Контактная информация *</FieldLabel>
           <Input
             id="app-contact"
-            required
-            minLength={1}
             maxLength={500}
             value={form.contactInfo}
-            onChange={(e) => setForm((f) => ({ ...f, contactInfo: e.target.value }))}
+            aria-invalid={contactError ? true : undefined}
+            onChange={(e) => {
+              setContactError(null);
+              setForm((f) => ({ ...f, contactInfo: e.target.value }));
+            }}
             placeholder="мессенджер, email или ссылка"
           />
-          <FieldDescription>Видно реферальщику только в активных статусах заявки</FieldDescription>
+          {contactError ? (
+            <FieldDescription className="text-destructive">{contactError}</FieldDescription>
+          ) : (
+            <FieldDescription>Видно реферальщику только в активных статусах заявки</FieldDescription>
+          )}
         </Field>
 
-        <Field>
+        <Field data-invalid={bioError ? "true" : undefined}>
           <FieldLabel htmlFor="app-bio">О себе *</FieldLabel>
           <Textarea
             id="app-bio"
-            required
-            minLength={10}
-            maxLength={1000}
             rows={5}
+            maxLength={1000}
             value={form.bio}
-            onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+            aria-invalid={bioError ? true : undefined}
+            onChange={(e) => {
+              setBioError(null);
+              setForm((f) => ({ ...f, bio: e.target.value }));
+            }}
             placeholder="Опыт, стек, достижения"
           />
+          {bioError ? (
+            <FieldDescription className="text-destructive">{bioError}</FieldDescription>
+          ) : (
+            <FieldDescription>Минимум 10 символов, максимум 1000.</FieldDescription>
+          )}
         </Field>
 
         <Field>
