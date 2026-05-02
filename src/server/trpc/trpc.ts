@@ -40,9 +40,9 @@ const enforceUserIsModerator = t.middleware(async ({ ctx, next }) => {
   }
   const user = await ctx.db.user.findUnique({
     where: { id: ctx.session.user.id },
-    select: { roles: true },
+    select: { staffRoles: true },
   });
-  if (!user?.roles.includes("MODERATOR") && !user?.roles.includes("ADMIN")) {
+  if (!user?.staffRoles.includes("MODERATOR") && !user?.staffRoles.includes("ADMIN")) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
   return next({

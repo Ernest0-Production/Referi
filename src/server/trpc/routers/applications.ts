@@ -418,10 +418,11 @@ export const applicationsRouter = router({
 
       const viewer = await ctx.db.user.findUnique({
         where: { id: ctx.userId },
-        select: { roles: true },
+        select: { staffRoles: true },
       });
       const isModerator = Boolean(
-        viewer && (viewer.roles.includes("MODERATOR") || viewer.roles.includes("ADMIN")),
+        viewer &&
+          (viewer.staffRoles.includes("MODERATOR") || viewer.staffRoles.includes("ADMIN")),
       );
 
       if (!isSeeker && !isReferrer && !isModerator) {

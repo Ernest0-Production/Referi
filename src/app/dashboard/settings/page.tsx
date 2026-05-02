@@ -21,7 +21,7 @@ export default async function SettingsPage() {
         displayName: true,
         contactInfo: true,
         bio: true,
-        roles: true,
+        staffRoles: true,
       },
     }),
     prisma.seekerSubscription.findUnique({
@@ -53,7 +53,6 @@ export default async function SettingsPage() {
             currentName={user.displayName ?? ""}
             currentContactInfo={user.contactInfo}
             currentBio={user.bio}
-            currentRoles={user.roles}
           />
         </section>
 
@@ -113,20 +112,21 @@ export default async function SettingsPage() {
           </section>
         ) : null}
 
-        {/* Roles section */}
-        <section className="space-y-2 rounded-2xl border border-gray-100 bg-white p-6">
-          <h2 className="font-semibold text-gray-800">Роли</h2>
-          <div className="flex flex-wrap gap-2">
-            {user.roles.map((role) => (
-              <span
-                key={role}
-                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-              >
-                {role}
-              </span>
-            ))}
-          </div>
-        </section>
+        {user.staffRoles.length > 0 ? (
+          <section className="space-y-2 rounded-2xl border border-gray-100 bg-white p-6">
+            <h2 className="font-semibold text-gray-800">Персонал</h2>
+            <div className="flex flex-wrap gap-2">
+              {user.staffRoles.map((role) => (
+                <span
+                  key={role}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                >
+                  {role}
+                </span>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* Quick links */}
         <section className="space-y-3 rounded-2xl border border-gray-100 bg-white p-6">

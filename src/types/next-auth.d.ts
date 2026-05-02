@@ -1,11 +1,11 @@
 import type { DefaultSession } from "next-auth";
-import type { UserRole } from "@prisma/client";
+import type { StaffRole } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      roles: UserRole[];
+      staffRoles: StaffRole[];
       githubLogin?: string;
     } & DefaultSession["user"];
   }
@@ -13,7 +13,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
-    roles?: UserRole[];
+    staffRoles?: StaffRole[];
     githubLogin?: string;
     userClaimsLoaded?: boolean;
   }

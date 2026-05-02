@@ -20,7 +20,6 @@ async function main() {
       email: "alexey@example.test",
       contactInfo: "@alexey_ref",
       bio: "Backend-разработчик, 8+ лет опыта в распределенных системах.",
-      roles: ["REFERRER"],
       githubProfile: {
         create: {
           githubId: 1000001,
@@ -42,7 +41,6 @@ async function main() {
       email: "maria@example.test",
       contactInfo: "@maria_seek",
       bio: "Fullstack-инженер, работаю с React, Node.js и PostgreSQL.",
-      roles: ["SEEKER"],
       githubProfile: {
         create: {
           githubId: 1000002,
@@ -62,7 +60,7 @@ async function main() {
       id: "00000000-0000-0000-0000-000000000003",
       displayName: "Модератор",
       email: "moderator@example.test",
-      roles: ["MODERATOR", "ADMIN"],
+      staffRoles: ["MODERATOR", "ADMIN"],
       githubProfile: {
         create: {
           githubId: 1000003,

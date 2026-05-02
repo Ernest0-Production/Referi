@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   const [user, activeApplications, vacancyData, attemptData] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { displayName: true, roles: true },
+      select: { displayName: true, staffRoles: true },
     }),
     // Seeker: active applications with deadlines
     prisma.application.findMany({
@@ -81,10 +81,9 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const isReferrer = user?.roles.includes("REFERRER") ?? false;
-  const isSeeker = user?.roles.includes("SEEKER") ?? false;
-  const isModerator =
-    (user?.roles.includes("MODERATOR") ?? false) || (user?.roles.includes("ADMIN") ?? false);
+  const isStaff =
+    (user?.staffRoles.includes("MODERATOR") ?? false) ||
+    (user?.staffRoles.includes("ADMIN") ?? false);
 
   const now = new Date();
   const activeConsumed = attemptData.filter(
@@ -115,50 +114,46 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             Добро пожаловать{user?.displayName ? `, ${user.displayName}` : ""}!
           </h1>
-          <div className="mt-1 flex gap-2">
-            {user?.roles.map((r) => (
-              <span
-                key={r}
-                className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600"
-              >
-                {r}
-              </span>
-            ))}
-          </div>
+          {user && user.staffRoles.length > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {user.staffRoles.map((r) => (
+                <span
+                  key={r}
+                  className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600"
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {isSeeker && (
-            <Link
-              href="/dashboard/applications"
-              className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-            >
-              <div className="text-lg font-bold text-gray-800">{activeApplications.length}</div>
-              <div className="text-xs text-gray-400">Активных заявок</div>
-            </Link>
-          )}
-          {isReferrer && (
-            <>
-              <Link
-                href="/dashboard/vacancy"
-                className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-              >
-                <div className="text-lg font-bold text-gray-800">
-                  {vacancyData ? vacancyData._count.applications : "—"}
-                </div>
-                <div className="text-xs text-gray-400">Откликов</div>
-              </Link>
-              <Link
-                href="/dashboard/attempts"
-                className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-              >
-                <div className="text-lg font-bold text-blue-600">{availableAttempts}</div>
-                <div className="text-xs text-gray-400">Попыток</div>
-              </Link>
-            </>
-          )}
-          {isModerator && (
+          <Link
+            href="/dashboard/applications"
+            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
+          >
+            <div className="text-lg font-bold text-gray-800">{activeApplications.length}</div>
+            <div className="text-xs text-gray-400">Активных заявок</div>
+          </Link>
+          <Link
+            href="/dashboard/vacancy"
+            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
+          >
+            <div className="text-lg font-bold text-gray-800">
+              {vacancyData ? vacancyData._count.applications : "—"}
+            </div>
+            <div className="text-xs text-gray-400">Откликов</div>
+          </Link>
+          <Link
+            href="/dashboard/attempts"
+            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
+          >
+            <div className="text-lg font-bold text-blue-600">{availableAttempts}</div>
+            <div className="text-xs text-gray-400">Попыток</div>
+          </Link>
+          {isStaff && (
             <Link
               href="/admin"
               className="rounded-2xl border border-red-50 bg-white p-4 text-center transition hover:border-red-100 hover:shadow-sm"
@@ -169,8 +164,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Seeker: active applications with deadlines */}
-        {isSeeker && activeApplications.length > 0 && (
+        {activeApplications.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
               Активные заявки
@@ -214,12 +208,10 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Referrer: vacancy summary */}
-        {isReferrer && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
-              Моя вакансия
-            </h2>
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
+            Моя вакансия
+          </h2>
             {vacancyData ? (
               <a
                 href="/dashboard/vacancy"
@@ -254,8 +246,7 @@ export default async function DashboardPage() {
                 </a>
               </div>
             )}
-          </section>
-        )}
+        </section>
       </div>
     </main>
   );

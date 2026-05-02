@@ -4,11 +4,10 @@ import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { env } from "@/env";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { paymentProvider } from "@/server/services/paymentService";
-import type { UserRole } from "@prisma/client";
 import { randomUUID } from "crypto";
 
 export const authRouter = router({
-  /** Current user + roles + attempt count */
+  /** Current user, staff flags, attempt pool */
   me: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.db.user.findUnique({
       where: { id: ctx.userId },
@@ -37,17 +36,15 @@ export const authRouter = router({
     const regeneratedCount = attemptLedger.filter((e) => e.event === "REGENERATED").length;
     const availableAttempts =
       BUSINESS_RULES.MAX_REFERRER_ATTEMPTS - consumedCount + regeneratedCount;
-    const attemptRegenerations = user.roles.includes("REFERRER")
-      ? await ctx.db.referrerAttemptLedger.findMany({
-          where: {
-            referrerId: ctx.userId,
-            event: "CONSUMED",
-            regeneratesAt: { gt: new Date() },
-          },
-          select: { applicationId: true, regeneratesAt: true },
-          orderBy: { regeneratesAt: "asc" },
-        })
-      : [];
+    const attemptRegenerations = await ctx.db.referrerAttemptLedger.findMany({
+      where: {
+        referrerId: ctx.userId,
+        event: "CONSUMED",
+        regeneratesAt: { gt: new Date() },
+      },
+      select: { applicationId: true, regeneratesAt: true },
+      orderBy: { regeneratesAt: "asc" },
+    });
 
     return {
       id: user.id,
@@ -55,7 +52,7 @@ export const authRouter = router({
       contactInfo: user.contactInfo ?? null,
       bio: user.bio ?? null,
       email: user.email ?? null,
-      roles: user.roles,
+      staffRoles: user.staffRoles,
       githubLogin: user.githubProfile?.githubLogin ?? null,
       paidRegistration: user.githubProfile?.paidRegistration ?? false,
       subscription: user.seekerSubscription
@@ -78,41 +75,22 @@ export const authRouter = router({
         displayName: z.string().min(2).max(100),
         contactInfo: z.string().max(500).optional(),
         bio: z.string().max(1000).optional(),
-        roles: z.array(z.enum(["SEEKER", "REFERRER"])).min(1).max(2).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const current = await ctx.db.user.findUnique({
-        where: { id: ctx.userId },
-        select: { roles: true },
-      });
-      if (!current) throw new TRPCError({ code: "NOT_FOUND" });
-
-      const retainedPrivilegedRoles = current.roles.filter(
-        (r) => r === "MODERATOR" || r === "ADMIN",
-      );
-      const selectedFunctionalRoles = input.roles
-        ? Array.from(new Set(input.roles))
-        : current.roles.filter((r) => r === "SEEKER" || r === "REFERRER");
-      const nextRoles = [
-        ...retainedPrivilegedRoles,
-        ...(selectedFunctionalRoles.length > 0 ? selectedFunctionalRoles : ["SEEKER"]),
-      ] as UserRole[];
-
       const updated = await ctx.db.user.update({
         where: { id: ctx.userId },
         data: {
           displayName: input.displayName.trim(),
           contactInfo: input.contactInfo?.trim() || null,
           bio: input.bio?.trim() || null,
-          roles: nextRoles,
         },
         select: {
           id: true,
           displayName: true,
           contactInfo: true,
           bio: true,
-          roles: true,
+          staffRoles: true,
         },
       });
       return updated;

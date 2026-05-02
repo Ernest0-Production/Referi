@@ -10,11 +10,6 @@ export default async function DashboardVacancyPage() {
   if (!session?.user?.id) redirect("/login");
 
   const me = await trpc.auth.me();
-
-  if (!me.roles.includes("REFERRER")) {
-    redirect("/dashboard");
-  }
-
   const vacancy = await trpc.vacancies.myActive();
 
   return (

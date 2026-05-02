@@ -7,21 +7,12 @@ interface Props {
   currentName: string;
   currentContactInfo?: string | null;
   currentBio?: string | null;
-  currentRoles?: string[];
 }
 
-export function UpdateProfileForm({
-  currentName,
-  currentContactInfo,
-  currentBio,
-  currentRoles,
-}: Props) {
+export function UpdateProfileForm({ currentName, currentContactInfo, currentBio }: Props) {
   const [name, setName] = useState(currentName);
   const [contactInfo, setContactInfo] = useState(currentContactInfo ?? "");
   const [bio, setBio] = useState(currentBio ?? "");
-  const [roles, setRoles] = useState<string[]>(
-    currentRoles?.filter((r) => r === "SEEKER" || r === "REFERRER") ?? ["SEEKER"],
-  );
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,43 +35,10 @@ export function UpdateProfileForm({
           displayName: name,
           contactInfo: contactInfo || undefined,
           bio: bio || undefined,
-          roles: roles as ("SEEKER" | "REFERRER")[],
         });
       }}
       className="space-y-3"
     >
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">Роли</label>
-        <div className="flex flex-wrap gap-3 rounded-xl border border-gray-200 px-3 py-2">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={roles.includes("SEEKER")}
-              onChange={(e) =>
-                setRoles((prev) =>
-                  e.target.checked ? Array.from(new Set([...prev, "SEEKER"])) : prev.filter((r) => r !== "SEEKER"),
-                )
-              }
-            />
-            Соискатель
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={roles.includes("REFERRER")}
-              onChange={(e) =>
-                setRoles((prev) =>
-                  e.target.checked
-                    ? Array.from(new Set([...prev, "REFERRER"]))
-                    : prev.filter((r) => r !== "REFERRER"),
-                )
-              }
-            />
-            Реферальщик
-          </label>
-        </div>
-      </div>
-
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-600">Имя / псевдоним</label>
         <input
@@ -122,7 +80,7 @@ export function UpdateProfileForm({
 
       <button
         type="submit"
-        disabled={update.isPending || name.trim().length < 2 || roles.length === 0}
+        disabled={update.isPending || name.trim().length < 2}
         className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
       >
         {update.isPending ? "Сохранение…" : "Сохранить"}

@@ -29,7 +29,7 @@ tags: design, architecture, app
 | -------------- | ------------------------------------------------------------------- |
 | **Query**      | tRPC процедура для чтения данных (GET-семантика)                    |
 | **Mutation**   | tRPC процедура для записи/изменения данных (POST-семантика)         |
-| **Middleware** | tRPC middleware для проверки прав (isAuth, isReferrer, isModerator) |
+| **Middleware** | tRPC middleware для проверки прав (isAuth, isModerator) |
 | **Zod schema** | TypeScript-схема валидации входных данных                           |
 | **ctx**        | Базовый context: `{ session, db, ip }`; после `protectedProcedure` — ещё `userId: string` |
 
@@ -72,8 +72,8 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 
 const enforceUserIsModerator = t.middleware(async ({ ctx, next }) => {
-  // … загрузка roles из БД …
-  if (!user?.roles.includes("MODERATOR") && !user?.roles.includes("ADMIN"))
+  // … загрузка staffRoles из БД …
+  if (!user?.staffRoles.includes("MODERATOR") && !user?.staffRoles.includes("ADMIN"))
     throw new TRPCError({ code: "FORBIDDEN" });
   return next({ ctx: { ...ctx, session: ctx.session, userId: ctx.session.user.id } });
 });
@@ -86,8 +86,8 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 
 | Процедура                          | Тип      | Auth   | Входные данные                             | Описание                                      |
 | ---------------------------------- | -------- | ------ | ------------------------------------------ | --------------------------------------------- |
-| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + профиль + роли; объект `subscription` (если есть): период, статус, `autoRenewEnabled` для автопродления при `ACTIVE`; `availableAttempts` |
-| `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo?, bio?, roles? }` | Обновить профиль пользователя                     |
+| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + профиль + `staffRoles` (MODERATOR/ADMIN); объект `subscription` (если есть): период, статус, `autoRenewEnabled` для автопродления при `ACTIVE`; `availableAttempts` |
+| `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo?, bio? }`      | Обновить профиль пользователя                     |
 | `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                               | Создать платёж за регистрацию (молодой GitHub); сумма — `BUSINESS_RULES.REGISTRATION_FEE_KOP`; `confirmationUrl` |
 
 ### 4.3 Router: `vacancies`
@@ -96,7 +96,7 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 | ---------------------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `vacancies.list`       | query    | public | `{ specialty?: Specialty[], grade?: Grade[], workFormat?: WorkFormat[], salaryFrom?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами                         |
 | `vacancies.getById`    | query    | public | `{ id }`                                                                                                   | Детальная страница вакансии (без данных реферальщика)       |
-| `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия                |
+| `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия, пул попыток > 0 |
 | `vacancies.delete`     | mutation | isAuth | `{ id }`                                                                                                   | Удалить вакансию; cascade refund                            |
 | `vacancies.myActive`   | query    | isAuth | —                                                                                                          | Активная вакансия текущего реферальщика                     |
 | `vacancies.applicants` | query    | isAuth | `{ vacancyId }`                                                                                            | Список заявок на вою вакансию (только контакты, bio, cover) |

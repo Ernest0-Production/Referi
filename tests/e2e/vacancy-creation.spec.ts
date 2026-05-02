@@ -2,8 +2,7 @@ import { test, expect } from "@playwright/test";
 
 /**
  * E2E tests for the vacancy creation flow.
- * These tests require a logged-in REFERRER session.
- * In CI, they run against a staging environment with seed data.
+ * These tests require a logged-in user session (any account).
  *
  * To run locally with auth:
  *   PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e
@@ -12,13 +11,12 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Vacancy creation flow (requires auth)", () => {
   test.skip(
-    !process.env.E2E_REFERRER_SESSION,
-    "Skipped: E2E_REFERRER_SESSION not set (requires authenticated session cookie)",
+    !process.env.E2E_SESSION_COOKIE,
+    "Skipped: E2E_SESSION_COOKIE not set (value of next-auth.session-token cookie)",
   );
 
   test.beforeEach(async ({ context }) => {
-    // Set the session cookie if provided
-    const sessionCookie = process.env.E2E_REFERRER_SESSION;
+    const sessionCookie = process.env.E2E_SESSION_COOKIE;
     if (sessionCookie) {
       await context.addCookies([
         {
@@ -33,13 +31,13 @@ test.describe("Vacancy creation flow (requires auth)", () => {
     }
   });
 
-  test("referrer can view vacancy dashboard", async ({ page }) => {
+  test("user can view vacancy dashboard", async ({ page }) => {
     await page.goto("/dashboard/vacancy");
     await expect(page).not.toHaveURL(/login/);
     await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("referrer can view attempts pool", async ({ page }) => {
+  test("user can view attempts pool", async ({ page }) => {
     await page.goto("/dashboard/attempts");
     await expect(page).not.toHaveURL(/login/);
     await expect(page.getByText(/Пул попыток/i)).toBeVisible();

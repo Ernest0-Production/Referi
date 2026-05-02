@@ -4,7 +4,7 @@ import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import { encryptToken } from "@/lib/crypto";
 import { isGitHubAccountOldEnough } from "@/shared/utils/ageCheck";
-import type { UserRole } from "@prisma/client";
+import type { StaffRole } from "@prisma/client";
 
 interface GitHubProfile {
   id: number;
@@ -46,7 +46,6 @@ async function upsertUserFromGitHub(data: {
     data: {
       displayName: githubLogin,
       email: email ?? undefined,
-      roles: ["SEEKER"] as UserRole[],
       githubProfile: {
         create: {
           githubId,
@@ -110,9 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.sub) {
         session.user.id = token.sub;
       }
-      if (token.roles) {
-        session.user.roles = token.roles as UserRole[];
-      }
+      session.user.staffRoles = (token.staffRoles as StaffRole[] | undefined) ?? [];
       if (typeof token.githubLogin === "string" && token.githubLogin.length > 0) {
         session.user.githubLogin = token.githubLogin;
       }
@@ -127,13 +124,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { githubProfile: { githubId } },
             select: {
               id: true,
-              roles: true,
+              staffRoles: true,
               githubProfile: { select: { githubLogin: true } },
             },
           });
           if (dbUser) {
             token.sub = dbUser.id;
-            token.roles = dbUser.roles;
+            token.staffRoles = dbUser.staffRoles;
             token.githubLogin = dbUser.githubProfile?.githubLogin ?? "";
             token.userClaimsLoaded = true;
           }
@@ -147,23 +144,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const needsDbRefresh =
         !token.userClaimsLoaded &&
-        (!Array.isArray(token.roles) ||
-          token.roles.length === 0 ||
-          token.githubLogin === undefined);
+        (!Array.isArray(token.staffRoles) || token.githubLogin === undefined);
 
       if (needsDbRefresh) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
           select: {
-            roles: true,
+            staffRoles: true,
             githubProfile: { select: { githubLogin: true } },
           },
         });
         if (dbUser) {
-          token.roles = dbUser.roles;
+          token.staffRoles = dbUser.staffRoles;
           token.githubLogin = dbUser.githubProfile?.githubLogin ?? "";
         } else {
-          token.roles = [];
+          token.staffRoles = [];
           token.githubLogin = "";
         }
         token.userClaimsLoaded = true;

@@ -11,10 +11,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const { prisma } = await import("@/lib/prisma");
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { roles: true },
+    select: { staffRoles: true },
   });
 
-  if (!user?.roles.includes("MODERATOR") && !user?.roles.includes("ADMIN")) {
+  if (!user?.staffRoles.includes("MODERATOR") && !user?.staffRoles.includes("ADMIN")) {
     redirect("/dashboard");
   }
 

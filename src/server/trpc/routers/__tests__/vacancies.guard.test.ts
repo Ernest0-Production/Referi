@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Guard rules under test (mock db)
+// Guard rules under test (mock db) — mirrors vacancies.create preconditions
 // ---------------------------------------------------------------------------
 
 type AsyncMockFn = (...args: unknown[]) => Promise<unknown>;
@@ -9,25 +9,16 @@ type AsyncMockFn = (...args: unknown[]) => Promise<unknown>;
 type MockDb = {
   vacancy: { findFirst: AsyncMockFn };
   referrerAttemptLedger: { count: AsyncMockFn };
-  user: { findUnique: AsyncMockFn };
 };
 
 function createMockDb(): MockDb {
   return {
     vacancy: { findFirst: vi.fn() as AsyncMockFn },
     referrerAttemptLedger: { count: vi.fn() as AsyncMockFn },
-    user: { findUnique: vi.fn() as AsyncMockFn },
   };
 }
 
 async function runCreateGuard(db: MockDb, userId: string): Promise<{ error: string | null }> {
-  const user = (await db.user.findUnique({ where: { id: userId } })) as {
-    roles: string[];
-  } | null;
-  if (!user?.roles?.includes("REFERRER")) {
-    return { error: "FORBIDDEN" };
-  }
-
   const existing = await db.vacancy.findFirst({
     where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
   });
@@ -57,15 +48,7 @@ describe("vacancies.create guard — one active vacancy", () => {
     db = createMockDb();
   });
 
-  it("rejects non-REFERRER users", async () => {
-    (db.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ roles: ["SEEKER"] });
-
-    const { error } = await runCreateGuard(db, "user-1");
-    expect(error).toBe("FORBIDDEN");
-  });
-
   it("blocks creation when an ACTIVE vacancy exists", async () => {
-    (db.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ roles: ["REFERRER"] });
     (db.vacancy.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "existing-vacancy",
       status: "ACTIVE",
@@ -76,7 +59,6 @@ describe("vacancies.create guard — one active vacancy", () => {
   });
 
   it("blocks creation when a FROZEN vacancy exists", async () => {
-    (db.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ roles: ["REFERRER"] });
     (db.vacancy.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "existing-vacancy",
       status: "FROZEN",
@@ -87,7 +69,6 @@ describe("vacancies.create guard — one active vacancy", () => {
   });
 
   it("blocks creation when referrer has no attempts left", async () => {
-    (db.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ roles: ["REFERRER"] });
     (db.vacancy.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (db.referrerAttemptLedger.count as ReturnType<typeof vi.fn>).mockResolvedValue(3);
 
@@ -95,8 +76,7 @@ describe("vacancies.create guard — one active vacancy", () => {
     expect(error).toBe("NO_ATTEMPTS_LEFT");
   });
 
-  it("allows creation when user is REFERRER, no active vacancy, and has attempts", async () => {
-    (db.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ roles: ["REFERRER"] });
+  it("allows creation when no active vacancy and has full attempt pool", async () => {
     (db.vacancy.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (db.referrerAttemptLedger.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
@@ -105,7 +85,6 @@ describe("vacancies.create guard — one active vacancy", () => {
   });
 
   it("allows creation when referrer still has 1 attempt remaining", async () => {
-    (db.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ roles: ["REFERRER"] });
     (db.vacancy.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (db.referrerAttemptLedger.count as ReturnType<typeof vi.fn>).mockResolvedValue(2);
 

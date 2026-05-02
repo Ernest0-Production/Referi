@@ -10,6 +10,9 @@ export default async function ProfilePage() {
 
   const me = await trpc.auth.me();
 
+  const staffLabel =
+    me.staffRoles.length > 0 ? me.staffRoles.join(", ") : "—";
+
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
@@ -42,15 +45,13 @@ export default async function ProfilePage() {
             <p className="whitespace-pre-wrap">{me.bio ?? "—"}</p>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="font-medium">Роли:</span>
-            <span>{me.roles.join(", ")}</span>
+            <span className="font-medium">Персонал:</span>
+            <span>{staffLabel}</span>
           </div>
-          {me.roles.includes("REFERRER") && (
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span className="font-medium">Доступных попыток:</span>
-              <span>{me.availableAttempts}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span className="font-medium">Доступных попыток:</span>
+            <span>{me.availableAttempts}</span>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-gray-100 bg-white p-6">
@@ -59,7 +60,6 @@ export default async function ProfilePage() {
             currentName={me.displayName}
             currentContactInfo={me.contactInfo}
             currentBio={me.bio}
-            currentRoles={me.roles}
           />
         </div>
       </div>

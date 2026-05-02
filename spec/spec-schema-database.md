@@ -32,7 +32,7 @@ tags: schema, data, infrastructure
 | `kopecks`           | Целое число копеек; 100 kopecks = 1 рубль                      |
 | `ApplicationStatus` | Enum всех состояний заявки                                     |
 | `VacancyStatus`     | Enum статусов вакансии                                         |
-| `UserRole`          | Enum роли пользователя на платформе                            |
+| `StaffRole`         | Привилегии персонала (`MODERATOR`, `ADMIN`); не путать с актором заявки |
 | `SanctionType`      | Тип санкции, наложенной на пользователя                        |
 | `AttemptEvent`      | Тип события в журнале попыток реферальщика                     |
 | `AuditActor`        | Кто произвёл действие (system / seeker / referrer / moderator) |
@@ -80,9 +80,7 @@ datasource db {
 // IDENTITY CONTEXT
 // ─────────────────────────────────────────────
 
-enum UserRole {
-  SEEKER
-  REFERRER
+enum StaffRole {
   MODERATOR
   ADMIN
 }
@@ -96,7 +94,7 @@ model User {
   contactInfo String?  @db.VarChar(500)
   bio         String?  @db.VarChar(1000)
   email       String?  @db.VarChar(320)
-  roles       UserRole[]
+  staffRoles  StaffRole[] @default([])
 
   yookassaPayoutDestination String?
 

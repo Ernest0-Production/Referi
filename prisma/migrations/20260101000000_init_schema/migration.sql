@@ -2,7 +2,7 @@
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('SEEKER', 'REFERRER', 'MODERATOR', 'ADMIN');
+CREATE TYPE "StaffRole" AS ENUM ('MODERATOR', 'ADMIN');
 
 -- CreateEnum
 CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELLED', 'PAST_DUE');
@@ -51,7 +51,7 @@ CREATE TABLE "users" (
 "contactInfo" VARCHAR(500),
 "bio" VARCHAR(1000),
 "email" VARCHAR(320),
-    "roles" "UserRole"[],
+"staffRoles" "StaffRole" [] DEFAULT ARRAY[]::"StaffRole" [],
     "yookassaPayoutDestination" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")

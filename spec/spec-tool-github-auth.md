@@ -209,7 +209,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (token.sub) {
         session.user.id = token.sub;
-        session.user.roles = token.roles as UserRole[];
+        session.user.staffRoles = (token.staffRoles as StaffRole[] | undefined) ?? [];
       }
       if (typeof token.githubLogin === 'string' && token.githubLogin.length > 0) {
         session.user.githubLogin = token.githubLogin;
@@ -223,11 +223,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (Number.isFinite(githubId)) {
           const dbUser = await db.user.findFirst({
             where: { githubProfile: { githubId } },
-            select: { id: true, roles: true, githubProfile: { select: { githubLogin: true } } },
+            select: { id: true, staffRoles: true, githubProfile: { select: { githubLogin: true } } },
           });
           if (dbUser) {
             token.sub = dbUser.id;
-            token.roles = dbUser.roles;
+            token.staffRoles = dbUser.staffRoles;
             token.githubLogin = dbUser.githubProfile?.githubLogin ?? '';
             token.userClaimsLoaded = true;
           }
@@ -239,20 +239,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const needsDbRefresh =
         !token.userClaimsLoaded &&
-        (!Array.isArray(token.roles) ||
-          token.roles.length === 0 ||
-          token.githubLogin === undefined);
+        (!Array.isArray(token.staffRoles) || token.githubLogin === undefined);
 
       if (needsDbRefresh) {
         const dbUser = await db.user.findUnique({
           where: { id: token.sub },
-          select: { roles: true, githubProfile: { select: { githubLogin: true } } },
+          select: { staffRoles: true, githubProfile: { select: { githubLogin: true } } },
         });
         if (dbUser) {
-          token.roles = dbUser.roles;
+          token.staffRoles = dbUser.staffRoles;
           token.githubLogin = dbUser.githubProfile?.githubLogin ?? '';
         } else {
-          token.roles = [];
+          token.staffRoles = [];
           token.githubLogin = '';
         }
         token.userClaimsLoaded = true;
@@ -269,7 +267,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 });
 ```
 
-В JWT для OAuth Auth.js задаёт `user.id` как случайный UUID, не совпадающий с `users.id` в БД; числовой id GitHub приходит в `account.providerAccountId`. Колбэк `jwt` сопоставляет его с `GitHubProfile.githubId`, выставляет `token.sub` равным `User.id` в Prisma и подмешивает `roles` и `githubLogin` из БД. После одного запроса по `token.sub` в JWT выставляется `userClaimsLoaded`, чтобы не повторять `findUnique` на каждом HTTP-запросе при пустом ответе (это не схема БД, только поле в подписанном токене).
+В JWT для OAuth Auth.js задаёт `user.id` как случайный UUID, не совпадающий с `users.id` в БД; числовой id GitHub приходит в `account.providerAccountId`. Колбэк `jwt` сопоставляет его с `GitHubProfile.githubId`, выставляет `token.sub` равным `User.id` в Prisma и подмешивает `staffRoles` и `githubLogin` из БД. После одного запроса по `token.sub` в JWT выставляется `userClaimsLoaded`, чтобы не повторять `findUnique` на каждом HTTP-запросе при отсутствии `githubLogin` в токене (это не схема БД, только поле в подписанном токене).
 
 ### 4.5 Переменные окружения
 

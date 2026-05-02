@@ -13,9 +13,7 @@ datasource db {
 // IDENTITY CONTEXT
 // ─────────────────────────────────────────────
 
-enum UserRole {
-  SEEKER
-  REFERRER
+enum StaffRole {
   MODERATOR
   ADMIN
 }
@@ -29,7 +27,7 @@ model User {
   contactInfo String?  @db.VarChar(500)
   bio         String?  @db.VarChar(1000)
   email       String?  @db.VarChar(320)
-  roles       UserRole[]
+  staffRoles  StaffRole[] @default([])
 
   /// Номер кошелька YooMoney / id сохранённого способа выплаты (ЮKassa); для dev можно не задавать
   yookassaPayoutDestination String?

@@ -157,18 +157,6 @@ export const vacanciesRouter = router({
   create: protectedProcedure.input(createVacancySchema).mutation(async ({ ctx, input }) => {
     const { userId } = ctx;
 
-    // Guard: referrer must have REFERRER role
-    const user = await ctx.db.user.findUnique({
-      where: { id: userId },
-      select: { roles: true },
-    });
-    if (!user?.roles.includes("REFERRER")) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Only users with REFERRER role can create vacancies",
-      });
-    }
-
     // Guard: no more than 1 active vacancy
     const existing = await ctx.db.vacancy.findFirst({
       where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },

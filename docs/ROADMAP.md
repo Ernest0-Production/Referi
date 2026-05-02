@@ -69,7 +69,7 @@ flowchart LR
 | Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`              |
 | Профиль пользователя               | `[CORE]` | Страница `/dashboard/profile`; `auth.updateProfile` mutation |
 | Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                    |
-| `auth.me` query                    | `[CORE]` | Данные текущего пользователя + роли + попытки                |
+| `auth.me` query                    | `[CORE]` | Данные текущего пользователя + staff-флаги + попытки         |
 
 ### Definition of Done
 
