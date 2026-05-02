@@ -91,10 +91,11 @@ flowchart LR
 | ------------------------------- | -------- | --------------------------------------------------------------- |
 | `vacancies.create` mutation     | `[CORE]` | Guard: 1 активная вакансия, пул попыток > 0                     |
 | `vacancies.delete` mutation     | `[CORE]` | Cascade refund (пока без реальных денег)                        |
-| `vacancies.list` query          | `[CORE]` | Фильтры: specialty, grade, workFormat, salary, query; пагинация |
+| `vacancies.list` query          | `[CORE]` | Фильтры: specialty, grade, workFormat, salary, query; исключение просмотренных; пагинация |
+| `vacancySearchPresets` router   | `[CORE]` | Сохранённые наборы фильтров каталога (имя + JSON параметров) |
 | `vacancies.getById` query       | `[CORE]` | Без данных реферальщика                                         |
 | `vacancies.myActive` query      | `[CORE]` | Текущая вакансия реферальщика                                   |
-| Страница `/` — лента вакансий   | `[CORE]` | Карточки вакансий + фильтры + поиск                             |
+| Страница `/` — лента вакансий   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных |
 | Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница вакансии + кнопка «Откликнуться»             |
 | Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей вакансией                         |
 | Форма создания вакансии         | `[CORE]` | Все поля из spec; валидация Zod                                 |
@@ -249,7 +250,7 @@ flowchart LR
 | Задача                         | Флаг     | Описание                                                           |
 | ------------------------------ | -------- | ------------------------------------------------------------------ |
 | Rate limiting (tRPC)           | `[CORE]` | `FEATURE_RATE_LIMITING` + Redis в `src/lib/rateLimiter.ts`, проверка в `src/app/api/trpc/[trpc]/route.ts` (см. spec-design-api §4.10) |
-| Полировка UI                   | `[CORE]` | Адаптивность, accessibility (Lighthouse ≥ 95), темизация           |
+| Полировка UI                   | `[CORE]` | Единый UI shell (шапки, `--app-page-surface`, shadcn); адаптивность, accessibility (Lighthouse ≥ 95), темизация |
 | Страница настроек пользователя | `[CORE]` | Профиль, подписка; опционально блок «Связь с модерацией» по `NEXT_PUBLIC_MODERATION_CONTACT_URL` |
 | Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                      |
 | Дашборд реферальщика           | `[CORE]` | Вакансия, список кандидатов, пул попыток                           |

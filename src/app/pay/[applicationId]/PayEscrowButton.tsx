@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 export function PayEscrowButton({ applicationId }: { applicationId: string }) {
   const [error, setError] = useState<string | null>(null);
@@ -18,15 +20,20 @@ export function PayEscrowButton({ applicationId }: { applicationId: string }) {
   });
 
   return (
-    <div className="space-y-2">
-      <button
-        onClick={() => initiate.mutate({ applicationId })}
+    <div className="flex flex-col gap-2">
+      <Button
+        type="button"
+        className="w-full"
         disabled={initiate.isPending}
-        className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+        onClick={() => initiate.mutate({ applicationId })}
       >
         {initiate.isPending ? "Создание платежа…" : "Перейти к оплате"}
-      </button>
-      {error && <p className="text-center text-xs text-red-500">{error}</p>}
+      </Button>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription className="text-center text-xs">{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

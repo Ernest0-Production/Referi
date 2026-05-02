@@ -80,8 +80,15 @@
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-  }
+  --sidebar-ring: oklch(0.708 0 0);
+  --app-page-surface: oklch(0.97 0.005 95);
+  --app-search-accent-bg: oklch(0.92 0.18 95);
+  --app-search-accent-fg: oklch(0.2 0.02 95);
+  --app-search-accent-hover: oklch(0.88 0.17 95);
+  --app-nav-cta-bg: oklch(0.28 0.02 280);
+  --app-nav-cta-fg: oklch(0.99 0 0);
+  --app-nav-cta-hover: oklch(0.35 0.02 280);
+}
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -114,6 +121,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --app-page-surface: oklch(0.18 0.01 280);
+  --app-search-accent-bg: oklch(0.75 0.14 95);
+  --app-search-accent-fg: oklch(0.2 0.02 95);
+  --app-search-accent-hover: oklch(0.7 0.13 95);
+  --app-nav-cta-bg: oklch(0.85 0.02 280);
+  --app-nav-cta-fg: oklch(0.15 0.02 280);
+  --app-nav-cta-hover: oklch(0.78 0.02 280);
 }
 
 @layer base {

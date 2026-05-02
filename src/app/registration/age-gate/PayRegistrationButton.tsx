@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   userId: string;
@@ -21,15 +23,15 @@ export function PayRegistrationButton({ userId, feeDisplay }: Props) {
   });
 
   return (
-    <div className="space-y-2">
-      <button
-        onClick={() => initiate.mutate({ userId })}
-        disabled={initiate.isPending}
-        className="w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
-      >
+    <div className="flex flex-col gap-2">
+      <Button type="button" className="w-full" disabled={initiate.isPending} onClick={() => initiate.mutate({ userId })}>
         {initiate.isPending ? "Создание платежа…" : `Оплатить ${feeDisplay} и зарегистрироваться`}
-      </button>
-      {error && <p className="text-center text-xs text-red-500">{error}</p>}
+      </Button>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription className="text-center text-xs">{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

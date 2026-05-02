@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface Props {
   reportId: string;
@@ -22,31 +28,38 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
   });
 
   if (resolved) {
-    return <p className="text-sm font-medium text-green-600">Жалоба закрыта.</p>;
+    return <p className="text-sm font-medium text-muted-foreground">Жалоба закрыта.</p>;
   }
 
   return (
-    <div className="space-y-3">
-      <textarea
-        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-        rows={2}
-        placeholder="Решение (обязательно)"
-        value={resolution}
-        onChange={(e) => setResolution(e.target.value)}
-        disabled={resolve.isPending}
-      />
-      {vacancyId && (
-        <label className="flex items-center gap-2 text-sm text-gray-600">
-          <input
-            type="checkbox"
+    <FieldGroup className="gap-4">
+      <Field>
+        <FieldLabel htmlFor="report-resolution">Решение (обязательно)</FieldLabel>
+        <Textarea
+          id="report-resolution"
+          rows={2}
+          placeholder="Решение (обязательно)"
+          value={resolution}
+          onChange={(e) => setResolution(e.target.value)}
+          disabled={resolve.isPending}
+        />
+      </Field>
+      {vacancyId ? (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="block-vacancy"
             checked={blockVacancy}
-            onChange={(e) => setBlockVacancy(e.target.checked)}
-            className="rounded"
+            onCheckedChange={(v) => setBlockVacancy(v === true)}
+            disabled={resolve.isPending}
           />
-          Заблокировать вакансию
-        </label>
-      )}
-      <button
+          <Label htmlFor="block-vacancy" className="text-sm font-normal text-muted-foreground">
+            Заблокировать вакансию
+          </Label>
+        </div>
+      ) : null}
+      <Button
+        type="button"
+        disabled={resolve.isPending || !resolution.trim()}
         onClick={() =>
           resolve.mutate({
             reportId,
@@ -54,12 +67,14 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
             blockVacancy: vacancyId ? blockVacancy : undefined,
           })
         }
-        disabled={resolve.isPending || !resolution.trim()}
-        className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
       >
         Закрыть жалобу
-      </button>
-      {resolve.error && <p className="text-sm text-red-500">{resolve.error.message}</p>}
-    </div>
+      </Button>
+      {resolve.error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{resolve.error.message}</AlertDescription>
+        </Alert>
+      ) : null}
+    </FieldGroup>
   );
 }

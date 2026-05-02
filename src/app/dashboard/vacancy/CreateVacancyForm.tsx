@@ -3,6 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const SPECIALTIES = [
   "FRONTEND",
@@ -59,141 +72,160 @@ export function CreateVacancyForm() {
     });
   }
 
-  const field = (key: keyof typeof form) => ({
-    value: form[key],
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((f) => ({ ...f, [key]: e.target.value })),
-  });
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">
-            Название вакансии *
-          </label>
-          <input
-            required
-            minLength={3}
-            maxLength={200}
-            {...field("title")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="Senior Backend Engineer"
-          />
+    <form onSubmit={handleSubmit}>
+      <FieldGroup>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="vac-title">Название вакансии *</FieldLabel>
+            <Input
+              id="vac-title"
+              required
+              minLength={3}
+              maxLength={200}
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder="Senior Backend Engineer"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="vac-company">Компания *</FieldLabel>
+            <Input
+              id="vac-company"
+              required
+              minLength={2}
+              maxLength={200}
+              value={form.companyName}
+              onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+              placeholder="ООО Пример"
+            />
+          </Field>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Компания *</label>
-          <input
-            required
-            minLength={2}
-            maxLength={200}
-            {...field("companyName")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="ООО Пример"
-          />
-        </div>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Специальность</label>
-          <select
-            {...field("specialty")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-          >
-            {SPECIALTIES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field>
+            <FieldLabel>Специальность</FieldLabel>
+            <Select
+              value={form.specialty}
+              onValueChange={(v) => setForm((f) => ({ ...f, specialty: v as (typeof SPECIALTIES)[number] }))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {SPECIALTIES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel>Грейд</FieldLabel>
+            <Select
+              value={form.grade}
+              onValueChange={(v) => setForm((f) => ({ ...f, grade: v as (typeof GRADES)[number] }))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {GRADES.map((g) => (
+                    <SelectItem key={g} value={g}>
+                      {g}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel>Формат</FieldLabel>
+            <Select
+              value={form.workFormat}
+              onValueChange={(v) => setForm((f) => ({ ...f, workFormat: v as (typeof FORMATS)[number] }))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {FORMATS.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {f}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Грейд</label>
-          <select
-            {...field("grade")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-          >
-            {GRADES.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Формат</label>
-          <select
-            {...field("workFormat")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-          >
-            {FORMATS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Зарплата от (₽)</label>
-          <input
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="vac-sal-from">Зарплата от (₽)</FieldLabel>
+            <Input
+              id="vac-sal-from"
+              type="number"
+              min={0}
+              value={form.salaryFrom}
+              onChange={(e) => setForm((f) => ({ ...f, salaryFrom: e.target.value }))}
+              placeholder="100000"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="vac-sal-to">Зарплата до (₽)</FieldLabel>
+            <Input
+              id="vac-sal-to"
+              type="number"
+              min={0}
+              value={form.salaryTo}
+              onChange={(e) => setForm((f) => ({ ...f, salaryTo: e.target.value }))}
+              placeholder="200000"
+            />
+          </Field>
+        </div>
+
+        <Field>
+          <FieldLabel htmlFor="vac-reward">Бонус реферальщику (₽)</FieldLabel>
+          <Input
+            id="vac-reward"
             type="number"
             min={0}
-            {...field("salaryFrom")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-            placeholder="100000"
+            value={form.rewardKopecks}
+            onChange={(e) => setForm((f) => ({ ...f, rewardKopecks: e.target.value }))}
+            placeholder="0"
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Зарплата до (₽)</label>
-          <input
-            type="number"
-            min={0}
-            {...field("salaryTo")}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-            placeholder="200000"
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="vac-desc">Описание *</FieldLabel>
+          <Textarea
+            id="vac-desc"
+            required
+            minLength={10}
+            maxLength={3000}
+            rows={6}
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            placeholder="Расскажите о вакансии, требованиях и условиях работы"
           />
-        </div>
-      </div>
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">
-          Бонус реферальщику (₽)
-        </label>
-        <input
-          type="number"
-          min={0}
-          {...field("rewardKopecks")}
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-          placeholder="0"
-        />
-      </div>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">Описание *</label>
-        <textarea
-          required
-          minLength={10}
-          maxLength={3000}
-          rows={6}
-          {...field("description")}
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="Расскажите о вакансии, требованиях и условиях работы"
-        />
-      </div>
-
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={create.isPending}
-        className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
-      >
-        {create.isPending ? "Публикация…" : "Опубликовать вакансию"}
-      </button>
+        <Button type="submit" disabled={create.isPending}>
+          {create.isPending ? "Публикация…" : "Опубликовать вакансию"}
+        </Button>
+      </FieldGroup>
     </form>
   );
 }

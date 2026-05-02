@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
+import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { LoginButton } from "./LoginButton";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -10,28 +11,25 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="mx-auto w-full max-w-md p-8">
-        <div className="space-y-6 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold">
-              <ServiceBrandLink className="text-2xl text-gray-900" />
-            </h1>
-            <p className="text-sm text-gray-500">Реферальная платформа для разработчиков</p>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-center text-sm text-gray-600">
-              Войдите через GitHub, чтобы продолжить
-            </p>
+    <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
+      <PublicHeaderNav session={null} />
+      <main className="flex flex-1 flex-col items-center justify-center p-6">
+        <Card className="w-full max-w-md shadow-sm">
+          <CardHeader className="flex flex-col gap-1 text-center">
+            <CardTitle className="text-2xl">Referi</CardTitle>
+            <CardDescription>Реферальная платформа для разработчиков</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-center text-sm text-muted-foreground">Войдите через GitHub, чтобы продолжить</p>
             <LoginButton />
-          </div>
-
-          <p className="text-center text-xs text-gray-400">
-            Для регистрации требуется GitHub аккаунт старше 1 года
-          </p>
-        </div>
-      </div>
-    </main>
+          </CardContent>
+          <CardFooter>
+            <p className="w-full text-center text-xs text-muted-foreground">
+              Для регистрации требуется GitHub аккаунт старше 1 года
+            </p>
+          </CardFooter>
+        </Card>
+      </main>
+    </div>
   );
 }

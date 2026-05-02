@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   applicationId: string;
@@ -32,45 +33,49 @@ export function ApplicationActionsPanel({ applicationId, status }: Props) {
 
   if (status === "SUBMITTED" || status === "AWAITING_PAYMENT") {
     return (
-      <button
-        onClick={() => cancelMutation.mutate({ applicationId: id })}
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-destructive"
         disabled={cancelMutation.isPending}
-        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60"
+        onClick={() => cancelMutation.mutate({ applicationId: id })}
       >
         {cancelMutation.isPending ? "…" : "Отозвать"}
-      </button>
+      </Button>
     );
   }
 
   if (status === "AWAITING_RESUME_HANDOFF") {
     return (
-      <button
-        onClick={() => requestCancelMutation.mutate({ applicationId: id })}
+      <Button
+        variant="outline"
+        size="sm"
         disabled={requestCancelMutation.isPending}
-        className="rounded-lg border border-amber-200 px-3 py-1.5 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+        onClick={() => requestCancelMutation.mutate({ applicationId: id })}
       >
         {requestCancelMutation.isPending ? "…" : "Запросить отмену"}
-      </button>
+      </Button>
     );
   }
 
   if (status === "AWAITING_COMPANY_DECISION") {
     return (
-      <div className="flex gap-2">
-        <button
-          onClick={() => acceptOfferMutation.mutate({ applicationId: id })}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
           disabled={acceptOfferMutation.isPending}
-          className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs text-green-700 hover:bg-green-100 disabled:opacity-60"
+          onClick={() => acceptOfferMutation.mutate({ applicationId: id })}
         >
           {acceptOfferMutation.isPending ? "…" : "Принять оффер"}
-        </button>
-        <button
-          onClick={() => reportRejectionMutation.mutate({ applicationId: id })}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           disabled={reportRejectionMutation.isPending}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+          onClick={() => reportRejectionMutation.mutate({ applicationId: id })}
         >
           {reportRejectionMutation.isPending ? "…" : "Получил отказ"}
-        </button>
+        </Button>
       </div>
     );
   }

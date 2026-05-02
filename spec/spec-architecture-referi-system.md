@@ -117,7 +117,7 @@ referi/
 │   │   │   └── vacancyStatus.ts     # VacancyStatus enum
 │   │   └── utils/
 │   │       └── money.ts             # Конвертация копеек ↔ рубли
-│   ├── components/                  # Переиспользуемые UI-компоненты
+│   ├── components/                  # Переиспользуемые UI-компоненты; оболочка навигации — [spec-ui-shell.md](spec-ui-shell.md)
 │   └── lib/
 │       ├── prisma.ts                # Prisma Client singleton
 │       ├── redis.ts                 # Redis/BullMQ client

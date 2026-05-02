@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { CreateVacancyForm } from "./CreateVacancyForm";
 import { ManageVacancyPanel } from "./ManageVacancyPanel";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function DashboardVacancyPage() {
   const session = await auth();
@@ -13,40 +14,36 @@ export default async function DashboardVacancyPage() {
   const vacancy = await trpc.vacancies.myActive();
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <span className="text-sm text-gray-500">{me.displayName}</span>
-      </nav>
-
-      <div className="mx-auto max-w-3xl space-y-6 p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Моя вакансия</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Доступных попыток: {me.availableAttempts} из 3
-            </p>
-          </div>
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-foreground">Моя вакансия</h1>
+          <p className="text-sm text-muted-foreground">
+            Доступных попыток: {me.availableAttempts} из 3
+          </p>
         </div>
 
         {vacancy ? (
           <ManageVacancyPanel vacancy={vacancy} />
         ) : (
-          <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
-            <h2 className="font-semibold text-gray-800">Разместить вакансию</h2>
-            <p className="text-sm text-gray-500">
-              У вас нет активной вакансии. Заполните форму ниже.
-            </p>
-            {me.availableAttempts > 0 ? (
-              <CreateVacancyForm />
-            ) : (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm text-amber-800">
-                  Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60 дней.
-                </p>
-              </div>
-            )}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Разместить вакансию</CardTitle>
+              <CardDescription>У вас нет активной вакансии. Заполните форму ниже.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {me.availableAttempts > 0 ? (
+                <CreateVacancyForm />
+              ) : (
+                <Alert>
+                  <AlertTitle>Нет попыток</AlertTitle>
+                  <AlertDescription>
+                    Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60 дней.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </main>

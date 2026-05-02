@@ -54,6 +54,7 @@ export type VacancyListFlatSearchParams = {
   sort?: string;
   query?: string;
   page?: string;
+  hideViewed?: string;
 };
 
 export type VacancyListSearchParamsInput = {
@@ -64,6 +65,7 @@ export type VacancyListSearchParamsInput = {
   sort?: string | string[];
   query?: string | string[];
   page?: string | string[];
+  hideViewed?: string | string[];
 };
 
 function scalarSearchParam(raw: string | string[] | undefined): string | undefined {
@@ -72,6 +74,9 @@ function scalarSearchParam(raw: string | string[] | undefined): string | undefin
 }
 
 export function normalizeVacancyListSearchParams(raw: VacancyListSearchParamsInput): VacancyListFlatSearchParams {
+  const hideRaw = scalarSearchParam(raw.hideViewed);
+  const hideOn =
+    hideRaw === "1" || hideRaw?.toLowerCase() === "true" || hideRaw?.toLowerCase() === "yes";
   return {
     specialty: scalarSearchParam(raw.specialty),
     grade: scalarSearchParam(raw.grade),
@@ -80,6 +85,7 @@ export function normalizeVacancyListSearchParams(raw: VacancyListSearchParamsInp
     sort: scalarSearchParam(raw.sort),
     query: scalarSearchParam(raw.query),
     page: scalarSearchParam(raw.page),
+    hideViewed: hideOn ? "1" : undefined,
   };
 }
 
@@ -92,6 +98,7 @@ export function vacancyListFlatToSearchParams(params: VacancyListFlatSearchParam
   if (params.workFormat?.trim()) q.set("workFormat", params.workFormat.trim());
   if (params.salaryFrom?.trim()) q.set("salaryFrom", params.salaryFrom.trim());
   if (params.page) q.set("page", params.page);
+  if (params.hideViewed === "1") q.set("hideViewed", "1");
   return q;
 }
 
@@ -110,4 +117,32 @@ export function mergeVacancyListQueryParams(
   }
   merged.page = patch.page ?? "1";
   return vacancyListFlatToSearchParams(merged);
+}
+
+export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Record<string, string> {
+  const keys = ["specialty", "grade", "workFormat", "salaryFrom", "sort", "query"] as const;
+  const out: Record<string, string> = {};
+  for (const k of keys) {
+    const v = flat[k];
+    if (typeof v === "string" && v.trim()) {
+      out[k] = v.trim();
+    }
+  }
+  return out;
+}
+
+export function presetParamsFromJson(
+  raw: unknown,
+): Partial<Pick<VacancyListFlatSearchParams, "specialty" | "grade" | "workFormat" | "salaryFrom" | "sort" | "query">> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const o = raw as Record<string, unknown>;
+  const s = (k: keyof typeof o) => (typeof o[k] === "string" ? o[k] : undefined);
+  return {
+    specialty: s("specialty"),
+    grade: s("grade"),
+    workFormat: s("workFormat"),
+    salaryFrom: s("salaryFrom"),
+    sort: s("sort"),
+    query: s("query"),
+  };
 }

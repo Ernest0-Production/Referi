@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const STATUS_LABELS: Record<string, string> = {
   SUBMITTED: "Подана",
@@ -29,70 +32,59 @@ export default async function ApplicantsPage() {
   const applicants = await trpc.vacancies.applicants({ vacancyId: vacancy.id });
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <a href="/dashboard/vacancy" className="text-sm text-gray-500 hover:text-blue-600">
-          ← Моя вакансия
-        </a>
-      </nav>
-
-      <div className="mx-auto max-w-4xl space-y-6 p-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Кандидаты</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {vacancy.title} · {applicants.length} откликов
-          </p>
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6 md:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold text-foreground">Кандидаты</h1>
+            <p className="text-sm text-muted-foreground">
+              {vacancy.title} · {applicants.length} откликов
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/vacancy">← Моя вакансия</Link>
+          </Button>
         </div>
 
         {applicants.length === 0 ? (
-          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center">
-            <p className="text-gray-500">Откликов пока нет</p>
-          </div>
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">Откликов пока нет</CardContent>
+          </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {applicants.map((app) => (
-              <div
-                key={app.id}
-                className="space-y-3 rounded-2xl border border-gray-100 bg-white p-5"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {app.seeker?.displayName ?? "—"}
-                    </p>
-                    <p className="text-xs text-gray-400">
+              <Card key={app.id}>
+                <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0 pb-2">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-medium text-foreground">{app.seeker?.displayName ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">
                       {new Date(app.createdAt).toLocaleDateString("ru-RU")}
                     </p>
                   </div>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+                  <Badge variant="secondary" className="shrink-0">
                     {STATUS_LABELS[app.status] ?? app.status}
-                  </span>
-                </div>
-
-                {app.bio && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">О себе</p>
-                    <p className="mt-0.5 line-clamp-3 text-sm text-gray-700">{app.bio}</p>
+                  </Badge>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 pt-0">
+                  {app.bio ? (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs font-medium text-muted-foreground">О себе</p>
+                      <p className="line-clamp-3 text-sm text-foreground">{app.bio}</p>
+                    </div>
+                  ) : null}
+                  {app.contactInfo ? (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs font-medium text-muted-foreground">Контакты</p>
+                      <p className="text-sm text-foreground">{app.contactInfo}</p>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/dashboard/applications/${app.id}`}>Подробнее</Link>
+                    </Button>
                   </div>
-                )}
-
-                {app.contactInfo && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">Контакты</p>
-                    <p className="mt-0.5 text-sm text-gray-700">{app.contactInfo}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-1">
-                  <a
-                    href={`/dashboard/applications/${app.id}`}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
-                  >
-                    Подробнее
-                  </a>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

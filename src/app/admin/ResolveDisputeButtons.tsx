@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   caseId: string;
@@ -29,48 +33,53 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
 
   if (resolved) {
     return (
-      <p className="text-sm font-medium text-green-600">
+      <p className="text-sm font-medium text-muted-foreground">
         Спор закрыт. Обновите страницу для актуального списка.
       </p>
     );
   }
 
   const isPending = forReferrer.isPending || forSeeker.isPending;
+  const errMsg = forReferrer.error?.message ?? forSeeker.error?.message;
 
   return (
-    <div className="space-y-3">
-      <textarea
-        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-        rows={2}
-        placeholder="Примечание модератора (необязательно)"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        disabled={isPending}
-      />
-      <div className="flex gap-3">
-        <button
-          onClick={() => forReferrer.mutate({ caseId, notes: notes || undefined })}
+    <FieldGroup className="gap-4">
+      <Field>
+        <FieldLabel htmlFor="mod-notes">Примечание модератора (необязательно)</FieldLabel>
+        <Textarea
+          id="mod-notes"
+          rows={2}
+          placeholder="Примечание модератора (необязательно)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
           disabled={isPending}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        />
+      </Field>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={() => forReferrer.mutate({ caseId, notes: notes || undefined })}
         >
           Решить в пользу реферальщика
-        </button>
-        <button
-          onClick={() => forSeeker.mutate({ caseId, notes: notes || undefined })}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
           disabled={isPending}
-          className="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+          onClick={() => forSeeker.mutate({ caseId, notes: notes || undefined })}
         >
           Решить в пользу соискателя
-        </button>
+        </Button>
       </div>
-      {(forReferrer.error ?? forSeeker.error) && (
-        <p className="text-sm text-red-500">
-          {forReferrer.error?.message ?? forSeeker.error?.message}
-        </p>
-      )}
-      <p className="text-xs text-gray-400">
-        Заявка: <code className="rounded bg-gray-50 px-1">{applicationId}</code>
+      {errMsg ? (
+        <Alert variant="destructive">
+          <AlertDescription>{errMsg}</AlertDescription>
+        </Alert>
+      ) : null}
+      <p className="text-xs text-muted-foreground">
+        Заявка: <code className="rounded bg-muted px-1 font-mono">{applicationId}</code>
       </p>
-    </div>
+    </FieldGroup>
   );
 }

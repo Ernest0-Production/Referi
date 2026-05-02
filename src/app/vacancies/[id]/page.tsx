@@ -1,9 +1,13 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
-import Link from "next/link";
 import { ReportVacancyForm } from "./ReportVacancyForm";
+import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -63,79 +67,67 @@ export default async function VacancyDetailPage({ params }: PageProps) {
     }).format(v);
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-[var(--app-page-surface)]">
+      <VacancyViewCookieWriter vacancyId={id} />
       <PublicHeaderNav session={session} />
 
-      <div className="mx-auto max-w-3xl space-y-6 px-6 py-8">
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
-          ← Все вакансии
-        </Link>
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
+        <Button variant="ghost" size="sm" className="w-fit" asChild>
+          <Link href="/">← Все вакансии</Link>
+        </Button>
 
-        <div className="space-y-5 rounded-2xl border border-gray-100 bg-white p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{vacancy.title}</h1>
-              <p className="mt-1 text-gray-500">{vacancy.companyName}</p>
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
+            <div className="flex flex-col gap-1">
+              <CardTitle className="text-2xl">{vacancy.title}</CardTitle>
+              <p className="text-sm text-muted-foreground">{vacancy.companyName}</p>
             </div>
-            {reward > 0 && (
-              <span className="shrink-0 rounded-full bg-green-50 px-4 py-1.5 text-sm font-medium text-green-700">
+            {reward > 0 ? (
+              <Badge variant="secondary" className="shrink-0 text-sm font-medium">
                 Бонус: {fmt(reward)}
-              </span>
-            )}
-          </div>
+              </Badge>
+            ) : null}
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">{SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}</Badge>
+              <Badge variant="secondary">{GRADE_LABELS[vacancy.grade] ?? vacancy.grade}</Badge>
+              <Badge variant="secondary">{FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}</Badge>
+            </div>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-md bg-blue-50 px-3 py-1 text-sm text-blue-700">
-              {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
-            </span>
-            <span className="rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-600">
-              {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
-            </span>
-            <span className="rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-600">
-              {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
-            </span>
-          </div>
+            {salaryFrom || salaryTo ? (
+              <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
+                <p className="text-sm text-muted-foreground">Зарплата</p>
+                <p className="font-semibold text-foreground">
+                  {salaryFrom && salaryTo
+                    ? `${fmt(salaryFrom)} — ${fmt(salaryTo)}`
+                    : salaryFrom
+                      ? `от ${fmt(salaryFrom)}`
+                      : `до ${fmt(salaryTo!)}`}
+                </p>
+              </div>
+            ) : null}
 
-          {(salaryFrom || salaryTo) && (
-            <div className="rounded-xl bg-gray-50 px-4 py-3">
-              <p className="text-sm text-gray-500">Зарплата</p>
-              <p className="font-semibold text-gray-900">
-                {salaryFrom && salaryTo
-                  ? `${fmt(salaryFrom)} — ${fmt(salaryTo)}`
-                  : salaryFrom
-                    ? `от ${fmt(salaryFrom)}`
-                    : `до ${fmt(salaryTo!)}`}
+            <div className="flex flex-col gap-2">
+              <h2 className="font-semibold text-foreground">Описание</h2>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                {vacancy.description}
               </p>
             </div>
-          )}
-
-          <div>
-            <h2 className="mb-2 font-semibold text-gray-800">Описание</h2>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-600">
-              {vacancy.description}
-            </p>
-          </div>
-
-          <div className="pt-2">
+          </CardContent>
+          <CardFooter className="flex flex-col items-stretch gap-4 border-t pt-6">
             {session?.user ? (
-              <Link
-                href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}
-                className="inline-block rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
-              >
-                Откликнуться
-              </Link>
+              <Button asChild className="w-full sm:w-auto">
+                <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>Откликнуться</Link>
+              </Button>
             ) : (
-              <Link
-                href={`/login?callbackUrl=/vacancies/${vacancy.id}`}
-                className="inline-block rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
-              >
-                Войти чтобы откликнуться
-              </Link>
+              <Button asChild className="w-full sm:w-auto">
+                <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>Войти чтобы откликнуться</Link>
+              </Button>
             )}
-          </div>
-
-          {session?.user && <ReportVacancyForm vacancyId={vacancy.id} />}
-        </div>
+            {session?.user ? <ReportVacancyForm vacancyId={vacancy.id} /> : null}
+          </CardFooter>
+        </Card>
       </div>
     </main>
   );

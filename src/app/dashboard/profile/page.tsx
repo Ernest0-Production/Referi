@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { UpdateProfileForm } from "./UpdateProfileForm";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -10,58 +10,61 @@ export default async function ProfilePage() {
 
   const me = await trpc.auth.me();
 
-  const staffLabel =
-    me.staffRoles.length > 0 ? me.staffRoles.join(", ") : "—";
+  const staffLabel = me.staffRoles.length > 0 ? me.staffRoles.join(", ") : "—";
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <span className="text-sm text-gray-500">{me.displayName}</span>
-      </nav>
-
-      <div className="mx-auto max-w-2xl space-y-8 p-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Профиль</h1>
-          <p className="mt-1 text-sm text-gray-500">Управление вашими данными</p>
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-foreground">Профиль</h1>
+          <p className="text-sm text-muted-foreground">Управление вашими данными</p>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
-          <h2 className="font-semibold text-gray-800">Основная информация</h2>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="font-medium">GitHub:</span>
-            <span>{me.githubLogin ?? "—"}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="font-medium">Email:</span>
-            <span>{me.email ?? "—"}</span>
-          </div>
-          <div className="space-y-1 text-sm text-gray-600">
-            <span className="font-medium">Контакт:</span>
-            <p>{me.contactInfo ?? "—"}</p>
-          </div>
-          <div className="space-y-1 text-sm text-gray-600">
-            <span className="font-medium">Биография:</span>
-            <p className="whitespace-pre-wrap">{me.bio ?? "—"}</p>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="font-medium">Персонал:</span>
-            <span>{staffLabel}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="font-medium">Доступных попыток:</span>
-            <span>{me.availableAttempts}</span>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Основная информация</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-foreground">GitHub:</span>
+              <span className="text-muted-foreground">{me.githubLogin ?? "—"}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-foreground">Email:</span>
+              <span className="text-muted-foreground">{me.email ?? "—"}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium text-foreground">Контакт:</span>
+              <p className="text-muted-foreground">{me.contactInfo ?? "—"}</p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium text-foreground">Биография:</span>
+              <p className="whitespace-pre-wrap text-muted-foreground">{me.bio ?? "—"}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-foreground">Персонал:</span>
+              <span className="text-muted-foreground">{staffLabel}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-foreground">Доступных попыток:</span>
+              <span className="text-muted-foreground">{me.availableAttempts}</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <h2 className="mb-4 font-semibold text-gray-800">Редактирование профиля</h2>
-          <UpdateProfileForm
-            currentName={me.displayName}
-            currentContactInfo={me.contactInfo}
-            currentBio={me.bio}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Редактирование профиля</CardTitle>
+            <CardDescription>Имя, контакты и био для откликов</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UpdateProfileForm
+              currentName={me.displayName}
+              currentContactInfo={me.contactInfo}
+              currentBio={me.bio}
+            />
+          </CardContent>
+        </Card>
       </div>
     </main>
   );

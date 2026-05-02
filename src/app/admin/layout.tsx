@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import type { ReactNode } from "react";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
+import { AdminHeaderNav } from "@/components/AdminHeaderNav";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -19,18 +19,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center gap-6 border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <span className="text-xs font-semibold tracking-wide text-red-600 uppercase">Admin</span>
-        <a href="/admin" className="text-sm text-gray-600 hover:text-gray-900">
-          Споры
-        </a>
-        <a href="/admin/reports" className="text-sm text-gray-600 hover:text-gray-900">
-          Жалобы
-        </a>
-      </nav>
-      <div className="mx-auto max-w-5xl p-8">{children}</div>
+    <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
+      <AdminHeaderNav session={session} />
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-8 md:py-8">{children}</div>
     </div>
   );
 }

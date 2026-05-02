@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import {
   normalizeVacancyListSearchParams,
@@ -8,10 +9,12 @@ import {
   VACANCY_LIST_WORK_FORMAT_VALUES,
   type VacancyListSearchParamsInput,
 } from "@/lib/vacancyListQuery";
+import { readVacancyViewedIdsFromCookies } from "@/lib/vacancyViewedCookie";
 import { trpc } from "@/trpc/server";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { VacancyCard } from "@/components/VacancyCard";
 import { VacancyFilters } from "./VacancyFilters";
+import { VacancyListChrome } from "./VacancyListChrome";
 
 export type VacancyListSearchParams = VacancyListSearchParamsInput;
 
@@ -31,6 +34,9 @@ export async function VacancyListing({
   const workFormatParsed = parseCsvEnumParam(flat.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
 
   const session = await auth();
+  const cookieStore = await cookies();
+  const viewedIds = readVacancyViewedIdsFromCookies(cookieStore);
+  const excludeIds = flat.hideViewed === "1" && viewedIds.length > 0 ? viewedIds : undefined;
 
   const { items, total, totalPages } = await trpc.vacancies.list({
     specialty: specialtyParsed,
@@ -41,7 +47,13 @@ export async function VacancyListing({
     query: flat.query,
     page,
     limit: 20,
+    excludeIds,
   });
+
+  let presets: { id: string; name: string; params: unknown }[] = [];
+  if (session?.user?.id) {
+    presets = await trpc.vacancySearchPresets.list();
+  }
 
   const buildPageLink = (nextPage: number) => {
     const q = vacancyListFlatToSearchParams({
@@ -53,19 +65,12 @@ export async function VacancyListing({
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-[var(--app-page-surface)]">
       <PublicHeaderNav session={session} />
 
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Вакансии</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {total} {total === 1 ? "вакансия" : "вакансий"}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <aside className="w-full shrink-0 lg:w-64">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+          <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-80 lg:self-start">
             <VacancyFilters
               key={[
                 flat.query,
@@ -75,45 +80,54 @@ export async function VacancyListing({
                 flat.salaryFrom,
                 flat.sort,
                 flat.page,
+                flat.hideViewed,
               ].join("|")}
               currentParams={flat}
               listPath={listPath}
+              presets={presets}
+              isLoggedIn={Boolean(session?.user)}
             />
           </aside>
 
-          <div className="flex-1 space-y-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-6">
+            <VacancyListChrome currentParams={flat} listPath={listPath} total={total} />
+
             {items.length === 0 ? (
-              <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center">
-                <p className="text-gray-500">Вакансии не найдены</p>
-                <p className="mt-1 text-sm text-gray-400">Попробуйте изменить фильтры</p>
+              <div className="rounded-2xl border border-border bg-card p-8 text-center">
+                <p className="text-muted-foreground">Вакансии не найдены</p>
+                <p className="mt-1 text-sm text-muted-foreground">Попробуйте изменить фильтры</p>
               </div>
             ) : (
-              items.map((vacancy) => <VacancyCard key={vacancy.id} vacancy={vacancy} />)
+              <div className="flex flex-col gap-3">
+                {items.map((vacancy) => (
+                  <VacancyCard key={vacancy.id} vacancy={vacancy} />
+                ))}
+              </div>
             )}
 
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
-                {page > 1 && (
+            {totalPages > 1 ? (
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                {page > 1 ? (
                   <a
                     href={buildPageLink(page - 1)}
-                    className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
                   >
                     Назад
                   </a>
-                )}
-                <span className="text-sm text-gray-500">
+                ) : null}
+                <span className="text-sm text-muted-foreground">
                   Страница {page} из {totalPages}
                 </span>
-                {page < totalPages && (
+                {page < totalPages ? (
                   <a
                     href={buildPageLink(page + 1)}
-                    className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
                   >
                     Вперёд
                   </a>
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

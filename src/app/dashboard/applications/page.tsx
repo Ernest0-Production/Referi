@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { ApplicationActionsPanel } from "./ApplicationActionsPanel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const STATUS_LABELS: Record<string, string> = {
   SUBMITTED: "Подана",
@@ -45,95 +47,83 @@ export default async function ApplicationsPage() {
   const closed = applications.filter((a) => TERMINAL.has(a.status));
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <Link href="/" className="text-sm text-blue-600 hover:text-blue-700">
-          Найти вакансии
-        </Link>
-      </nav>
-
-      <div className="mx-auto max-w-4xl space-y-8 p-8">
-        <h1 className="text-2xl font-bold text-gray-900">Мои заявки</h1>
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 md:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Мои заявки</h1>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/">Найти вакансии</Link>
+          </Button>
+        </div>
 
         {applications.length === 0 && (
-          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center">
-            <p className="text-gray-500">У вас пока нет заявок</p>
-            <Link
-              href="/"
-              className="mt-4 inline-block rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Смотреть вакансии
-            </Link>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-4 py-10">
+              <p className="text-muted-foreground">У вас пока нет заявок</p>
+              <Button asChild>
+                <Link href="/">Смотреть вакансии</Link>
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {active.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
               Активные ({active.length})
             </h2>
             {active.map((app) => (
-              <div
-                key={app.id}
-                className="space-y-3 rounded-2xl border border-gray-100 bg-white p-5"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-gray-900">{app.vacancy.title}</p>
-                    <p className="text-sm text-gray-500">{app.vacancy.companyName}</p>
+              <Card key={app.id}>
+                <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-semibold text-foreground">{app.vacancy.title}</p>
+                    <p className="text-sm text-muted-foreground">{app.vacancy.companyName}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                  <Badge variant="secondary" className="shrink-0">
                     {STATUS_LABELS[app.status] ?? app.status}
-                  </span>
-                </div>
-
-                {app.paymentDeadline && (
-                  <p className="text-xs text-amber-600">
-                    Оплатить до:{" "}
-                    {new Date(app.paymentDeadline).toLocaleDateString("ru-RU", {
-                      day: "2-digit",
-                      month: "long",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                )}
-
-                <div className="flex gap-2">
-                  <a
-                    href={`/dashboard/applications/${app.id}`}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
-                  >
-                    Подробнее
-                  </a>
-                  <ApplicationActionsPanel applicationId={app.id} status={app.status} />
-                </div>
-              </div>
+                  </Badge>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 pb-4">
+                  {app.paymentDeadline ? (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Оплатить до:{" "}
+                      {new Date(app.paymentDeadline).toLocaleDateString("ru-RU", {
+                        day: "2-digit",
+                        month: "long",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/dashboard/applications/${app.id}`}>Подробнее</Link>
+                    </Button>
+                    <ApplicationActionsPanel applicationId={app.id} status={app.status} />
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </section>
         )}
 
         {closed.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
               Завершённые ({closed.length})
             </h2>
             {closed.map((app) => (
-              <div
-                key={app.id}
-                className="rounded-2xl border border-gray-100 bg-white p-5 opacity-70"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-gray-700">{app.vacancy.title}</p>
-                    <p className="text-sm text-gray-400">{app.vacancy.companyName}</p>
+              <Card key={app.id} className="opacity-80">
+                <CardContent className="flex items-center justify-between gap-4 py-5">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-medium text-foreground">{app.vacancy.title}</p>
+                    <p className="text-sm text-muted-foreground">{app.vacancy.companyName}</p>
                   </div>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">
+                  <Badge variant="outline" className="shrink-0">
                     {STATUS_LABELS[app.status] ?? app.status}
-                  </span>
-                </div>
-              </div>
+                  </Badge>
+                </CardContent>
+              </Card>
             ))}
           </section>
         )}

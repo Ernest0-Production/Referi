@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
 import { ModerationContactLink } from "@/components/ModerationContactLink";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   applicationId: string;
@@ -42,103 +47,107 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
   const id = applicationId;
 
   return (
-    <div className="space-y-3 pt-2">
+    <div className="flex flex-col gap-3 pt-2">
       <div className="flex flex-wrap gap-2">
         {(status === "SUBMITTED" || status === "AWAITING_PAYMENT") && (
-          <button
-            onClick={() => cancelMutation.mutate({ applicationId: id })}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive"
             disabled={cancelMutation.isPending}
-            className="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+            onClick={() => cancelMutation.mutate({ applicationId: id })}
           >
             {cancelMutation.isPending ? "…" : "Отозвать заявку"}
-          </button>
+          </Button>
         )}
 
         {status === "AWAITING_RESUME_HANDOFF" && (
-          <button
-            onClick={() => requestCancelMutation.mutate({ applicationId: id })}
+          <Button
+            variant="outline"
+            size="sm"
             disabled={requestCancelMutation.isPending}
-            className="rounded-xl border border-amber-200 px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+            onClick={() => requestCancelMutation.mutate({ applicationId: id })}
           >
             {requestCancelMutation.isPending ? "…" : "Запросить отмену"}
-          </button>
+          </Button>
         )}
 
         {status === "AWAITING_COMPANY_DECISION" && (
           <>
-            <button
-              onClick={() => acceptOfferMutation.mutate({ applicationId: id })}
-              disabled={acceptOfferMutation.isPending}
-              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
-            >
+            <Button size="sm" disabled={acceptOfferMutation.isPending} onClick={() => acceptOfferMutation.mutate({ applicationId: id })}>
               {acceptOfferMutation.isPending ? "…" : "Принять оффер"}
-            </button>
-            <button
-              onClick={() => reportRejectionMutation.mutate({ applicationId: id })}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               disabled={reportRejectionMutation.isPending}
-              className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+              onClick={() => reportRejectionMutation.mutate({ applicationId: id })}
             >
               {reportRejectionMutation.isPending ? "…" : "Получил отказ"}
-            </button>
+            </Button>
           </>
         )}
 
         {!["CANCELLED", "REJECTED_BY_REFERRER", "OFFER_ACCEPTED"].includes(status) && (
-          <button
-            onClick={() => {
-              setShowAbuse((v) => !v);
-              setAbuseSuccess(false);
-            }}
-            className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
-          >
+          <Button variant="ghost" size="sm" onClick={() => { setShowAbuse((v) => !v); setAbuseSuccess(false); }}>
             Пожаловаться
-          </button>
+          </Button>
         )}
       </div>
 
-      {abuseSuccess && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-gray-700">
-          <p className="font-medium text-green-900">Жалоба зарегистрирована.</p>
-          <p className="mt-1 text-xs">При необходимости уточнений можно связаться с модерацией по ссылке ниже.</p>
-          <div className="mt-2">
+      {abuseSuccess ? (
+        <Alert>
+          <AlertTitle>Жалоба зарегистрирована</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <span>При необходимости уточнений можно связаться с модерацией по ссылке ниже.</span>
             <ModerationContactLink />
-          </div>
-        </div>
-      )}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
-      {showAbuse && (
-        <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-medium text-amber-800">Причина жалобы</p>
-          <textarea
-            rows={3}
-            value={abuseReason}
-            onChange={(e) => setAbuseReason(e.target.value)}
-            className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm focus:outline-none"
-            placeholder="Опишите, что произошло"
-          />
-          {abuseError && <p className="text-xs text-red-600">{abuseError}</p>}
-          <div className="flex gap-2">
-            <button
-              onClick={() =>
-                abuseReportMutation.mutate({
-                  reason: "OTHER",
-                  comment: abuseReason,
-                })
-              }
-              disabled={abuseReportMutation.isPending || abuseReason.trim().length < 5}
-              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-60"
-            >
-              {abuseReportMutation.isPending ? "…" : "Отправить"}
-            </button>
-            <button
-              onClick={() => setShowAbuse(false)}
-              className="rounded-lg border border-amber-200 px-4 py-2 text-sm text-amber-700 hover:bg-white"
-            >
-              Отмена
-            </button>
-          </div>
-        </div>
-      )}
+      {showAbuse ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Причина жалобы</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="abuse-detail">Опишите ситуацию</FieldLabel>
+                <Textarea
+                  id="abuse-detail"
+                  rows={3}
+                  value={abuseReason}
+                  onChange={(e) => setAbuseReason(e.target.value)}
+                  placeholder="Опишите, что произошло"
+                />
+              </Field>
+            </FieldGroup>
+            {abuseError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{abuseError}</AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                disabled={abuseReportMutation.isPending || abuseReason.trim().length < 5}
+                onClick={() =>
+                  abuseReportMutation.mutate({
+                    reason: "OTHER",
+                    comment: abuseReason,
+                  })
+                }
+              >
+                {abuseReportMutation.isPending ? "…" : "Отправить"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowAbuse(false)}>
+                Отмена
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

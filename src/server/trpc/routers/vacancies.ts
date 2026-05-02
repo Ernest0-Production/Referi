@@ -42,6 +42,7 @@ const vacancyListSchema = z.object({
   sort: z.enum(["created_desc", "salary_desc"]).default("created_desc"),
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(50).default(20),
+  excludeIds: z.array(z.string().uuid()).max(200).optional(),
 });
 
 function serializeVacancy<
@@ -61,7 +62,7 @@ function serializeVacancy<
 
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
-    const { specialty, grade, workFormat, salaryFrom, query, sort, page, limit } = input;
+    const { specialty, grade, workFormat, salaryFrom, query, sort, page, limit, excludeIds } = input;
     const q = query?.trim();
     let ftsIds: string[] | undefined;
 
@@ -82,9 +83,13 @@ export const vacanciesRouter = router({
       }
     }
 
+    const idFilter: { in?: string[]; notIn?: string[] } = {};
+    if (ftsIds?.length) idFilter.in = ftsIds;
+    if (excludeIds?.length) idFilter.notIn = excludeIds;
+
     const where: Prisma.VacancyWhereInput = {
       status: "ACTIVE",
-      ...(ftsIds && { id: { in: ftsIds } }),
+      ...(Object.keys(idFilter).length > 0 && { id: idFilter }),
       ...(specialty?.length && { specialty: { in: specialty } }),
       ...(grade?.length && { grade: { in: grade } }),
       ...(workFormat?.length && { workFormat: { in: workFormat } }),
@@ -116,6 +121,7 @@ export const vacanciesRouter = router({
           rewardKopecks: true,
           description: true,
           createdAt: true,
+          updatedAt: true,
         },
       }),
       ctx.db.vacancy.count({ where }),
@@ -146,6 +152,7 @@ export const vacanciesRouter = router({
           rewardKopecks: true,
           description: true,
           createdAt: true,
+          updatedAt: true,
         },
       });
 

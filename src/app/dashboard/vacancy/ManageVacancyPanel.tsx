@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -46,69 +51,56 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
   });
 
   return (
-    <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="font-semibold text-gray-900">{vacancy.title}</h2>
-          <p className="text-sm text-gray-500">{vacancy.companyName}</p>
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-lg">{vacancy.title}</CardTitle>
+          <p className="text-sm text-muted-foreground">{vacancy.companyName}</p>
         </div>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            vacancy.status === "ACTIVE"
-              ? "bg-green-50 text-green-700"
-              : "bg-amber-50 text-amber-700"
-          }`}
-        >
+        <Badge variant={vacancy.status === "ACTIVE" ? "default" : "secondary"}>
           {vacancy.status === "ACTIVE" ? "Активна" : "Заморожена"}
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">{SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}</Badge>
+          <Badge variant="secondary">{vacancy.grade}</Badge>
+          <Badge variant="secondary">{vacancy.workFormat}</Badge>
+        </div>
 
-      <div className="flex flex-wrap gap-2 text-xs">
-        <span className="rounded-md bg-blue-50 px-2 py-0.5 text-blue-700">
-          {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
-        </span>
-        <span className="rounded-md bg-gray-100 px-2 py-0.5 text-gray-600">{vacancy.grade}</span>
-        <span className="rounded-md bg-gray-100 px-2 py-0.5 text-gray-600">
-          {vacancy.workFormat}
-        </span>
-      </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/vacancy/applicants">Кандидаты</Link>
+          </Button>
 
-      <div className="flex gap-3 pt-2">
-        <a
-          href={`/dashboard/vacancy/applicants`}
-          className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-        >
-          Кандидаты
-        </a>
+          {!confirmDelete ? (
+            <Button variant="outline" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+              Удалить вакансию
+            </Button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Подтвердить?</span>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={del.isPending}
+                onClick={() => del.mutate({ id: vacancy.id })}
+              >
+                {del.isPending ? "Удаление…" : "Да, удалить"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                Отмена
+              </Button>
+            </div>
+          )}
+        </div>
 
-        {!confirmDelete ? (
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-          >
-            Удалить вакансию
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Подтвердить?</span>
-            <button
-              onClick={() => del.mutate({ id: vacancy.id })}
-              disabled={del.isPending}
-              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-            >
-              {del.isPending ? "Удаление…" : "Да, удалить"}
-            </button>
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-            >
-              Отмена
-            </button>
-          </div>
-        )}
-      </div>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-    </div>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,9 +1,11 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { ApplicationDetailActions } from "./ApplicationDetailActions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -51,90 +53,84 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   const isSeeker = application.content !== null;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <Link href="/dashboard/applications" className="text-sm text-gray-500 hover:text-blue-600">
-          ← Мои заявки
-        </Link>
-      </nav>
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
+        <Button variant="ghost" size="sm" className="w-fit" asChild>
+          <Link href="/dashboard/applications">← Мои заявки</Link>
+        </Button>
 
-      <div className="mx-auto max-w-3xl space-y-6 p-8">
-        <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{application.vacancy.title}</h1>
-              <p className="text-gray-500">{application.vacancy.companyName}</p>
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
+            <div className="flex flex-col gap-1">
+              <CardTitle className="text-xl">{application.vacancy.title}</CardTitle>
+              <p className="text-sm text-muted-foreground">{application.vacancy.companyName}</p>
             </div>
-            <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+            <Badge variant="secondary" className="shrink-0">
               {STATUS_LABELS[application.status] ?? application.status}
-            </span>
-          </div>
-
-          {/* Deadlines */}
-          <div className="space-y-1 text-sm">
-            {application.paymentDeadline && (
-              <p className="text-amber-600">
-                Оплатить до: {new Date(application.paymentDeadline).toLocaleString("ru-RU")}
-              </p>
-            )}
-            {application.resumeHandoffDeadline && (
-              <p className="text-blue-600">
-                Передача резюме до:{" "}
-                {new Date(application.resumeHandoffDeadline).toLocaleString("ru-RU")}
-              </p>
-            )}
-            {application.companyDecisionDeadline && (
-              <p className="text-gray-500">
-                Решение компании до:{" "}
-                {new Date(application.companyDecisionDeadline).toLocaleString("ru-RU")}
-              </p>
-            )}
-          </div>
-
-          {/* Contact info — only visible to referrer in active statuses */}
-          {application.content?.contactInfo && (
-            <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-xs font-medium text-gray-500">Контакты соискателя</p>
-              <p className="mt-0.5 text-sm text-gray-800">{application.content.contactInfo}</p>
+            </Badge>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1 text-sm">
+              {application.paymentDeadline ? (
+                <p className="text-amber-600 dark:text-amber-400">
+                  Оплатить до: {new Date(application.paymentDeadline).toLocaleString("ru-RU")}
+                </p>
+              ) : null}
+              {application.resumeHandoffDeadline ? (
+                <p className="text-primary">
+                  Передача резюме до:{" "}
+                  {new Date(application.resumeHandoffDeadline).toLocaleString("ru-RU")}
+                </p>
+              ) : null}
+              {application.companyDecisionDeadline ? (
+                <p className="text-muted-foreground">
+                  Решение компании до:{" "}
+                  {new Date(application.companyDecisionDeadline).toLocaleString("ru-RU")}
+                </p>
+              ) : null}
             </div>
-          )}
 
-          {/* My application content (visible to seeker) */}
-          {isSeeker && application.content?.bio && (
-            <div>
-              <p className="text-xs font-medium text-gray-500">О себе</p>
-              <p className="mt-0.5 text-sm whitespace-pre-wrap text-gray-700">
-                {application.content.bio}
-              </p>
-            </div>
-          )}
+            {application.content?.contactInfo ? (
+              <div className="rounded-xl border border-border bg-muted/50 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Контакты соискателя</p>
+                <p className="mt-0.5 text-sm text-foreground">{application.content.contactInfo}</p>
+              </div>
+            ) : null}
 
-          <ApplicationDetailActions applicationId={id} status={application.status} />
-        </div>
+            {isSeeker && application.content?.bio ? (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-medium text-muted-foreground">О себе</p>
+                <p className="whitespace-pre-wrap text-sm text-foreground">{application.content.bio}</p>
+              </div>
+            ) : null}
 
-        {/* AuditLog */}
-        {auditLog.length > 0 && (
-          <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
-            <h2 className="font-semibold text-gray-800">История изменений</h2>
-            <div className="space-y-2">
+            <ApplicationDetailActions applicationId={id} status={application.status} />
+          </CardContent>
+        </Card>
+
+        {auditLog.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">История изменений</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
               {auditLog.map((entry) => (
                 <div key={entry.id} className="flex items-start gap-3 text-sm">
-                  <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-400" />
-                  <div>
-                    <span className="text-xs text-gray-500">
+                  <div className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(entry.createdAt).toLocaleString("ru-RU")}
                     </span>
-                    <p className="text-gray-700">
+                    <p className="text-foreground">
                       {ACTOR_LABELS[entry.actor] ?? entry.actor}:{" "}
-                      {entry.fromStatus && (
+                      {entry.fromStatus ? (
                         <>
                           <span className="font-medium">
                             {STATUS_LABELS[entry.fromStatus] ?? entry.fromStatus}
                           </span>{" "}
                           →{" "}
                         </>
-                      )}
+                      ) : null}
                       <span className="font-medium">
                         {STATUS_LABELS[entry.toStatus] ?? entry.toStatus}
                       </span>
@@ -142,9 +138,9 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </main>
   );

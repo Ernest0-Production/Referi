@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -38,6 +41,7 @@ interface Vacancy {
   salaryToKopecks: string | null;
   rewardKopecks: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 function formatSalary(fromKop: string | null, toKop: string | null): string | null {
@@ -55,46 +59,72 @@ function formatSalary(fromKop: string | null, toKop: string | null): string | nu
   return `до ${fmt(to!)}`;
 }
 
+function formatUpdatedRelative(updatedAt: Date): string {
+  const rtf = new Intl.RelativeTimeFormat("ru", { numeric: "auto" });
+  const diffSec = Math.round((updatedAt.getTime() - Date.now()) / 1000);
+  const abs = Math.abs(diffSec);
+  if (abs < 45) return "обновлено только что";
+  if (abs < 3600) return `обновлено ${rtf.format(Math.round(diffSec / 60), "minute")}`;
+  if (abs < 86400) return `обновлено ${rtf.format(Math.round(diffSec / 3600), "hour")}`;
+  return `обновлено ${rtf.format(Math.round(diffSec / 86400), "day")}`;
+}
+
 export function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
   const salary = formatSalary(vacancy.salaryFromKopecks, vacancy.salaryToKopecks);
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
 
   return (
-    <Link
-      href={`/vacancies/${vacancy.id}`}
-      className="block rounded-2xl border border-gray-100 bg-white p-5 transition-shadow hover:shadow-sm"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-gray-900">{vacancy.title}</h3>
-          <p className="mt-0.5 text-sm text-gray-500">{vacancy.companyName}</p>
-        </div>
-        {reward > 0 && (
-          <span className="shrink-0 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
-            Бонус:{" "}
-            {new Intl.NumberFormat("ru-RU", {
-              style: "currency",
-              currency: "RUB",
-              maximumFractionDigits: 0,
-            }).format(reward)}
-          </span>
-        )}
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-          {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
-        </span>
-        <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-          {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
-        </span>
-        <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-          {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
-        </span>
-        {salary && (
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{salary}</span>
-        )}
-      </div>
+    <Link href={`/vacancies/${vacancy.id}`} className="block transition-shadow hover:shadow-md">
+      <Card className="overflow-hidden border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-col gap-3 space-y-0 pb-3 pt-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <span className="truncate text-sm font-medium text-muted-foreground">{vacancy.companyName}</span>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="secondary" className="font-normal">
+                  {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+                </Badge>
+                <Badge variant="secondary" className="font-normal">
+                  {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+                </Badge>
+              </div>
+            </div>
+            <time
+              className="shrink-0 text-xs text-muted-foreground"
+              dateTime={vacancy.updatedAt.toISOString()}
+            >
+              {formatUpdatedRelative(vacancy.updatedAt)}
+            </time>
+          </div>
+          <h3 className="text-lg font-bold leading-snug tracking-tight text-foreground md:text-xl">
+            {vacancy.title}
+          </h3>
+        </CardHeader>
+        <CardContent className="pb-4 pt-0">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="font-normal">
+              {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
+            </Badge>
+            {salary ? (
+              <Badge variant="outline" className="font-normal">
+                {salary}
+              </Badge>
+            ) : null}
+            {reward > 0 ? (
+              <Badge
+                className={cn("border-transparent font-medium", "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200")}
+              >
+                Бонус:{" "}
+                {new Intl.NumberFormat("ru-RU", {
+                  style: "currency",
+                  currency: "RUB",
+                  maximumFractionDigits: 0,
+                }).format(reward)}
+              </Badge>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

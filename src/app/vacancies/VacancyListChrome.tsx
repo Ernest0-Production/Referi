@@ -1,0 +1,109 @@
+"use client";
+
+import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import { mergeVacancyListQueryParams, type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
+import { cn } from "@/lib/utils";
+
+export function VacancyListChrome({
+  currentParams,
+  listPath,
+  total,
+}: {
+  currentParams: VacancyListFlatSearchParams;
+  listPath: string;
+  total: number;
+}) {
+  const router = useRouter();
+  const [queryDraft, setQueryDraft] = useState(currentParams.query ?? "");
+
+  function pushMerged(patch: Partial<VacancyListFlatSearchParams>) {
+    const q = mergeVacancyListQueryParams(currentParams, patch);
+    const qs = q.toString();
+    router.push(`${listPath}${qs ? `?${qs}` : ""}`);
+  }
+
+  const hideViewedOn = currentParams.hideViewed === "1";
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          Ваша следующая роль — с рефералом
+        </h1>
+        <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
+          Вакансии от разработчиков внутри компаний: прозрачный процесс и защищённое вознаграждение рефереру.
+        </p>
+      </header>
+
+      <InputGroup className="h-11 rounded-xl border-border bg-card shadow-sm md:h-12">
+        <InputGroupInput
+          placeholder="Название вакансии или компании"
+          value={queryDraft}
+          onChange={(e) => setQueryDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              pushMerged({ query: queryDraft.trim() || undefined });
+            }
+          }}
+          className="h-full min-h-10 text-base md:text-sm"
+        />
+        <InputGroupAddon align="inline-end" className="pr-1.5">
+          <InputGroupButton
+            type="button"
+            size="icon-sm"
+            className={cn(
+              "rounded-lg font-semibold",
+              "bg-[var(--app-search-accent-bg)] text-[var(--app-search-accent-fg)] hover:bg-[var(--app-search-accent-hover)]",
+            )}
+            onClick={() => pushMerged({ query: queryDraft.trim() || undefined })}
+            aria-label="Искать"
+          >
+            <Search />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4">
+          <Select
+            value={currentParams.sort ?? "created_desc"}
+            onValueChange={(v) => pushMerged({ sort: v || undefined })}
+          >
+            <SelectTrigger className="h-9 w-[200px] rounded-lg border-border bg-card">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_desc">Сначала новые</SelectItem>
+              <SelectItem value="salary_desc">По зарплате</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hide-viewed"
+              checked={hideViewedOn}
+              onCheckedChange={(c) => pushMerged({ hideViewed: c === true ? "1" : undefined })}
+            />
+            <Label htmlFor="hide-viewed" className="cursor-pointer text-sm font-normal text-muted-foreground">
+              Скрыть просмотренные
+            </Label>
+          </div>
+        </div>
+
+        <p className="text-sm text-muted-foreground">Найдено: {total}</p>
+      </div>
+    </div>
+  );
+}

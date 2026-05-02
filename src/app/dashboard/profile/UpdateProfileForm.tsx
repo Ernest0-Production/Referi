@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   currentName: string;
@@ -37,56 +42,59 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
           bio: bio || undefined,
         });
       }}
-      className="space-y-3"
     >
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">Имя / псевдоним</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          minLength={2}
-          maxLength={100}
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="Отображаемое имя"
-        />
-      </div>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="profile-name">Имя / псевдоним</FieldLabel>
+          <Input
+            id="profile-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            minLength={2}
+            maxLength={100}
+            placeholder="Отображаемое имя"
+          />
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">
-          Контактная информация (мессенджер, email, ссылка)
-        </label>
-        <input
-          type="text"
-          value={contactInfo}
-          onChange={(e) => setContactInfo(e.target.value)}
-          maxLength={500}
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="@username / email / ссылка"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="profile-contact">Контактная информация (мессенджер, email, ссылка)</FieldLabel>
+          <Input
+            id="profile-contact"
+            type="text"
+            value={contactInfo}
+            onChange={(e) => setContactInfo(e.target.value)}
+            maxLength={500}
+            placeholder="@username / email / ссылка"
+          />
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">Краткая биография</label>
-        <textarea
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          maxLength={1000}
-          rows={4}
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="Кратко о вашем опыте"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="profile-bio">Краткая биография</FieldLabel>
+          <Textarea
+            id="profile-bio"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            maxLength={1000}
+            rows={4}
+            placeholder="Кратко о вашем опыте"
+          />
+        </Field>
 
-      <button
-        type="submit"
-        disabled={update.isPending || name.trim().length < 2}
-        className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
-      >
-        {update.isPending ? "Сохранение…" : "Сохранить"}
-      </button>
-      {saved && <p className="text-xs text-green-600">Сохранено</p>}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={update.isPending || name.trim().length < 2}>
+            {update.isPending ? "Сохранение…" : "Сохранить"}
+          </Button>
+          {saved ? (
+            <p className="text-xs text-muted-foreground">Сохранено</p>
+          ) : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
+      </FieldGroup>
     </form>
   );
 }

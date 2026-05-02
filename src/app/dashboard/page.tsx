@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ACTIVE_STATUSES = [
   "SUBMITTED",
@@ -52,7 +54,6 @@ export default async function DashboardPage() {
       where: { id: userId },
       select: { displayName: true, staffRoles: true },
     }),
-    // Seeker: active applications with deadlines
     prisma.application.findMany({
       where: {
         seekerId: userId,
@@ -64,7 +65,6 @@ export default async function DashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
-    // Referrer: active vacancy + applicant count
     prisma.vacancy.findFirst({
       where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
       select: {
@@ -75,7 +75,6 @@ export default async function DashboardPage() {
         _count: { select: { applications: true } },
       },
     }),
-    // Referrer: attempt pool
     prisma.referrerAttemptLedger.findMany({
       where: { referrerId: userId },
     }),
@@ -95,157 +94,123 @@ export default async function DashboardPage() {
   );
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/settings" className="text-sm text-gray-500 hover:text-gray-900">
-            Настройки
-          </Link>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- NextAuth signOut GET */}
-          <a href="/api/auth/signout" className="text-sm text-gray-400 hover:text-gray-600">
-            Выйти
-          </a>
-        </div>
-      </nav>
-
-      <div className="mx-auto max-w-4xl space-y-8 p-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 md:p-8">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-foreground">
             Добро пожаловать{user?.displayName ? `, ${user.displayName}` : ""}!
           </h1>
           {user && user.staffRoles.length > 0 ? (
-            <div className="mt-1 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {user.staffRoles.map((r) => (
-                <span
-                  key={r}
-                  className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600"
-                >
+                <Badge key={r} variant="secondary">
                   {r}
-                </span>
+                </Badge>
               ))}
             </div>
           ) : null}
         </div>
 
-        {/* Quick actions */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Link
-            href="/dashboard/applications"
-            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-          >
-            <div className="text-lg font-bold text-gray-800">{activeApplications.length}</div>
-            <div className="text-xs text-gray-400">Активных заявок</div>
-          </Link>
-          <Link
-            href="/dashboard/vacancy"
-            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-          >
-            <div className="text-lg font-bold text-gray-800">
-              {vacancyData ? vacancyData._count.applications : "—"}
-            </div>
-            <div className="text-xs text-gray-400">Откликов</div>
-          </Link>
-          <Link
-            href="/dashboard/attempts"
-            className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
-          >
-            <div className="text-lg font-bold text-blue-600">{availableAttempts}</div>
-            <div className="text-xs text-gray-400">Попыток</div>
-          </Link>
-          {isStaff && (
-            <Link
-              href="/admin"
-              className="rounded-2xl border border-red-50 bg-white p-4 text-center transition hover:border-red-100 hover:shadow-sm"
-            >
-              <div className="text-lg font-bold text-red-600">Admin</div>
-              <div className="text-xs text-gray-400">Панель</div>
+          <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
+            <Link href="/dashboard/applications">
+              <span className="text-lg font-bold text-foreground">{activeApplications.length}</span>
+              <span className="text-xs text-muted-foreground">Активных заявок</span>
             </Link>
-          )}
+          </Button>
+          <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
+            <Link href="/dashboard/vacancy">
+              <span className="text-lg font-bold text-foreground">
+                {vacancyData ? vacancyData._count.applications : "—"}
+              </span>
+              <span className="text-xs text-muted-foreground">Откликов</span>
+            </Link>
+          </Button>
+          <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
+            <Link href="/dashboard/attempts">
+              <span className="text-lg font-bold text-primary">{availableAttempts}</span>
+              <span className="text-xs text-muted-foreground">Попыток</span>
+            </Link>
+          </Button>
+          {isStaff ? (
+            <Button variant="outline" className="h-auto flex-col gap-1 border-destructive/30 py-4 font-normal" asChild>
+              <Link href="/admin">
+                <span className="text-lg font-bold text-destructive">Admin</span>
+                <span className="text-xs text-muted-foreground">Панель</span>
+              </Link>
+            </Button>
+          ) : null}
         </div>
 
         {activeApplications.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
               Активные заявки
             </h2>
             {activeApplications.map((app) => {
               const deadline = nearestDeadline(app);
               const days = deadline ? daysLeft(deadline) : null;
               return (
-                <Link
-                  key={app.id}
-                  href={`/dashboard/applications/${app.id}`}
-                  className="block rounded-2xl border border-gray-100 bg-white p-4 transition hover:border-blue-100 hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{app.vacancy.title}</p>
-                      <p className="text-sm text-gray-500">{app.vacancy.companyName}</p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                        {STATUS_LABELS[app.status] ?? app.status}
-                      </span>
-                      {days !== null && (
-                        <p
-                          className={`mt-1 text-xs ${days <= 1 ? "font-semibold text-red-500" : "text-gray-400"}`}
-                        >
-                          {days === 0 ? "Дедлайн сегодня" : `${days} дн. до дедлайна`}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                <Link key={app.id} href={`/dashboard/applications/${app.id}`}>
+                  <Card className="transition-colors hover:border-primary/40">
+                    <CardContent className="flex items-start justify-between gap-4 p-4">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="font-medium text-foreground">{app.vacancy.title}</p>
+                        <p className="text-sm text-muted-foreground">{app.vacancy.companyName}</p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                        <Badge variant="secondary">{STATUS_LABELS[app.status] ?? app.status}</Badge>
+                        {days !== null ? (
+                          <p
+                            className={`text-xs ${days <= 1 ? "font-semibold text-destructive" : "text-muted-foreground"}`}
+                          >
+                            {days === 0 ? "Дедлайн сегодня" : `${days} дн. до дедлайна`}
+                          </p>
+                        ) : null}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               );
             })}
-            <Link
-              href="/dashboard/applications"
-              className="block text-sm text-blue-600 hover:underline"
-            >
-              Все заявки →
-            </Link>
+            <Button variant="link" className="h-auto self-start p-0" asChild>
+              <Link href="/dashboard/applications">Все заявки →</Link>
+            </Button>
           </section>
         )}
 
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
-            Моя вакансия
-          </h2>
-            {vacancyData ? (
-              <a
-                href="/dashboard/vacancy"
-                className="block rounded-2xl border border-gray-100 bg-white p-4 transition hover:border-blue-100 hover:shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-gray-900">{vacancyData.title}</p>
-                    <p className="text-sm text-gray-500">{vacancyData.companyName}</p>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Моя вакансия</h2>
+          {vacancyData ? (
+            <Link href="/dashboard/vacancy">
+              <Card className="transition-colors hover:border-primary/40">
+                <CardContent className="flex flex-col gap-2 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="font-medium text-foreground">{vacancyData.title}</p>
+                      <p className="text-sm text-muted-foreground">{vacancyData.companyName}</p>
+                    </div>
+                    <Badge variant={vacancyData.status === "ACTIVE" ? "default" : "secondary"}>
+                      {vacancyData.status}
+                    </Badge>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${vacancyData.status === "ACTIVE"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                      }`}
-                  >
-                    {vacancyData.status}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  {vacancyData._count.applications} откликов
-                </p>
-              </a>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center">
-                <p className="text-sm text-gray-500">У вас нет активной вакансии.</p>
-                <a
-                  href="/dashboard/vacancy"
-                  className="mt-3 inline-block rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Создать вакансию
-                </a>
-              </div>
-            )}
+                  <p className="text-sm text-muted-foreground">{vacancyData._count.applications} откликов</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle className="text-base">Нет активной вакансии</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-3">
+                <p className="text-center text-sm text-muted-foreground">Создайте вакансию, чтобы получать отклики.</p>
+                <Button asChild>
+                  <Link href="/dashboard/vacancy">Создать вакансию</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </section>
       </div>
     </main>

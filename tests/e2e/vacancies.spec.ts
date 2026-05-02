@@ -4,7 +4,9 @@ test.describe("Vacancies catalog", () => {
   test("home page shows vacancy catalog without auth", async ({ page }) => {
     await page.goto("/");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.getByRole("heading", { name: "Вакансии" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Ваша следующая роль|Вакансии/i }),
+    ).toBeVisible();
   });
 
   test("/vacancies redirects to / preserving query", async ({ page }) => {
@@ -19,7 +21,9 @@ test.describe("Vacancies catalog", () => {
     await page.goto("/vacancies");
     await expect(page).not.toHaveURL(/login/);
     expect(new URL(page.url()).pathname).toBe("/");
-    await expect(page.getByRole("heading", { name: "Вакансии" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Ваша следующая роль|Вакансии/i }),
+    ).toBeVisible();
   });
 
   test("vacancies page shows vacancy cards", async ({ page }) => {
@@ -31,16 +35,16 @@ test.describe("Vacancies catalog", () => {
 
   test("vacancies filters include sort and salary controls", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Сортировка")).toBeVisible();
-    await expect(page.getByPlaceholder("От")).toBeVisible();
-    await expect(page.getByPlaceholder("До")).toBeVisible();
+    await expect(page.getByText("Сначала новые")).toBeVisible();
+    await expect(page.getByLabel(/Зарплата не ниже/i)).toBeVisible();
+    await expect(page.getByPlaceholder("Минимум")).toBeVisible();
   });
 });
 
 test.describe("Authentication flow", () => {
   test("/login page renders GitHub sign-in button", async ({ page }) => {
     await page.goto("/login");
-    const githubButton = page.getByRole("link", { name: /github/i });
+    const githubButton = page.getByRole("button", { name: /github/i });
     await expect(githubButton).toBeVisible();
   });
 

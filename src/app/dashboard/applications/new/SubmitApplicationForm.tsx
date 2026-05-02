@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   vacancyId: string;
@@ -71,85 +77,82 @@ export function SubmitApplicationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">
-          Контактная информация *
-        </label>
-        <input
-          required
-          minLength={1}
-          maxLength={500}
-          value={form.contactInfo}
-          onChange={(e) => setForm((f) => ({ ...f, contactInfo: e.target.value }))}
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="мессенджер, email или ссылка"
-        />
-        <p className="mt-0.5 text-xs text-gray-400">
-          Видно реферальщику только в активных статусах заявки
-        </p>
-      </div>
+    <form onSubmit={handleSubmit}>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="app-contact">Контактная информация *</FieldLabel>
+          <Input
+            id="app-contact"
+            required
+            minLength={1}
+            maxLength={500}
+            value={form.contactInfo}
+            onChange={(e) => setForm((f) => ({ ...f, contactInfo: e.target.value }))}
+            placeholder="мессенджер, email или ссылка"
+          />
+          <FieldDescription>Видно реферальщику только в активных статусах заявки</FieldDescription>
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">О себе *</label>
-        <textarea
-          required
-          minLength={10}
-          maxLength={1000}
-          rows={5}
-          value={form.bio}
-          onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="Опыт, стек, достижения"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="app-bio">О себе *</FieldLabel>
+          <Textarea
+            id="app-bio"
+            required
+            minLength={10}
+            maxLength={1000}
+            rows={5}
+            value={form.bio}
+            onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+            placeholder="Опыт, стек, достижения"
+          />
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">
-          Сопроводительное письмо (необязательно)
-        </label>
-        <textarea
-          maxLength={300}
-          rows={3}
-          value={form.coverLetter}
-          onChange={(e) => setForm((f) => ({ ...f, coverLetter: e.target.value }))}
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          placeholder="Почему именно эта вакансия?"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="app-cover">Сопроводительное письмо (необязательно)</FieldLabel>
+          <Textarea
+            id="app-cover"
+            maxLength={300}
+            rows={3}
+            value={form.coverLetter}
+            onChange={(e) => setForm((f) => ({ ...f, coverLetter: e.target.value }))}
+            placeholder="Почему именно эта вакансия?"
+          />
+        </Field>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-        <p className="text-sm font-medium text-gray-800">Разовый токен отклика (199 ₽)</p>
-        <p className="mt-1 text-xs text-gray-500">
-          Если бесплатный лимит активных откликов исчерпан, купите токен для этой вакансии.
-        </p>
-        {tokenId ? (
-          <p className="mt-2 text-xs text-green-700">Токен активирован для текущей заявки.</p>
-        ) : (
-          <button
-            type="button"
-            onClick={() => buyToken.mutate({ vacancyId })}
-            disabled={buyToken.isPending}
-            className="mt-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-60"
-          >
-            {buyToken.isPending ? "Переход к оплате…" : "Купить токен"}
-          </button>
-        )}
-      </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Разовый токен отклика (199 ₽)</CardTitle>
+            <CardDescription>
+              Если бесплатный лимит активных откликов исчерпан, купите токен для этой вакансии.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {tokenId ? (
+              <p className="text-xs text-muted-foreground">Токен активирован для текущей заявки.</p>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={buyToken.isPending}
+                onClick={() => buyToken.mutate({ vacancyId })}
+              >
+                {buyToken.isPending ? "Переход к оплате…" : "Купить токен"}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
-      <button
-        type="submit"
-        disabled={submit.isPending}
-        className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
-      >
-        {submit.isPending ? "Отправка…" : "Отправить отклик"}
-      </button>
+        <Button type="submit" disabled={submit.isPending} className="w-full">
+          {submit.isPending ? "Отправка…" : "Отправить отклик"}
+        </Button>
+      </FieldGroup>
     </form>
   );
 }

@@ -106,8 +106,24 @@ model User {
   attemptLedger       ReferrerAttemptLedger[]
   moderatorCases      ModeratorCase[]        @relation("ModeratorCases")
   abuseReportsFrom    AbuseReport[]          @relation("ReporterAbuseReports")
+  vacancySearchPresets VacancySearchPreset[]
 
   @@map("users")
+}
+
+model VacancySearchPreset {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  name      String   @db.VarChar(80)
+  /// Снимок параметров каталога (специальность, грейд, формат, зарплата, сортировка, query) без пагинации
+  params    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("vacancy_search_presets")
 }
 
 model GitHubProfile {

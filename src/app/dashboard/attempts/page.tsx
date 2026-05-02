@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -32,49 +32,46 @@ export default async function AttemptsPage() {
   const regenerated = ledger.filter((e) => e.event === "REGENERATED");
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-        <ServiceBrandLink />
-        <span className="text-sm text-gray-500">Попытки реферала</span>
-      </nav>
-
-      <div className="mx-auto max-w-3xl space-y-8 p-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Пул попыток</h1>
-          <p className="mt-1 text-sm text-gray-500">
+    <main className="flex-1">
+      <div className="mx-auto flex max-w-3xl flex-col gap-8 p-6 md:p-8">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-foreground">Пул попыток</h1>
+          <p className="text-sm text-muted-foreground">
             Каждая публикация вакансии расходует 1 попытку. Попытки восстанавливаются через 60 дней.
           </p>
         </div>
 
-        {/* Summary */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center">
-            <p className="text-3xl font-bold text-blue-600">{available}</p>
-            <p className="mt-1 text-xs text-gray-500">Доступно</p>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center">
-            <p className="text-3xl font-bold text-gray-900">{activeConsumed.length}</p>
-            <p className="mt-1 text-xs text-gray-500">Использовано</p>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center">
-            <p className="text-3xl font-bold text-gray-900">
-              {BUSINESS_RULES.MAX_REFERRER_ATTEMPTS}
-            </p>
-            <p className="mt-1 text-xs text-gray-500">Максимум</p>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
+              <p className="text-3xl font-bold text-primary">{available}</p>
+              <p className="text-xs text-muted-foreground">Доступно</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
+              <p className="text-3xl font-bold text-foreground">{activeConsumed.length}</p>
+              <p className="text-xs text-muted-foreground">Использовано</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
+              <p className="text-3xl font-bold text-foreground">{BUSINESS_RULES.MAX_REFERRER_ATTEMPTS}</p>
+              <p className="text-xs text-muted-foreground">Максимум</p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Active consumed attempts with regeneration countdown */}
-        {activeConsumed.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
+        {activeConsumed.length > 0 ? (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
               Использованные попытки
             </h2>
             {activeConsumed.map((e) => (
-              <div key={e.id} className="rounded-2xl border border-gray-100 bg-white p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
+              <Card key={e.id}>
+                <CardContent className="flex items-center justify-between gap-4 py-4">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-medium text-foreground">
                       Потрачена{" "}
                       {new Date(e.createdAt).toLocaleDateString("ru-RU", {
                         day: "2-digit",
@@ -82,88 +79,86 @@ export default async function AttemptsPage() {
                         year: "numeric",
                       })}
                     </p>
-                    {e.applicationId && (
-                      <p className="text-xs text-gray-400">Заявка: {e.applicationId}</p>
-                    )}
+                    {e.applicationId ? (
+                      <p className="text-xs text-muted-foreground">Заявка: {e.applicationId}</p>
+                    ) : null}
                   </div>
-                  {e.regeneratesAt && (
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">Восстановится через</p>
-                      <p className="font-semibold text-blue-600">
-                        {daysUntil(e.regeneratesAt)} дн.
-                      </p>
-                      <p className="text-xs text-gray-400">
+                  {e.regeneratesAt ? (
+                    <div className="flex flex-col items-end gap-0.5 text-right">
+                      <p className="text-xs text-muted-foreground">Восстановится через</p>
+                      <p className="font-semibold text-primary">{daysUntil(e.regeneratesAt)} дн.</p>
+                      <p className="text-xs text-muted-foreground">
                         {new Date(e.regeneratesAt).toLocaleDateString("ru-RU")}
                       </p>
                     </div>
-                  )}
-                </div>
-              </div>
+                  ) : null}
+                </CardContent>
+              </Card>
             ))}
-          </div>
-        )}
+          </section>
+        ) : null}
 
-        {/* History */}
-        {ledger.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-400 uppercase">
+        {ledger.length > 0 ? (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
               История ({ledger.length} записей)
             </h2>
-            <div className="divide-y divide-gray-50 rounded-2xl border border-gray-100 bg-white">
-              {ledger.slice(0, 20).map((e) => (
-                <div key={e.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`inline-block h-2 w-2 rounded-full ${
-                        e.event === "CONSUMED"
-                          ? "bg-red-400"
+            <Card>
+              <CardContent className="flex flex-col divide-y divide-border p-0">
+                {ledger.slice(0, 20).map((e) => (
+                  <div key={e.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-block size-2 shrink-0 rounded-full ${
+                          e.event === "CONSUMED"
+                            ? "bg-destructive"
+                            : e.event === "RETURNED"
+                              ? "bg-green-500"
+                              : "bg-primary"
+                        }`}
+                      />
+                      <span className="text-muted-foreground">
+                        {e.event === "CONSUMED"
+                          ? "Потрачена"
                           : e.event === "RETURNED"
-                            ? "bg-green-400"
-                            : "bg-blue-400"
-                      }`}
-                    />
-                    <span className="text-gray-600">
-                      {e.event === "CONSUMED"
-                        ? "Потрачена"
-                        : e.event === "RETURNED"
-                          ? "Возвращена"
-                          : "Regenerated"}
+                            ? "Возвращена"
+                            : "Восстановлена"}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(e.createdAt).toLocaleDateString("ru-RU")}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {new Date(e.createdAt).toLocaleDateString("ru-RU")}
-                  </span>
-                </div>
-              ))}
-              {ledger.length > 20 && (
-                <p className="px-4 py-2 text-xs text-gray-400">
-                  + ещё {ledger.length - 20} записей
-                </p>
-              )}
-            </div>
-          </div>
-        )}
+                ))}
+                {ledger.length > 20 ? (
+                  <p className="px-4 py-2 text-xs text-muted-foreground">+ ещё {ledger.length - 20} записей</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          </section>
+        ) : null}
 
-        {/* Stats */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-4">
-          <h2 className="mb-3 font-semibold text-gray-800">Статистика</h2>
-          <div className="space-y-2 text-sm text-gray-600">
-            <div className="flex justify-between">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Статистика</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <div className="flex justify-between gap-4">
               <span>Всего потрачено</span>
-              <span className="font-medium">
+              <span className="font-medium text-foreground">
                 {ledger.filter((e) => e.event === "CONSUMED").length}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <span>Возвращено</span>
-              <span className="font-medium">{returned.length}</span>
+              <span className="font-medium text-foreground">{returned.length}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <span>Восстановлено по истечении срока</span>
-              <span className="font-medium">{regenerated.length}</span>
+              <span className="font-medium text-foreground">{regenerated.length}</span>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );

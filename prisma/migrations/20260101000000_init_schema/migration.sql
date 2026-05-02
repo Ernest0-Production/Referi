@@ -373,3 +373,21 @@ ALTER TABLE "abuse_reports" ADD CONSTRAINT "abuse_reports_vacancyId_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_applicationId_fkey" FOREIGN KEY ("applicationId") REFERENCES "applications"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- CreateTable
+CREATE TABLE "vacancy_search_presets" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL,
+    "name" VARCHAR(80) NOT NULL,
+    "params" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "vacancy_search_presets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "vacancy_search_presets_userId_idx" ON "vacancy_search_presets"("userId");
+
+-- AddForeignKey
+ALTER TABLE "vacancy_search_presets" ADD CONSTRAINT "vacancy_search_presets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

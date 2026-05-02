@@ -3,6 +3,19 @@
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
 import { ModerationContactLink } from "@/components/ModerationContactLink";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const REASONS = [
   { value: "FAKE_VACANCY", label: "Подозрение в фейковой вакансии" },
@@ -30,72 +43,79 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
 
   if (!open) {
     return (
-      <div className="border-t border-gray-100 pt-4">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="text-sm text-amber-700 underline-offset-2 hover:underline"
-        >
+      <div className="flex w-full flex-col gap-3 border-t pt-4">
+        <Button type="button" variant="link" className="h-auto self-start p-0" onClick={() => setOpen(true)}>
           Пожаловаться на вакансию
-        </button>
-        {msg === "registered" && (
-          <div className="mt-2 space-y-2 text-xs text-gray-600">
-            <p>Жалоба зарегистрирована. Модераторы увидят её в системе.</p>
-            <ModerationContactLink />
-          </div>
-        )}
-        {msg && msg !== "registered" && <p className="mt-2 text-xs text-gray-600">{msg}</p>}
+        </Button>
+        {msg === "registered" ? (
+          <Alert>
+            <AlertTitle>Жалоба зарегистрирована</AlertTitle>
+            <AlertDescription className="flex flex-col gap-2">
+              <span>Модераторы увидят её в системе.</span>
+              <ModerationContactLink />
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        {msg && msg !== "registered" ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4">
-      <p className="text-sm font-medium text-gray-800">Жалоба на вакансию</p>
-      <label className="block text-xs text-gray-600">Причина</label>
-      <select
-        value={reason}
-        onChange={(e) => setReason(e.target.value as (typeof REASONS)[number]["value"])}
-        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-      >
-        {REASONS.map((r) => (
-          <option key={r.value} value={r.value}>
-            {r.label}
-          </option>
-        ))}
-      </select>
-      <label className="block text-xs text-gray-600">Комментарий (необязательно)</label>
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        maxLength={500}
-        rows={3}
-        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-      />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          disabled={submit.isPending}
-          onClick={() => submit.mutate({ vacancyId, reason, comment: comment.trim() || undefined })}
-          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-        >
-          Отправить
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-white"
-        >
-          Отмена
-        </button>
-      </div>
-      {msg === "registered" && (
-        <div className="space-y-2 text-xs text-gray-600">
-          <p>Жалоба зарегистрирована.</p>
-          <ModerationContactLink />
-        </div>
-      )}
-      {msg && msg !== "registered" && <p className="text-xs text-red-600">{msg}</p>}
-    </div>
+    <Card className="w-full border-dashed">
+      <CardHeader>
+        <CardTitle className="text-base">Жалоба на вакансию</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <FieldGroup className="gap-4">
+          <Field>
+            <FieldLabel htmlFor="report-reason">Причина</FieldLabel>
+            <Select value={reason} onValueChange={(v) => setReason(v as (typeof REASONS)[number]["value"])}>
+              <SelectTrigger id="report-reason" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="report-comment">Комментарий (необязательно)</FieldLabel>
+            <Textarea
+              id="report-comment"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              maxLength={500}
+              rows={3}
+            />
+          </Field>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={submit.isPending}
+              onClick={() => submit.mutate({ vacancyId, reason, comment: comment.trim() || undefined })}
+            >
+              Отправить
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Отмена
+            </Button>
+          </div>
+        </FieldGroup>
+        {msg === "registered" ? (
+          <div className="flex flex-col gap-2 border-t pt-3 text-sm text-muted-foreground">
+            <span className="text-foreground">Жалоба зарегистрирована.</span>
+            <ModerationContactLink />
+          </div>
+        ) : null}
+        {msg && msg !== "registered" ? <p className="text-xs text-destructive">{msg}</p> : null}
+      </CardContent>
+    </Card>
   );
 }

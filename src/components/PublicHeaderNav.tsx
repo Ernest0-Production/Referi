@@ -1,7 +1,17 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
-import { CircleUserRound } from "lucide-react";
-import { ServiceBrandLink } from "@/components/ServiceBrandLink";
+import { LayoutDashboard, Briefcase, Send } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -16,28 +26,135 @@ function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   return "Аккаунт";
 }
 
-export function PublicHeaderNav({ session }: { session: Session | null }) {
+function initialsFromLabel(label: string): string {
+  const t = label.replace(/^@/, "").trim();
+  if (!t) return "?";
+  const parts = t.split(/[\s._-]+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+  }
+  return t.slice(0, 2).toUpperCase();
+}
+
+export async function PublicHeaderNav({ session }: { session: Session | null }) {
+  const userId = session?.user?.id;
+  let referrerVacancy: { id: string } | null = null;
+  let subscription: { status: string } | null = null;
+
+  if (userId) {
+    const [vac, sub] = await Promise.all([
+      prisma.vacancy.findFirst({
+        where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
+        select: { id: true },
+      }),
+      prisma.seekerSubscription.findUnique({
+        where: { userId },
+        select: { status: true },
+      }),
+    ]);
+    referrerVacancy = vac;
+    subscription = sub;
+  }
+
+  const hasActivePro = subscription?.status === "ACTIVE";
+  const showProCta = !hasActivePro;
+  const proHref = userId ? "/dashboard/settings" : "/login";
+
+  const overviewHref = "/dashboard";
+  const overviewLabel = "Обзор";
+  const vacancyHref = "/dashboard/vacancy";
+  const vacancyLabel = "Моя вакансия";
+  const applicationsSeekerHref = "/dashboard/applications";
+  const applicationsReferrerHref = "/dashboard/vacancy/applicants";
+  const applicationsLabel = "Отклики";
+
+  const primaryNav = referrerVacancy
+    ? { href: vacancyHref, label: vacancyLabel, icon: Briefcase }
+    : { href: overviewHref, label: overviewLabel, icon: LayoutDashboard };
+  const secondaryNav = referrerVacancy
+    ? { href: applicationsReferrerHref, label: applicationsLabel, icon: Send }
+    : { href: applicationsSeekerHref, label: applicationsLabel, icon: Send };
+
+  const PrimaryIcon = primaryNav.icon;
+  const SecondaryIcon = secondaryNav.icon;
+
   return (
-    <nav className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-      <ServiceBrandLink className="text-lg" />
-      <div className="flex min-w-0 items-center gap-3">
-        {session?.user ? (
-          <Link
-            href="/dashboard"
-            className="group flex min-w-0 max-w-full items-center gap-2 rounded-md py-0.5 text-sm text-gray-600 transition-colors hover:text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-            title="Перейти в дашборд"
-            aria-label="Перейти в дашборд"
+    <nav className="flex items-center justify-between gap-4 border-b border-border bg-card px-4 py-3 md:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight text-foreground">
+          <span
+            className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[var(--app-search-accent-bg)] text-[var(--app-search-accent-fg)]"
+            aria-hidden
           >
-            <CircleUserRound
-              className="size-5 shrink-0 text-gray-400 transition-colors group-hover:text-blue-600"
-              aria-hidden
-            />
-            <span className="truncate">{sessionDisplayLabel(session.user)}</span>
-          </Link>
+            <span className="text-lg leading-none">R</span>
+          </span>
+          <span className="truncate text-lg">Referi</span>
+        </Link>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" className="hidden h-9 gap-1.5 rounded-lg px-3 font-medium sm:inline-flex">
+              Вакансии
+              <span className="text-muted-foreground" aria-hidden>
+                ▾
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link href="/">Каталог вакансий</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/vacancy">Разместить вакансию</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {userId ? (
+          <div className="hidden items-center gap-1 md:flex">
+            <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+              <Link href={primaryNav.href}>
+                <PrimaryIcon data-icon="inline-start" />
+                {primaryNav.label}
+              </Link>
+            </Button>
+            <Button variant="ghost" className="h-9 gap-2 font-normal text-muted-foreground" asChild>
+              <Link href={secondaryNav.href}>
+                <SecondaryIcon data-icon="inline-start" />
+                {secondaryNav.label}
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <ThemeToggle />
+        {showProCta ? (
+          <Button
+            asChild
+            className={cn(
+              "hidden h-9 rounded-lg px-4 font-semibold sm:inline-flex",
+              "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
+            )}
+          >
+            <Link href={proHref}>Подключить PRO</Link>
+          </Button>
+        ) : null}
+        {session?.user ? (
+          <Button variant="ghost" size="icon" className="size-9 rounded-full" asChild>
+            <Link href="/dashboard" title={sessionDisplayLabel(session.user)} aria-label="Перейти в дашборд">
+              <Avatar className="size-8">
+                <AvatarFallback className="text-xs font-medium">
+                  {initialsFromLabel(sessionDisplayLabel(session.user))}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </Button>
         ) : (
-          <Link href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-            Войти
-          </Link>
+          <Button asChild variant="default" size="sm" className="h-9">
+            <Link href="/login">Войти</Link>
+          </Button>
         )}
       </div>
     </nav>
