@@ -1,29 +1,53 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { TRPCError } from "@trpc/server";
 import { auth } from "@/lib/auth";
+import { firstQueryParam } from "@/lib/searchParams";
 import { trpc } from "@/trpc/server";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PageProps {
-  searchParams: Promise<{ vacancyId?: string; paidTokenId?: string }>;
+  searchParams: Promise<{
+    vacancyId?: string | string[];
+    paidTokenId?: string | string[];
+  }>;
 }
 
 export default async function NewApplicationPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const { vacancyId, paidTokenId } = await searchParams;
+  const raw = await searchParams;
+  const vacancyId = firstQueryParam(raw.vacancyId);
+  const paidTokenId = firstQueryParam(raw.paidTokenId);
   if (!vacancyId) notFound();
 
-  let vacancy;
+  let me;
   try {
-    const [v, me] = await Promise.all([trpc.vacancies.getById({ id: vacancyId }), trpc.auth.me()]);
-    vacancy = { ...v, me };
-  } catch {
-    notFound();
+    me = await trpc.auth.me();
+  } catch (e) {
+    if (e instanceof TRPCError && (e.code === "UNAUTHORIZED" || e.code === "NOT_FOUND")) {
+      redirect("/login");
+    }
+    throw e;
   }
+
+  let v;
+  try {
+    v = await trpc.vacancies.getById({ id: vacancyId });
+  } catch (e) {
+    if (e instanceof TRPCError && (e.code === "NOT_FOUND" || e.code === "BAD_REQUEST")) {
+      notFound();
+    }
+    if (e instanceof TRPCError && e.code === "UNAUTHORIZED") {
+      redirect("/login");
+    }
+    throw e;
+  }
+
+  const vacancy = { ...v, me };
 
   return (
     <main className="flex-1">

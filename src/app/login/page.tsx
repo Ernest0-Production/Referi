@@ -1,13 +1,18 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { LoginButton } from "./LoginButton";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function LoginPage() {
   const session = await auth();
-  if (session?.user) {
-    redirect("/dashboard");
+  const userId = session?.user?.id;
+  if (userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (user) {
+      redirect("/dashboard");
+    }
   }
 
   return (
