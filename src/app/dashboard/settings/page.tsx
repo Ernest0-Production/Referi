@@ -142,7 +142,7 @@ export default async function SettingsPage() {
             <Link href="/dashboard/applications" className="text-blue-600 hover:underline">
               Мои заявки
             </Link>
-            <Link href="/vacancies" className="text-blue-600 hover:underline">
+            <Link href="/" className="text-blue-600 hover:underline">
               Все вакансии
             </Link>
           </div>

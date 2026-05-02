@@ -49,7 +49,7 @@ export default async function ApplicationsPage() {
         <Link href="/dashboard" className="font-bold text-gray-900 hover:text-blue-600">
           Referi
         </Link>
-        <Link href="/vacancies" className="text-sm text-blue-600 hover:text-blue-700">
+        <Link href="/" className="text-sm text-blue-600 hover:text-blue-700">
           Найти вакансии
         </Link>
       </nav>
@@ -61,7 +61,7 @@ export default async function ApplicationsPage() {
           <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center">
             <p className="text-gray-500">У вас пока нет заявок</p>
             <Link
-              href="/vacancies"
+              href="/"
               className="mt-4 inline-block rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
             >
               Смотреть вакансии

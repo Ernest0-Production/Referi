@@ -47,7 +47,7 @@ flowchart LR
 - [ ] `docker compose up` поднимает приложение без ошибок
 - [ ] `npm run lint && npm run typecheck && npm run test` проходят
 - [ ] `prisma migrate dev` выполняется без ошибок
-- [ ] `GET /` возвращает заглушку главной страницы
+- [ ] `GET /` возвращает каталог вакансий (листинг); `GET /vacancies` редиректит на `/` с сохранением query-параметров
 - [ ] CI pipeline зелёный на пустом PR
 
 ---

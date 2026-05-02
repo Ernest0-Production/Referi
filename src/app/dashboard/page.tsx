@@ -129,7 +129,7 @@ export default async function DashboardPage() {
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Link
-            href="/vacancies"
+            href="/"
             className="rounded-2xl border border-gray-100 bg-white p-4 text-center transition hover:border-blue-200 hover:shadow-sm"
           >
             <div className="text-lg font-bold text-blue-600">Вакансии</div>

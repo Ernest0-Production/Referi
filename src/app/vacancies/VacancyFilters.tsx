@@ -32,9 +32,10 @@ const FORMATS = [
 
 interface Props {
   currentParams: Record<string, string | undefined>;
+  listPath?: string;
 }
 
-export function VacancyFilters({ currentParams }: Props) {
+export function VacancyFilters({ currentParams, listPath = "/" }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState(currentParams.query ?? "");
   const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
@@ -46,7 +47,7 @@ export function VacancyFilters({ currentParams }: Props) {
       .filter(([, v]) => v)
       .map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
       .join("&");
-    router.push(`/vacancies${qs ? "?" + qs : ""}`);
+    router.push(`${listPath}${qs ? "?" + qs : ""}`);
   }
 
   return (
@@ -150,7 +151,7 @@ export function VacancyFilters({ currentParams }: Props) {
       </div>
 
       <button
-        onClick={() => router.push("/vacancies")}
+        onClick={() => router.push(listPath)}
         className="w-full rounded-lg border border-gray-200 py-2 text-sm text-gray-500 hover:bg-gray-50"
       >
         Сбросить фильтры
