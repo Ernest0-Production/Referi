@@ -4,7 +4,7 @@ import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { env } from "@/env";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { paymentProvider } from "@/server/services/paymentService";
-import { randomUUID } from "crypto";
+import { randomUuid } from "@/lib/randomUuid";
 import { deleteAccountAndAllData } from "@/server/commands/deleteAccount";
 import { BusinessError } from "@/server/commands/submitApplication";
 
@@ -127,7 +127,7 @@ export const authRouter = router({
         });
       }
 
-      const idempotencyKey = randomUUID();
+      const idempotencyKey = randomUuid();
       const returnUrl = `${env.NEXT_PUBLIC_URL}/login?registered=1`;
       const feeKopecks = BUSINESS_RULES.REGISTRATION_FEE_KOP;
 

@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUuid } from "@/lib/randomUuid";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { getPaymentQueue } from "@/server/workers/paymentQueue";
 
@@ -11,7 +11,7 @@ export async function scheduleSubscriptionRenewal(userId: string, periodEnd: Dat
       type: "subscription-renewal",
       userId,
       periodEndMs,
-      idempotencyKey: randomUUID(),
+      idempotencyKey: randomUuid(),
     },
     {
       jobId: `subscription-renew:${userId}:${periodEndMs}`,
@@ -28,10 +28,10 @@ export async function scheduleSubscriptionRenewRetry(userId: string, attempt: nu
       type: "subscription-renew-retry",
       userId,
       attempt,
-      idempotencyKey: randomUUID(),
+      idempotencyKey: randomUuid(),
     },
     {
-      jobId: `subscription-retry:${userId}:${attempt}:${randomUUID()}`,
+      jobId: `subscription-retry:${userId}:${attempt}:${randomUuid()}`,
       delay: BUSINESS_RULES.SUBSCRIPTION_RETRY_DELAY_MS,
     },
   );

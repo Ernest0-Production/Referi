@@ -5,7 +5,7 @@ import { env } from "@/env";
 import { paymentProvider } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { kopecksToString } from "@/shared/utils/money";
-import { randomUUID } from "crypto";
+import { randomUuid } from "@/lib/randomUuid";
 
 export const paymentsRouter = router({
   initiateEscrow: protectedProcedure
@@ -49,8 +49,8 @@ export const paymentsRouter = router({
         }
       }
 
-      const idDeal = randomUUID();
-      const idPay = randomUUID();
+      const idDeal = randomUuid();
+      const idPay = randomUuid();
       const amountKopecks = app.vacancy.rewardKopecks;
       if (amountKopecks <= 0n) {
         throw new TRPCError({
@@ -115,7 +115,7 @@ export const paymentsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "VACANCY_NOT_ACTIVE" });
       }
 
-      const idempotencyKey = randomUUID();
+      const idempotencyKey = randomUuid();
       const expiresAt = new Date(
         Date.now() + BUSINESS_RULES.PAID_APPLICATION_TOKEN_VALIDITY_DAYS * 24 * 60 * 60 * 1000,
       );

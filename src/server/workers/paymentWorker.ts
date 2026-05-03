@@ -2,7 +2,7 @@
  * Payment Worker — эскроу Safe deal (выплата), возвраты, проверка регистрации, продление PRO.
  */
 
-import { randomUUID } from "crypto";
+import { randomUuid } from "@/lib/randomUuid";
 import { Worker, type Job } from "bullmq";
 import { env } from "@/env";
 import { redis } from "@/lib/redis";
@@ -203,7 +203,7 @@ async function processJob(job: Job<PaymentJobData>) {
       }
 
       try {
-        const chargeKey = randomUUID();
+        const chargeKey = randomUuid();
         const result = await paymentProvider.createPaymentWithSavedMethod({
           idempotencyKey: chargeKey,
           amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,
@@ -251,7 +251,7 @@ async function processJob(job: Job<PaymentJobData>) {
       }
 
       try {
-        const chargeKey = randomUUID();
+        const chargeKey = randomUuid();
         const result = await paymentProvider.createPaymentWithSavedMethod({
           idempotencyKey: chargeKey,
           amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,

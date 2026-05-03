@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { randomUUID } from "crypto";
+import { randomUuid } from "@/lib/randomUuid";
 import { env } from "@/env";
 import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentService";
 
@@ -59,7 +59,7 @@ export async function syncEscrowFinancialsBeforeAccountDeletion(
       return;
     }
 
-    const idempotencyKey = `account-delete-refund:${applicationId}:${randomUUID()}`;
+    const idempotencyKey = `account-delete-refund:${applicationId}:${randomUuid()}`;
     const res = await refundEscrowOrThrow({
       idempotencyKey,
       escrow: {
@@ -90,7 +90,7 @@ export async function syncPaidTokenRefundBeforeAccountDeletion(
   const tok = await db.paidApplicationToken.findUnique({ where: { id: tokenId } });
   if (!tok?.yookassaPaymentId || tok.refundedAt || tok.usedAt) return;
 
-  const idempotencyKey = `account-delete-token:${tokenId}:${randomUUID()}`;
+  const idempotencyKey = `account-delete-token:${tokenId}:${randomUuid()}`;
   await paymentProvider.refundPayment({
     idempotencyKey,
     paymentId: tok.yookassaPaymentId,

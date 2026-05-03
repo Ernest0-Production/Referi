@@ -5,7 +5,7 @@ import { env } from "@/env";
 import { paymentProvider } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { kopecksToString } from "@/shared/utils/money";
-import { randomUUID } from "crypto";
+import { randomUuid } from "@/lib/randomUuid";
 
 export const subscriptionsRouter = router({
   /**
@@ -41,7 +41,7 @@ export const subscriptionsRouter = router({
         });
       }
 
-      const idempotencyKey = randomUUID();
+      const idempotencyKey = randomUuid();
       const returnUrl = input.returnUrl ?? `${env.NEXT_PUBLIC_URL}/dashboard/profile`;
 
       const payment = await paymentProvider.createPayment({
