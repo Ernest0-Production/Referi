@@ -41,7 +41,6 @@ export function VacancyListChrome({
     });
   }
 
-  const chromePending = listBusy || isPending;
   const hideViewedOn = currentParams.hideViewed === "1";
 
   return (
@@ -56,7 +55,10 @@ export function VacancyListChrome({
         </p>
       </header>
 
-      <InputGroup className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12">
+      <InputGroup
+        aria-busy={listBusy || isPending}
+        className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12"
+      >
         <InputGroupInput
           placeholder="Название вакансии или компании"
           value={queryDraft}
@@ -69,7 +71,7 @@ export function VacancyListChrome({
           }}
           className="h-full min-h-10 text-base md:text-sm"
         />
-        <InputGroupAddon>{chromePending ? <Spinner /> : <Search />}</InputGroupAddon>
+        <InputGroupAddon>{isPending ? <Spinner /> : <Search />}</InputGroupAddon>
         <InputGroupAddon align="inline-end" className="gap-2 pr-2">
           <InputGroupText className="hidden shrink-0 whitespace-nowrap sm:inline-flex">
             Найдено: {total}
@@ -78,7 +80,7 @@ export function VacancyListChrome({
             type="button"
             variant="secondary"
             size="sm"
-            disabled={chromePending}
+            disabled={isPending}
             onClick={runSearch}
           >
             Искать
