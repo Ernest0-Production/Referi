@@ -80,8 +80,8 @@ export function VacancyCard({
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
 
   return (
-    <Link href={`/vacancies/${vacancy.id}`} className="block transition-shadow hover:shadow-md">
-      <Card className="border-border bg-card overflow-hidden shadow-sm">
+    <Link href={`/vacancies/${vacancy.id}`} className="group block transition-shadow hover:shadow-md">
+      <Card className="border-border bg-card group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25 overflow-hidden shadow-sm transition-colors">
         <CardHeader className="flex flex-col gap-3 space-y-0 pt-5 pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
