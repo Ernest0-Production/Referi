@@ -9,8 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { cn } from "@/lib/utils";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
@@ -77,6 +78,9 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
 
   const PrimaryIcon = primaryNav.icon;
   const SecondaryIcon = secondaryNav.icon;
+
+  const profileLabel = session?.user ? sessionDisplayLabel(session.user) : "";
+  const avatarUrl = session?.user ? userAvatarImageUrl(session.user) : undefined;
 
   return (
     <nav className="border-border bg-card flex items-center justify-between gap-4 border-b px-4 py-3 md:px-6">
@@ -155,8 +159,9 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
               aria-label="Перейти в дашборд"
             >
               <Avatar className="size-8">
+                {avatarUrl ? <AvatarImage src={avatarUrl} alt={profileLabel} /> : null}
                 <AvatarFallback className="text-xs font-medium">
-                  {initialsFromLabel(sessionDisplayLabel(session.user))}
+                  {initialsFromLabel(profileLabel)}
                 </AvatarFallback>
               </Avatar>
             </Link>

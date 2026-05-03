@@ -10,7 +10,7 @@
 | Кабинет `/dashboard/*` | `DashboardHeaderNav` + layout | [`src/components/DashboardHeaderNav.tsx`](../src/components/DashboardHeaderNav.tsx), [`src/app/dashboard/layout.tsx`](../src/app/dashboard/layout.tsx) |
 | Модерация `/admin/*` | `AdminHeaderNav` + layout | [`src/components/AdminHeaderNav.tsx`](../src/components/AdminHeaderNav.tsx), [`src/app/admin/layout.tsx`](../src/app/admin/layout.tsx) |
 
-Правило: **первичная навигация задаётся в `layout.tsx` соответствующего сегмента**, а не дублируется в каждой `page.tsx`. В шапках кабинета и админки доступны переключатель темы (`ThemeToggle`) и выход из аккаунта (через меню профиля).
+Правило: **первичная навигация задаётся в `layout.tsx` соответствующего сегмента**, а не дублируется в каждой `page.tsx`. В шапках кабинета и админки доступны переключатель темы (`ThemeToggle`) и выход из аккаунта (через меню профиля). Аватар в шапке: фото профиля GitHub (`session.user.image` / запасной URL по логину), при отсутствии или ошибке загрузки — инициалы в `AvatarFallback`.
 
 ## Поверхность страницы и токены
 

@@ -16,5 +16,6 @@ declare module "next-auth/jwt" {
     staffRoles?: StaffRole[];
     githubLogin?: string;
     userClaimsLoaded?: boolean;
+    picture?: string;
   }
 }

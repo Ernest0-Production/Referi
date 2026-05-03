@@ -113,10 +113,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (typeof token.githubLogin === "string" && token.githubLogin.length > 0) {
         session.user.githubLogin = token.githubLogin;
       }
+      if (typeof token.picture === "string" && token.picture.length > 0) {
+        session.user.image = token.picture;
+      }
       return session;
     },
 
-    async jwt({ token, account }) {
+    async jwt({ token, user, account }) {
+      if (user && typeof user.image === "string" && user.image.length > 0) {
+        token.picture = user.image;
+      }
+
       if (account?.provider === "github" && typeof account.providerAccountId === "string") {
         const githubId = Number(account.providerAccountId);
         if (Number.isFinite(githubId)) {

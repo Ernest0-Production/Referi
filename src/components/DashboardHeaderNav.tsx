@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { cn } from "@/lib/utils";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
@@ -71,6 +72,9 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
 
   const PrimaryIcon = primaryNav.icon;
   const SecondaryIcon = secondaryNav.icon;
+
+  const profileLabel = sessionDisplayLabel(session.user!);
+  const avatarUrl = userAvatarImageUrl(session.user!);
 
   return (
     <nav className="border-border bg-card flex items-center justify-between gap-4 border-b px-4 py-3 md:px-6">
@@ -154,8 +158,9 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
               aria-label="Меню профиля"
             >
               <Avatar className="size-8">
+                {avatarUrl ? <AvatarImage src={avatarUrl} alt={profileLabel} /> : null}
                 <AvatarFallback className="text-xs font-medium">
-                  {initialsFromLabel(sessionDisplayLabel(session.user!))}
+                  {initialsFromLabel(profileLabel)}
                 </AvatarFallback>
               </Avatar>
             </Button>
