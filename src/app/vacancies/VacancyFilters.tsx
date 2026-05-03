@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter } from "@tabler/icons-react";
-import { ChevronDown, RefreshCw, RotateCcw, Save } from "lucide-react";
+import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import {
   parseCsvEnumParam,
   presetParamsFromJson,
@@ -82,6 +82,33 @@ const FORMATS: { value: (typeof VACANCY_LIST_WORK_FORMAT_VALUES)[number]; label:
   { value: "OFFICE", label: "Офис" },
 ];
 
+function VacancyFilterSalaryFromField({
+  committedSalary,
+  onCommit,
+}: {
+  committedSalary: string | undefined;
+  onCommit: (next: string | undefined) => void;
+}) {
+  const [salaryFrom, setSalaryFrom] = useState(committedSalary ?? "");
+  return (
+    <FieldGroup>
+      <Field>
+        <FieldLabel htmlFor="salary-from">Зарплата не ниже (₽)</FieldLabel>
+        <Input
+          id="salary-from"
+          type="number"
+          min={0}
+          value={salaryFrom}
+          onChange={(e) => setSalaryFrom(e.target.value)}
+          onBlur={() => onCommit(salaryFrom.trim() || undefined)}
+          placeholder="Минимум"
+          className="h-9 rounded-lg"
+        />
+      </Field>
+    </FieldGroup>
+  );
+}
+
 interface PresetRow {
   id: string;
   name: string;
@@ -99,7 +126,12 @@ interface Props {
   matchedPresetId: string | undefined;
   /** Пресет, выбранный в UI или удерживаемый после правок до совпадения снова. */
   activePresetId: string | undefined;
-  onActivePresetIdChange: (id: string | undefined) => void;
+  /** Только выбор строки в Select «Ваши фильтры» (не сброс каталога). */
+  onPickSavedVacancyPreset: (id: string) => void;
+  /** После сброса каталога: не показывать matched preset в Select, пока пользователь снова не выберет пункт. */
+  vacancyPresetSidebarCleared?: boolean;
+  /** Увеличивается при сбросе каталога — перемонтирование Select, чтобы Radix сбросил отображение. */
+  savedPresetSelectLayoutKey?: number;
 }
 
 export function VacancyFilters({
@@ -111,10 +143,11 @@ export function VacancyFilters({
   isLoggedIn,
   matchedPresetId,
   activePresetId,
-  onActivePresetIdChange,
+  onPickSavedVacancyPreset,
+  vacancyPresetSidebarCleared = false,
+  savedPresetSelectLayoutKey = 0,
 }: Props) {
   const router = useRouter();
-  const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
   const [saveOpen, setSaveOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [presetIdPendingDelete, setPresetIdPendingDelete] = useState<string | null>(null);
@@ -170,11 +203,13 @@ export function VacancyFilters({
       onReset();
       return;
     }
-    onActivePresetIdChange(value);
+    onPickSavedVacancyPreset(value);
     applyPresetSelection(value);
   }
 
-  const resolvedPresetId = activePresetId ?? matchedPresetId;
+  const resolvedPresetId = vacancyPresetSidebarCleared
+    ? undefined
+    : (activePresetId ?? matchedPresetId);
 
   const resolvedPresetRow = useMemo(
     () => (resolvedPresetId ? presets.find((x) => x.id === resolvedPresetId) : undefined),
@@ -184,6 +219,12 @@ export function VacancyFilters({
   const presetUpdateHasChanges =
     resolvedPresetRow != null &&
     !isVacancyFlatMatchingPresetParams(currentParams, resolvedPresetRow.params);
+
+  const footerCtaMode = useMemo<"save" | "update" | "delete">(() => {
+    if (!isLoggedIn || !resolvedPresetId) return "save";
+    if (presetUpdateHasChanges) return "update";
+    return "delete";
+  }, [isLoggedIn, resolvedPresetId, presetUpdateHasChanges]);
 
   const pendingDeletePresetName = useMemo(() => {
     if (!presetIdPendingDelete) return "";
@@ -237,6 +278,7 @@ export function VacancyFilters({
             </Alert>
           ) : (
             <Select
+              key={`saved-preset-select-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}-${resolvedPresetId ?? ""}`}
               value={resolvedPresetId}
               disabled={presets.length === 0}
               onValueChange={handlePresetSelectChange}
@@ -327,24 +369,14 @@ export function VacancyFilters({
           </ToggleGroup>
         </div>
 
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="salary-from">Зарплата не ниже (₽)</FieldLabel>
-            <Input
-              id="salary-from"
-              type="number"
-              min={0}
-              value={salaryFrom}
-              onChange={(e) => setSalaryFrom(e.target.value)}
-              onBlur={() => apply({ salaryFrom: salaryFrom.trim() || undefined })}
-              placeholder="Минимум"
-              className="h-9 rounded-lg"
-            />
-          </Field>
-        </FieldGroup>
+        <VacancyFilterSalaryFromField
+          key={currentParams.salaryFrom ?? "__salary_empty__"}
+          committedSalary={currentParams.salaryFrom}
+          onCommit={(next) => apply({ salaryFrom: next })}
+        />
       </CardContent>
       <CardFooter className="border-border flex flex-col gap-3 border-t px-4 py-4">
-        <div className="flex w-full items-center gap-2">
+        <div className="flex w-full min-w-0 flex-1 items-center gap-2">
           <Button
             type="button"
             variant="outline"
@@ -355,75 +387,97 @@ export function VacancyFilters({
           >
             <RotateCcw />
           </Button>
-          {isLoggedIn && resolvedPresetId ? (
-            <div data-slot="button-group" className="flex min-w-0 flex-1 overflow-hidden rounded-xl">
+          <div className="flex min-w-0 flex-1 items-stretch">
+            {footerCtaMode === "save" ? (
               <Button
                 type="button"
                 variant="default"
-                className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
-                disabled={updatePreset.isPending || !presetUpdateHasChanges}
+                className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
+                disabled={!isLoggedIn}
                 onClick={() => {
-                  updatePreset.mutate({
-                    id: resolvedPresetId,
-                    params: flatParamsForPresetSave(currentParams),
-                  });
+                  if (!isLoggedIn) return;
+                  setSaveOpen(true);
                 }}
               >
-                <RefreshCw className="size-4 shrink-0" />
-                Обновить
+                <Save />
+                Сохранить
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="icon"
-                    aria-label="Дополнительные действия с фильтром"
-                    className={cn(
-                      ctaButtonClass,
-                      "size-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
-                    )}
-                  >
-                    <ChevronDown className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-48">
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setSaveOpen(true);
-                    }}
-                  >
-                    Создать новый фильтр
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onSelect={() => {
-                      if (!resolvedPresetId) return;
-                      setPresetIdPendingDelete(resolvedPresetId);
-                      setDeleteConfirmOpen(true);
-                    }}
-                  >
-                    Удалить фильтр
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="default"
-              className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
-              disabled={!isLoggedIn}
-              onClick={() => {
-                if (!isLoggedIn) return;
-                setSaveOpen(true);
-              }}
-            >
-              <Save />
-              Сохранить
-            </Button>
-          )}
+            ) : footerCtaMode === "update" ? (
+              <div
+                data-slot="button-group"
+                className="flex min-w-0 flex-1 overflow-hidden rounded-xl"
+              >
+                <Button
+                  type="button"
+                  variant="default"
+                  className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
+                  disabled={updatePreset.isPending}
+                  onClick={() => {
+                    const id = resolvedPresetId;
+                    if (!id) return;
+                    updatePreset.mutate({
+                      id,
+                      params: flatParamsForPresetSave(currentParams),
+                    });
+                  }}
+                >
+                  <RefreshCw className="size-4 shrink-0" />
+                  Обновить
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="icon"
+                      aria-label="Дополнительные действия с фильтром"
+                      className={cn(
+                        ctaButtonClass,
+                        "size-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
+                      )}
+                    >
+                      <ChevronDown className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-48">
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSaveOpen(true);
+                      }}
+                    >
+                      Создать новый фильтр
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => {
+                        if (!resolvedPresetId) return;
+                        setPresetIdPendingDelete(resolvedPresetId);
+                        setDeleteConfirmOpen(true);
+                      }}
+                    >
+                      Удалить фильтр
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="destructive"
+                className="h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold"
+                disabled={deletePreset.isPending}
+                onClick={() => {
+                  if (!resolvedPresetId) return;
+                  setPresetIdPendingDelete(resolvedPresetId);
+                  setDeleteConfirmOpen(true);
+                }}
+              >
+                <Trash2 className="size-4 shrink-0" />
+                Удалить
+              </Button>
+            )}
+          </div>
         </div>
       </CardFooter>
 

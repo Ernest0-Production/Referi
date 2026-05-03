@@ -37,6 +37,8 @@ export function VacancyCatalogClient({
 }) {
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
   const [activeVacancyPresetId, setActiveVacancyPresetId] = useState<string | undefined>(undefined);
+  const [vacancyPresetSidebarCleared, setVacancyPresetSidebarCleared] = useState(false);
+  const [savedPresetSelectLayoutKey, setSavedPresetSelectLayoutKey] = useState(0);
   const lastMatchedVacancyPresetIdRef = useRef<string | undefined>(undefined);
 
   const matchedVacancyPresetId = useMemo(
@@ -47,13 +49,13 @@ export function VacancyCatalogClient({
   useLayoutEffect(() => {
     if (matchedVacancyPresetId != null) {
       lastMatchedVacancyPresetIdRef.current = matchedVacancyPresetId;
-    } else if (activeVacancyPresetId == null) {
+    } else if (activeVacancyPresetId == null && !vacancyPresetSidebarCleared) {
       const carry = lastMatchedVacancyPresetIdRef.current;
       if (carry != null) {
         setActiveVacancyPresetId(carry);
       }
     }
-  }, [matchedVacancyPresetId, activeVacancyPresetId]);
+  }, [matchedVacancyPresetId, activeVacancyPresetId, vacancyPresetSidebarCleared]);
 
   useEffect(() => {
     if (
@@ -105,6 +107,13 @@ export function VacancyCatalogClient({
     setParams({});
     setActiveVacancyPresetId(undefined);
     lastMatchedVacancyPresetIdRef.current = undefined;
+    setVacancyPresetSidebarCleared(true);
+    setSavedPresetSelectLayoutKey((k) => k + 1);
+  };
+
+  const handlePickSavedVacancyPreset = (id: string) => {
+    setVacancyPresetSidebarCleared(false);
+    setActiveVacancyPresetId(id);
   };
 
   const data = listQuery.data;
@@ -118,16 +127,6 @@ export function VacancyCatalogClient({
     <>
       <aside className="w-full shrink-0 md:sticky md:top-20 md:w-80 md:self-start">
         <VacancyFilters
-          key={[
-            params.query,
-            params.specialty,
-            params.grade,
-            params.workFormat,
-            params.salaryFrom,
-            params.sort,
-            params.page,
-            params.hideViewed,
-          ].join("|")}
           currentParams={params}
           onApplyPatch={applyPatch}
           onReplaceFromPreset={replaceFromPreset}
@@ -136,7 +135,9 @@ export function VacancyCatalogClient({
           isLoggedIn={isLoggedIn}
           matchedPresetId={matchedVacancyPresetId}
           activePresetId={activeVacancyPresetId}
-          onActivePresetIdChange={setActiveVacancyPresetId}
+          onPickSavedVacancyPreset={handlePickSavedVacancyPreset}
+          vacancyPresetSidebarCleared={vacancyPresetSidebarCleared}
+          savedPresetSelectLayoutKey={savedPresetSelectLayoutKey}
         />
       </aside>
 
