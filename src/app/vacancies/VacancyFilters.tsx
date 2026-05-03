@@ -31,7 +31,6 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -51,8 +50,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -174,11 +173,11 @@ interface Props {
   matchedPresetId: string | undefined;
   /** Пресет, выбранный в UI или удерживаемый после правок до совпадения снова. */
   activePresetId: string | undefined;
-  /** Только выбор строки в Select «Ваши фильтры» (не сброс каталога). */
+  /** Только выбор сохранённого пресета в панели (не сброс каталога). */
   onPickSavedVacancyPreset: (id: string) => void;
-  /** После сброса каталога: не показывать matched preset в Select, пока пользователь снова не выберет пункт. */
+  /** После сброса каталога: не показывать matched preset в списке пресетов, пока пользователь снова не выберет пункт. */
   vacancyPresetSidebarCleared?: boolean;
-  /** Увеличивается при сбросе каталога — перемонтирование Select, чтобы Radix сбросил отображение. */
+  /** Увеличивается при сбросе каталога — перемонтирование вкладок пресетов, чтобы Radix сбросил активную вкладку. */
   savedPresetSelectLayoutKey?: number;
   /** Нижний `CardFooter` закреплён, скроллится только тело (например в мобильном Sheet). */
   variant?: "default" | "sheet";
@@ -301,6 +300,8 @@ export function VacancyFilters({
 
   const isSheet = variant === "sheet";
 
+  const presetTabsValue = resolvedPresetId ?? PRESET_SELECT_CLEAR;
+
   return (
     <Card
       className={cn(
@@ -316,7 +317,7 @@ export function VacancyFilters({
       </CardHeader>
       <CardContent
         className={cn(
-          "flex flex-col gap-5 px-4 pb-4",
+          "flex flex-col gap-5 pb-4",
           isSheet && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
         )}
       >
@@ -339,30 +340,44 @@ export function VacancyFilters({
                 , чтобы сохранять наборы фильтров.
               </AlertDescription>
             </Alert>
+          ) : presets.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Пока нет сохранённых наборов.</p>
           ) : (
-            <Select
-              key={`saved-preset-select-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}-${resolvedPresetId ?? ""}`}
-              value={resolvedPresetId}
-              disabled={presets.length === 0}
+            <Tabs
+              key={`saved-preset-tabs-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
+              value={presetTabsValue}
               onValueChange={handlePresetSelectChange}
+              className="flex w-full min-w-0 shrink-0 flex-col gap-0"
             >
-              <SelectTrigger className="bg-card h-9 w-full rounded-lg">
-                <SelectValue placeholder={presets.length ? "Выберите фильтр" : "Нет сохранённых"} />
-              </SelectTrigger>
-              <SelectContent>
+              <TabsList className="h-fit max-h-fit w-full max-w-full min-w-0 shrink-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain">
+                <TabsTrigger
+                  value={PRESET_SELECT_CLEAR}
+                  className="h-8 max-h-8 shrink-0 flex-none px-3 py-0 text-sm shadow-none"
+                >
+                  Не выбран
+                </TabsTrigger>
                 {presets.map((pr) => (
-                  <SelectItem key={pr.id} value={pr.id}>
+                  <TabsTrigger
+                    key={pr.id}
+                    value={pr.id}
+                    title={pr.name}
+                    className="h-8 max-h-8 max-w-[min(12rem,45vw)] shrink-0 flex-none truncate px-3 py-0 text-sm shadow-none"
+                  >
                     {pr.name}
-                  </SelectItem>
+                  </TabsTrigger>
                 ))}
-                <SelectSeparator />
-                <SelectItem value={PRESET_SELECT_CLEAR}>Очистить выбор</SelectItem>
-              </SelectContent>
-            </Select>
+              </TabsList>
+              <TabsContent value={PRESET_SELECT_CLEAR} className="mt-0 flex-none">
+                <span className="sr-only">Сохранённый набор не выбран</span>
+              </TabsContent>
+              {presets.map((pr) => (
+                <TabsContent key={pr.id} value={pr.id} className="mt-0 flex-none">
+                  <span className="sr-only">Выбран набор «{pr.name}»</span>
+                </TabsContent>
+              ))}
+            </Tabs>
           )}
         </div>
-
-        <Separator />
 
         <div className="flex flex-col gap-2">
           <Label className="text-sm font-medium">Специализация</Label>
@@ -380,7 +395,7 @@ export function VacancyFilters({
             <SelectTrigger className="bg-card h-9 w-full rounded-lg">
               <SelectValue placeholder="Специализация" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value={SPECIALTY_SELECT_ANY}>Любая</SelectItem>
               {specialtyValues.length > 1 ? (
                 <SelectItem value={SPECIALTY_SELECT_MULTI}>Несколько выбрано</SelectItem>
