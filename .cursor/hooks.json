@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/prettier-after-agent-edit.cjs"
+      }
+    ]
+  }
+}
