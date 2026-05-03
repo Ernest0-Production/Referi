@@ -352,7 +352,7 @@ export function VacancyFilters({
               <TabsList className="h-fit max-h-fit w-full max-w-full min-w-0 shrink-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain">
                 <TabsTrigger
                   value={PRESET_SELECT_CLEAR}
-                  className="h-8 max-h-8 shrink-0 flex-none px-3 py-0 text-sm shadow-none"
+                  className="h-8 max-h-8 flex-none shrink-0 px-3 py-0 text-sm shadow-none"
                 >
                   Не выбран
                 </TabsTrigger>
@@ -361,7 +361,7 @@ export function VacancyFilters({
                     key={pr.id}
                     value={pr.id}
                     title={pr.name}
-                    className="h-8 max-h-8 max-w-[min(12rem,45vw)] shrink-0 flex-none truncate px-3 py-0 text-sm shadow-none"
+                    className="h-8 max-h-8 max-w-[min(12rem,45vw)] flex-none shrink-0 truncate px-3 py-0 text-sm shadow-none"
                   >
                     {pr.name}
                   </TabsTrigger>
@@ -456,8 +456,8 @@ export function VacancyFilters({
       </CardContent>
       <CardFooter
         className={cn(
-          "border-border flex flex-col gap-3 border-t bg-card px-4 py-4",
-          isSheet && "shrink-0 rounded-b-xl pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4",
+          "border-border bg-card flex flex-col gap-3 border-t px-4 py-4",
+          isSheet && "shrink-0 rounded-b-xl pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]",
         )}
       >
         <div className="flex w-full min-w-0 flex-1 items-center gap-2">

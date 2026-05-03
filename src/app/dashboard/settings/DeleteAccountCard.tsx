@@ -73,7 +73,12 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
             </Alert>
           ) : null}
           <DialogFooter>
-            <Button type="button" variant="outline" disabled={del.isPending} onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={del.isPending}
+              onClick={() => setOpen(false)}
+            >
               Отмена
             </Button>
             <Button

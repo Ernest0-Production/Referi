@@ -34,9 +34,7 @@ export function vacancyFlatToTrpcListInput(
   const salaryFrom = flat.salaryFrom ? Number(flat.salaryFrom) : undefined;
   const salaryCurrencyRaw = flat.salaryCurrency?.trim();
   const salaryCurrency =
-    salaryCurrencyRaw && isVacancySalaryCurrency(salaryCurrencyRaw)
-      ? salaryCurrencyRaw
-      : undefined;
+    salaryCurrencyRaw && isVacancySalaryCurrency(salaryCurrencyRaw) ? salaryCurrencyRaw : undefined;
   const specialtyParsed = parseCsvEnumParam(flat.specialty, VACANCY_LIST_SPECIALTY_VALUES);
   const gradeParsed = parseCsvEnumParam(flat.grade, VACANCY_LIST_GRADE_VALUES);
   const workFormatParsed = parseCsvEnumParam(flat.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);

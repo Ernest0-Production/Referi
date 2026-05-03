@@ -2,10 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  formatVacancySalaryRange,
-  type VacancySalaryCurrency,
-} from "@/lib/vacancySalaryCurrency";
+import { formatVacancySalaryRange, type VacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -74,8 +71,11 @@ export function VacancyCard({
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
 
   return (
-    <Link href={`/vacancies/${vacancy.id}`} className="group block transition-shadow hover:shadow-md">
-      <Card className="border-border bg-card group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25 overflow-hidden shadow-sm transition-colors">
+    <Link
+      href={`/vacancies/${vacancy.id}`}
+      className="group block transition-shadow hover:shadow-md"
+    >
+      <Card className="border-border bg-card overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
         <CardHeader className="flex flex-col gap-3 space-y-0 pt-5 pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">

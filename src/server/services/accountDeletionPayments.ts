@@ -36,11 +36,7 @@ export async function syncEscrowFinancialsBeforeAccountDeletion(
   if (tx.status === "CAPTURED" || tx.status === "REFUNDED") return;
 
   if (tx.status === "HELD") {
-    if (
-      app.status === "OFFER_ACCEPTED" &&
-      tx.yookassaDealId &&
-      !tx.yookassaPayoutId
-    ) {
+    if (app.status === "OFFER_ACCEPTED" && tx.yookassaDealId && !tx.yookassaPayoutId) {
       const idempotencyKey = `offer-accepted:${applicationId}`;
       const dest = await referrerPayoutDestination(db, app.vacancy.referrerId);
       const payout = await paymentProvider.createDealPayout({

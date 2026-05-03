@@ -67,8 +67,18 @@ function serializeVacancy<
 
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
-    const { specialty, grade, workFormat, salaryCurrency, salaryFrom, query, sort, page, limit, excludeIds } =
-      input;
+    const {
+      specialty,
+      grade,
+      workFormat,
+      salaryCurrency,
+      salaryFrom,
+      query,
+      sort,
+      page,
+      limit,
+      excludeIds,
+    } = input;
     const q = query?.trim();
     let ftsIds: string[] | undefined;
 
@@ -93,8 +103,7 @@ export const vacanciesRouter = router({
     if (ftsIds?.length) idFilter.in = ftsIds;
     if (excludeIds?.length) idFilter.notIn = excludeIds;
 
-    const effectiveSalaryCurrency =
-      salaryFrom != null ? salaryCurrency ?? "RUB" : salaryCurrency;
+    const effectiveSalaryCurrency = salaryFrom != null ? (salaryCurrency ?? "RUB") : salaryCurrency;
 
     const where: Prisma.VacancyWhereInput = {
       status: "ACTIVE",

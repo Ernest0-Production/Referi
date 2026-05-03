@@ -19,7 +19,10 @@ import { useMdUp } from "@/hooks/useMdUp";
 import { cn } from "@/lib/utils";
 import { VacancyFilters } from "./VacancyFilters";
 import { VacancyListChrome } from "./VacancyListChrome";
-import { vacancyFlatToTrpcListInput, vacancyListInputStableKey } from "./vacancyFlatToTrpcListInput";
+import {
+  vacancyFlatToTrpcListInput,
+  vacancyListInputStableKey,
+} from "./vacancyFlatToTrpcListInput";
 
 type ListOut = inferRouterOutputs<AppRouter>["vacancies"]["list"];
 
@@ -96,10 +99,7 @@ export function VacancyCatalogClient({
   }, [matchedVacancyPresetId, activeVacancyPresetId, vacancyPresetSidebarCleared]);
 
   useEffect(() => {
-    if (
-      activeVacancyPresetId != null &&
-      !presets.some((p) => p.id === activeVacancyPresetId)
-    ) {
+    if (activeVacancyPresetId != null && !presets.some((p) => p.id === activeVacancyPresetId)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- синхронизация при исчезновении пресета из списка после refresh
       setActiveVacancyPresetId(undefined);
       lastMatchedVacancyPresetIdRef.current = undefined;

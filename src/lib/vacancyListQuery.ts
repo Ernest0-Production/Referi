@@ -175,9 +175,7 @@ export function presetParamsFromJson(
   const salaryFrom = salaryFromRaw?.trim() ? salaryFromRaw.trim() : undefined;
   const salaryCurrencyRaw = s("salaryCurrency");
   const salaryCurrency =
-    salaryFrom &&
-    salaryCurrencyRaw?.trim() &&
-    isVacancySalaryCurrency(salaryCurrencyRaw.trim())
+    salaryFrom && salaryCurrencyRaw?.trim() && isVacancySalaryCurrency(salaryCurrencyRaw.trim())
       ? salaryCurrencyRaw.trim()
       : undefined;
   return {
@@ -229,10 +227,7 @@ function canonicalPresetSaveRecord(rec: Record<string, string>): Record<string, 
   return out;
 }
 
-function presetSaveRecordsEqual(
-  a: Record<string, string>,
-  b: Record<string, string>,
-): boolean {
+function presetSaveRecordsEqual(a: Record<string, string>, b: Record<string, string>): boolean {
   const ca = canonicalPresetSaveRecord(a);
   const cb = canonicalPresetSaveRecord(b);
   for (const k of PRESET_SAVE_KEYS) {
