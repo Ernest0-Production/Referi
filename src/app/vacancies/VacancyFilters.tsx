@@ -4,10 +4,9 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter } from "@tabler/icons-react";
-import { RotateCcw, Save } from "lucide-react";
+import { ChevronDown, RefreshCw, RotateCcw, Save } from "lucide-react";
 import {
   parseCsvEnumParam,
-  findMatchingVacancySearchPresetId,
   presetParamsFromJson,
   serializeCsvParam,
   flatParamsForPresetSave,
@@ -33,10 +32,18 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -87,6 +94,11 @@ interface Props {
   onReset: () => void;
   presets: PresetRow[];
   isLoggedIn: boolean;
+  /** Совпадение текущих параметров с сохранённым пресетом (без учёта «закреплённого» выбора). */
+  matchedPresetId: string | undefined;
+  /** Пресет, выбранный в UI или удерживаемый после правок до совпадения снова. */
+  activePresetId: string | undefined;
+  onActivePresetIdChange: (id: string | undefined) => void;
 }
 
 export function VacancyFilters({
@@ -96,10 +108,15 @@ export function VacancyFilters({
   onReset,
   presets,
   isLoggedIn,
+  matchedPresetId,
+  activePresetId,
+  onActivePresetIdChange,
 }: Props) {
   const router = useRouter();
   const [salaryFrom, setSalaryFrom] = useState(currentParams.salaryFrom ?? "");
   const [saveOpen, setSaveOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [presetIdPendingDelete, setPresetIdPendingDelete] = useState<string | null>(null);
   const [presetName, setPresetName] = useState("");
   const [presetNameInvalid, setPresetNameInvalid] = useState(false);
   const utils = trpcReact.useUtils();
@@ -114,6 +131,26 @@ export function VacancyFilters({
       router.refresh();
     },
     onError: (e) => toast.error(e.message || "Не удалось сохранить"),
+  });
+
+  const updatePreset = trpcReact.vacancySearchPresets.update.useMutation({
+    onSuccess: async () => {
+      toast.success("Фильтр обновлён");
+      await utils.vacancySearchPresets.list.invalidate();
+      router.refresh();
+    },
+    onError: (e) => toast.error(e.message || "Не удалось обновить"),
+  });
+
+  const deletePreset = trpcReact.vacancySearchPresets.delete.useMutation({
+    onSuccess: async () => {
+      toast.success("Фильтр удалён");
+      setDeleteConfirmOpen(false);
+      setPresetIdPendingDelete(null);
+      await utils.vacancySearchPresets.list.invalidate();
+      router.refresh();
+    },
+    onError: (e) => toast.error(e.message || "Не удалось удалить"),
   });
 
   function apply(patch: Partial<VacancyListFlatSearchParams>) {
@@ -132,12 +169,20 @@ export function VacancyFilters({
       onReset();
       return;
     }
+    onActivePresetIdChange(value);
     applyPresetSelection(value);
   }
 
-  const matchedPresetId = useMemo(
-    () => findMatchingVacancySearchPresetId(currentParams, presets),
-    [currentParams, presets],
+  const resolvedPresetId = activePresetId ?? matchedPresetId;
+
+  const pendingDeletePresetName = useMemo(() => {
+    if (!presetIdPendingDelete) return "";
+    return presets.find((p) => p.id === presetIdPendingDelete)?.name ?? "";
+  }, [presetIdPendingDelete, presets]);
+
+  const ctaButtonClass = cn(
+    "h-10 gap-2 font-semibold shadow-none",
+    "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
   );
 
   const specialtyValues =
@@ -182,7 +227,7 @@ export function VacancyFilters({
             </Alert>
           ) : (
             <Select
-              value={matchedPresetId}
+              value={resolvedPresetId}
               disabled={presets.length === 0}
               onValueChange={handlePresetSelectChange}
             >
@@ -300,23 +345,124 @@ export function VacancyFilters({
           >
             <RotateCcw />
           </Button>
-          <Button
-            type="button"
-            className={cn(
-              "h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold",
-              "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
-            )}
-            disabled={!isLoggedIn}
-            onClick={() => {
-              if (!isLoggedIn) return;
-              setSaveOpen(true);
-            }}
-          >
-            <Save />
-            Сохранить
-          </Button>
+          {isLoggedIn && resolvedPresetId ? (
+            <div data-slot="button-group" className="flex min-w-0 flex-1 overflow-hidden rounded-xl">
+              <Button
+                type="button"
+                variant="default"
+                className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
+                disabled={updatePreset.isPending}
+                onClick={() => {
+                  updatePreset.mutate({
+                    id: resolvedPresetId,
+                    params: flatParamsForPresetSave(currentParams),
+                  });
+                }}
+              >
+                <RefreshCw className="size-4 shrink-0" />
+                Обновить
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="icon"
+                    aria-label="Дополнительные действия с фильтром"
+                    className={cn(
+                      ctaButtonClass,
+                      "size-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
+                    )}
+                  >
+                    <ChevronDown className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-48">
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setSaveOpen(true);
+                    }}
+                  >
+                    Создать новый фильтр
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      if (!resolvedPresetId) return;
+                      setPresetIdPendingDelete(resolvedPresetId);
+                      setDeleteConfirmOpen(true);
+                    }}
+                  >
+                    Удалить фильтр
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="default"
+              className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
+              disabled={!isLoggedIn}
+              onClick={() => {
+                if (!isLoggedIn) return;
+                setSaveOpen(true);
+              }}
+            >
+              <Save />
+              Сохранить
+            </Button>
+          )}
         </div>
       </CardFooter>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onOpenChange={(open) => {
+          setDeleteConfirmOpen(open);
+          if (!open) setPresetIdPendingDelete(null);
+        }}
+      >
+        <DialogContent showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Удалить фильтр?</DialogTitle>
+            <DialogDescription>
+              {pendingDeletePresetName ? (
+                <>
+                  Будет удалён сохранённый набор «{pendingDeletePresetName}». Текущие значения полей
+                  в каталоге останутся как есть.
+                </>
+              ) : (
+                "Будет удалён выбранный сохранённый набор фильтров."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setPresetIdPendingDelete(null);
+              }}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!presetIdPendingDelete || deletePreset.isPending}
+              onClick={() => {
+                if (!presetIdPendingDelete) return;
+                deletePreset.mutate({ id: presetIdPendingDelete });
+              }}
+            >
+              Удалить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={saveOpen}

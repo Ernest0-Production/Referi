@@ -2,9 +2,13 @@
 
 import { keepPreviousData } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppRouter } from "@/server/trpc/root";
-import { mergeVacancyListFlat, type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
+import {
+  findMatchingVacancySearchPresetId,
+  mergeVacancyListFlat,
+  type VacancyListFlatSearchParams,
+} from "@/lib/vacancyListQuery";
 import { trpcReact } from "@/trpc/client";
 import { VacancyCard } from "@/components/VacancyCard";
 import { Button } from "@/components/ui/button";
@@ -32,6 +36,35 @@ export function VacancyCatalogClient({
   initialActiveVacancyIds: string[];
 }) {
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
+  const [activeVacancyPresetId, setActiveVacancyPresetId] = useState<string | undefined>(undefined);
+  const lastMatchedVacancyPresetIdRef = useRef<string | undefined>(undefined);
+
+  const matchedVacancyPresetId = useMemo(
+    () => findMatchingVacancySearchPresetId(params, presets),
+    [params, presets],
+  );
+
+  useLayoutEffect(() => {
+    if (matchedVacancyPresetId != null) {
+      lastMatchedVacancyPresetIdRef.current = matchedVacancyPresetId;
+    } else if (activeVacancyPresetId == null) {
+      const carry = lastMatchedVacancyPresetIdRef.current;
+      if (carry != null) {
+        setActiveVacancyPresetId(carry);
+      }
+    }
+  }, [matchedVacancyPresetId, activeVacancyPresetId]);
+
+  useEffect(() => {
+    if (
+      activeVacancyPresetId != null &&
+      !presets.some((p) => p.id === activeVacancyPresetId)
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- синхронизация при исчезновении пресета из списка после refresh
+      setActiveVacancyPresetId(undefined);
+      lastMatchedVacancyPresetIdRef.current = undefined;
+    }
+  }, [presets, activeVacancyPresetId]);
 
   const initialListInput = useMemo(
     () => vacancyFlatToTrpcListInput(initialParams, viewedVacancyIds),
@@ -70,6 +103,8 @@ export function VacancyCatalogClient({
 
   const resetCatalog = () => {
     setParams({});
+    setActiveVacancyPresetId(undefined);
+    lastMatchedVacancyPresetIdRef.current = undefined;
   };
 
   const data = listQuery.data;
@@ -99,6 +134,9 @@ export function VacancyCatalogClient({
           onReset={resetCatalog}
           presets={presets}
           isLoggedIn={isLoggedIn}
+          matchedPresetId={matchedVacancyPresetId}
+          activePresetId={activeVacancyPresetId}
+          onActivePresetIdChange={setActiveVacancyPresetId}
         />
       </aside>
 

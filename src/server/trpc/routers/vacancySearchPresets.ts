@@ -38,6 +38,28 @@ export const vacancySearchPresetsRouter = router({
       });
     }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        params: presetParamsSchema,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const owned = await ctx.db.vacancySearchPreset.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true },
+      });
+      if (!owned) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return ctx.db.vacancySearchPreset.update({
+        where: { id: input.id },
+        data: { params: input.params },
+        select: { id: true, name: true, params: true },
+      });
+    }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
