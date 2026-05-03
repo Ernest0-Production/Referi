@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileForm } from "@/app/dashboard/profile/UpdateProfileForm";
+import { DeleteAccountCard } from "@/app/dashboard/settings/DeleteAccountCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -124,6 +125,8 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
         ) : null}
+
+        <DeleteAccountCard allowDelete={user.staffRoles.length === 0} />
 
         <Card>
           <CardHeader>

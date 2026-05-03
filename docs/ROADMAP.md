@@ -17,6 +17,8 @@ flowchart LR
   p6 --> p7
 ```
 
+
+
 Порядок 5–6 в списке фаз условен: ветки Phase5 и Phase6 **параллельны** и обе стартуют после Phase4.
 
 Фазы 0–3 — строго последовательны. Фазы 5–6 могут вестись параллельно после завершения Phase 4.
@@ -29,26 +31,28 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                              | Флаг     | Описание                                                                 |
-| ----------------------------------- | -------- | ------------------------------------------------------------------------ |
-| Инициализация Next.js (App Router)   | `[CORE]` | `create-next-app` с App Router, TypeScript strict, Tailwind CSS (текущая ветка — 16.x) |
-| Prisma + PostgreSQL                 | `[CORE]` | `prisma init`, базовая конфигурация, первая пустая миграция              |
-| Docker Compose                      | `[CORE]` | `postgres:16`, `redis:7`, `app` сервисы; `docker-compose.yml` для dev    |
-| Redis + BullMQ                      | `[CORE]` | Клиент Redis, базовая очередь, тест подключения                          |
-| Auth.js v5 базовая                  | `[CORE]` | Установка, настройка провайдера (без реального GitHub OAuth пока)        |
-| tRPC v11                            | `[CORE]` | `initTRPC`, базовый `appRouter`, `superjson` transformer                 |
-| CI pipeline                         | `[CORE]` | GitHub Actions: `lint` (ESLint + Prettier), `typecheck`, `test` (Vitest) |
-| `.env.example`                      | `[CORE]` | Все переменные окружения с описаниями                                    |
-| `src/shared/constants/businessRules.ts` | `[CORE]` | Все SLA, тарифы, лимиты из спецификации                              |
-| shadcn/ui                           | `[CORE]` | Установка, базовые компоненты: Button, Card, Input, Badge, Dialog        |
+
+| Задача                                  | Флаг     | Описание                                                                               |
+| --------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| Инициализация Next.js (App Router)      | `[CORE]` | `create-next-app` с App Router, TypeScript strict, Tailwind CSS (текущая ветка — 16.x) |
+| Prisma + PostgreSQL                     | `[CORE]` | `prisma init`, базовая конфигурация, первая пустая миграция                            |
+| Docker Compose                          | `[CORE]` | `postgres:16`, `redis:7`, `app` сервисы; `docker-compose.yml` для dev                  |
+| Redis + BullMQ                          | `[CORE]` | Клиент Redis, базовая очередь, тест подключения                                        |
+| Auth.js v5 базовая                      | `[CORE]` | Установка, настройка провайдера (без реального GitHub OAuth пока)                      |
+| tRPC v11                                | `[CORE]` | `initTRPC`, базовый `appRouter`, `superjson` transformer                               |
+| CI pipeline                             | `[CORE]` | GitHub Actions: `lint` (ESLint + Prettier), `typecheck`, `test` (Vitest)               |
+| `.env.example`                          | `[CORE]` | Все переменные окружения с описаниями                                                  |
+| `src/shared/constants/businessRules.ts` | `[CORE]` | Все SLA, тарифы, лимиты из спецификации                                                |
+| shadcn/ui                               | `[CORE]` | Установка, базовые компоненты: Button, Card, Input, Badge, Dialog                      |
+
 
 ### Definition of Done
 
-- [ ] `docker compose up` поднимает приложение без ошибок
-- [ ] `npm run lint && npm run typecheck && npm run test` проходят
-- [ ] `prisma migrate dev` выполняется без ошибок
-- [ ] `GET /` — каталог вакансий; фильтры, поиск и пагинация **не меняют** строку адреса; данные ленты — **`trpc.vacancies.list`** на клиенте с гидратацией из первого SSR; без полной перезагрузки документа
-- [ ] CI pipeline зелёный на пустом PR
+- `docker compose up` поднимает приложение без ошибок
+- `npm run lint && npm run typecheck && npm run test` проходят
+- `prisma migrate dev` выполняется без ошибок
+- `GET /` — каталог вакансий; фильтры, поиск и пагинация **не меняют** строку адреса; данные ленты — `**trpc.vacancies.list`** на клиенте с гидратацией из первого SSR; без полной перезагрузки документа
+- CI pipeline зелёный на пустом PR
 
 ---
 
@@ -58,26 +62,28 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                             | Флаг     | Описание                                                     |
-| ---------------------------------- | -------- | ------------------------------------------------------------ |
-| GitHub OAuth провайдер             | `[CORE]` | Auth.js + реальный GitHub OAuth App                          |
-| Age-check в signIn callback        | `[CORE]` | `GET /user` → `created_at` → проверка 365 дней               |
-| Полная Prisma schema               | `[CORE]` | Все модели из `spec-schema-database.md`; миграции            |
-| Страница `/login`                  | `[CORE]` | Кнопка «Войти через GitHub», обработка ошибок                |
-| Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                             |
+
+| Задача                             | Флаг     | Описание                                                            |
+| ---------------------------------- | -------- | ------------------------------------------------------------------- |
+| GitHub OAuth провайдер             | `[CORE]` | Auth.js + реальный GitHub OAuth App                                 |
+| Age-check в signIn callback        | `[CORE]` | `GET /user` → `created_at` → проверка 365 дней                      |
+| Полная Prisma schema               | `[CORE]` | Все модели из `spec-schema-database.md`; миграции                   |
+| Страница `/login`                  | `[CORE]` | Кнопка «Войти через GitHub», обработка ошибок                       |
+| Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                                    |
 | `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC **public** mutation `{ userId }`; ЮКасса / MockPaymentProvider |
-| Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`              |
-| Профиль пользователя               | `[CORE]` | Страница `/dashboard/profile`; `auth.updateProfile` mutation |
-| Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                    |
-| `auth.me` query                    | `[CORE]` | Данные текущего пользователя + staff-флаги + попытки         |
+| Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`                     |
+| Профиль пользователя               | `[CORE]` | Страница `/dashboard/profile`; `auth.updateProfile` mutation        |
+| Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                           |
+| `auth.me` query                    | `[CORE]` | Данные текущего пользователя + staff-флаги + попытки                |
+
 
 ### Definition of Done
 
-- [ ] Пользователь с GitHub аккаунтом > 1 года может войти и видит dashboard
-- [ ] Пользователь с GitHub аккаунтом < 1 года попадает на age-gate страницу
-- [ ] MockPaymentProvider позволяет «оплатить» сбор и войти
-- [ ] `GitHubProfile.accessToken` зашифрован в БД
-- [ ] Unit-тест на age-check с мок-датами (< 365 дней, > 365 дней)
+- Пользователь с GitHub аккаунтом > 1 года может войти и видит dashboard
+- Пользователь с GitHub аккаунтом < 1 года попадает на age-gate страницу
+- MockPaymentProvider позволяет «оплатить» сбор и войти
+- `GitHubProfile.accessToken` зашифрован в БД
+- Unit-тест на age-check с мок-датами (< 365 дней, > 365 дней)
 
 ---
 
@@ -87,28 +93,30 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                          | Флаг     | Описание                                                        |
-| ------------------------------- | -------- | --------------------------------------------------------------- |
-| `vacancies.create` mutation     | `[CORE]` | Guard: 1 активная вакансия, пул попыток > 0                     |
-| `vacancies.delete` mutation     | `[CORE]` | Cascade refund (пока без реальных денег)                        |
+
+| Задача                          | Флаг     | Описание                                                                                                  |
+| ------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `vacancies.create` mutation     | `[CORE]` | Guard: 1 активная вакансия, пул попыток > 0                                                               |
+| `vacancies.delete` mutation     | `[CORE]` | Cascade refund (пока без реальных денег)                                                                  |
 | `vacancies.list` query          | `[CORE]` | Фильтры: specialty, grade, workFormat, salaryCurrency, salary, query; исключение просмотренных; пагинация |
-| `vacancySearchPresets` router   | `[CORE]` | Сохранённые наборы фильтров каталога: list/create/update/delete |
-| `vacancies.getById` query       | `[CORE]` | Без данных реферальщика                                         |
-| `vacancies.myActive` query      | `[CORE]` | Текущая вакансия реферальщика                                   |
-| Страница `/` — лента вакансий   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных |
-| Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница вакансии + кнопка «Откликнуться»             |
-| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей вакансией                         |
-| Форма создания вакансии         | `[CORE]` | Все поля из spec; валидация Zod                                 |
-| `ReferrerAttemptLedger` базовый | `[CORE]` | `getAvailableAttempts()` возвращает корректное значение         |
-| Full-text поиск                 | `[CORE]` | `pg_trgm` или `tsvector` для title/description                  |
+| `vacancySearchPresets` router   | `[CORE]` | Сохранённые наборы фильтров каталога: list/create/update/delete                                           |
+| `vacancies.getById` query       | `[CORE]` | Без данных реферальщика                                                                                   |
+| `vacancies.myActive` query      | `[CORE]` | Текущая вакансия реферальщика                                                                             |
+| Страница `/` — лента вакансий   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
+| Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница вакансии + кнопка «Откликнуться»                                                       |
+| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей вакансией                                                                   |
+| Форма создания вакансии         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
+| `ReferrerAttemptLedger` базовый | `[CORE]` | `getAvailableAttempts()` возвращает корректное значение                                                   |
+| Full-text поиск                 | `[CORE]` | `pg_trgm` или `tsvector` для title/description                                                            |
+
 
 ### Definition of Done
 
-- [ ] Реферальщик создаёт вакансию; вторая попытка создать вакансию заблокирована
-- [ ] Лента отображает активные вакансии с корректными фильтрами
-- [ ] Замороженные/удалённые вакансии не отображаются в ленте
-- [ ] Full-text поиск по названию и описанию работает
-- [ ] Unit-тесты на guard «1 активная вакансия»
+- Реферальщик создаёт вакансию; вторая попытка создать вакансию заблокирована
+- Лента отображает активные вакансии с корректными фильтрами
+- Замороженные/удалённые вакансии не отображаются в ленте
+- Full-text поиск по названию и описанию работает
+- Unit-тесты на guard «1 активная вакансия»
 
 ---
 
@@ -117,6 +125,7 @@ flowchart LR
 **Цель**: полный цикл заявки без реальных платежей; машина состояний работает полностью.
 
 ### Deliverables
+
 
 | Задача                                    | Флаг     | Описание                                             |
 | ----------------------------------------- | -------- | ---------------------------------------------------- |
@@ -139,13 +148,14 @@ flowchart LR
 | Правила видимости контактов               | `[CORE]` | contactInfo только в активных статусах               |
 | Property-based тесты state machine        | `[CORE]` | fast-check, инварианты INV-001..007                  |
 
+
 ### Definition of Done
 
-- [ ] Полный happy path от submit до offerAccepted работает без реальных платежей
-- [ ] Все guards из spec-process-application-lifecycle.md проверены unit-тестами
-- [ ] `AuditLog` создаётся при каждом переходе
-- [ ] `contactInfo` не виден в `vacancies.applicants` после терминального статуса
-- [ ] Соискатель не может откликнуться на > 2 вакансий одновременно
+- Полный happy path от submit до offerAccepted работает без реальных платежей
+- Все guards из spec-process-application-lifecycle.md проверены unit-тестами
+- `AuditLog` создаётся при каждом переходе
+- `contactInfo` не виден в `vacancies.applicants` после терминального статуса
+- Соискатель не может откликнуться на > 2 вакансий одновременно
 
 ---
 
@@ -155,32 +165,34 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                                    | Флаг    | Описание                                               |
-| ----------------------------------------- | ------- | ------------------------------------------------------ |
-| `YookassaPaymentProvider`                 | `[PAY]` | Реализация `PaymentProvider`; целевой объём — API Safe deal + Payments |
-| `payments.initiateEscrow` mutation        | `[PAY]` | Старт оплаты соискателя по заявке; `confirmationUrl` / `paymentId`              |
-| Webhook `/api/webhooks/yookassa`          | `[PAY]` | Верификация Basic Auth (`shopId:secretKey`); диспетчеризация по `metadata.type` |
-| `paymentWorker`                           | `[PAY]` | BullMQ: выплаты по сделке, возвраты, продление PRO (`subscription-renewal`, `subscription-renew-retry`) |
-| Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)   |
-| `refundPayment` при всех refund-переходах | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator |
-| `payments.addPayoutCard` (бэклог)         | `[PAY]` | Отдельная tRPC-процедура не реализована; выплаты — воркер + `User.yookassaPayoutDestination` |
-| `payments.initiatePaidApplicationToken`   | `[PAY]` | Покупка разового токена отклика через Payments API |
-| `PaidApplicationToken` использование      | `[PAY]` | При submit с токеном (`paidTokenId`) бесплатный лимит не проверяется |
-| `subscriptions.initiatePro`               | `[PAY]` | Подписка PRO (499 ₽/мес); первый платёж через ЮКасса + сохранение метода; автопродление через автоплатежи (`subscription_renewal`) и джобы очереди |
-| `subscriptions.cancel`                    | `[PAY]` | Отмена PRO; автосписания прекращаются                                       |
-| `subscriptions.me`                        | `[PAY]` | Статус подписки, `autoRenewEnabled`                                         |
-| Лимит 5 откликов с PRO                    | `[PAY]` | Guard в `applications.submit`: PRO при `ACTIVE` и неистёкшем `currentPeriodEnd` (`subscriptionGrantsProFeatures`) |
-| Polling fallback                          | `[PAY]` | BullMQ job если webhook не пришёл за 5 мин             |
-| `calculateCommission`                     | `[PAY]` | Утилита + unit-тесты на граничные значения             |
-| Страница оплаты (`/pay/[applicationId]`)  | `[PAY]` | Редирект на ЮКасса + обратный редирект                 |
+
+| Задача                                          | Флаг    | Описание                                                                                                                                           |
+| ----------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `YookassaPaymentProvider`                       | `[PAY]` | Реализация `PaymentProvider`; целевой объём — API Safe deal + Payments                                                                             |
+| `payments.initiateEscrow` mutation              | `[PAY]` | Старт оплаты соискателя по заявке; `confirmationUrl` / `paymentId`                                                                                 |
+| Webhook `/api/webhooks/yookassa`                | `[PAY]` | Верификация Basic Auth (`shopId:secretKey`); диспетчеризация по `metadata.type`                                                                    |
+| `paymentWorker`                                 | `[PAY]` | BullMQ: выплаты по сделке, возвраты, продление PRO (`subscription-renewal`, `subscription-renew-retry`)                                            |
+| Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)                                                                                                |
+| `refundPayment` при всех refund-переходах       | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator                                                                                         |
+| `payments.addPayoutCard` (бэклог)               | `[PAY]` | Отдельная tRPC-процедура не реализована; выплаты — воркер + `User.yookassaPayoutDestination`                                                       |
+| `payments.initiatePaidApplicationToken`         | `[PAY]` | Покупка разового токена отклика через Payments API                                                                                                 |
+| `PaidApplicationToken` использование            | `[PAY]` | При submit с токеном (`paidTokenId`) бесплатный лимит не проверяется                                                                               |
+| `subscriptions.initiatePro`                     | `[PAY]` | Подписка PRO (499 ₽/мес); первый платёж через ЮКасса + сохранение метода; автопродление через автоплатежи (`subscription_renewal`) и джобы очереди |
+| `subscriptions.cancel`                          | `[PAY]` | Отмена PRO; автосписания прекращаются                                                                                                              |
+| `subscriptions.me`                              | `[PAY]` | Статус подписки, `autoRenewEnabled`                                                                                                                |
+| Лимит 5 откликов с PRO                          | `[PAY]` | Guard в `applications.submit`: PRO при `ACTIVE` и неистёкшем `currentPeriodEnd` (`subscriptionGrantsProFeatures`)                                  |
+| Polling fallback                                | `[PAY]` | BullMQ job если webhook не пришёл за 5 мин                                                                                                         |
+| `calculateCommission`                           | `[PAY]` | Утилита + unit-тесты на граничные значения                                                                                                         |
+| Страница оплаты (`/pay/[applicationId]`)        | `[PAY]` | Редирект на ЮКасса + обратный редирект                                                                                                             |
+
 
 ### Definition of Done
 
-- [ ] Реальный тестовый платёж через ЮКасса sandbox проходит end-to-end
-- [ ] Webhook с невалидной подписью возвращает 401
-- [ ] Идемпотентность: повторный webhook не создаёт дубль транзакции
-- [ ] Подписка PRO расширяет лимит до 5 откликов
-- [ ] Комиссия рассчитывается корректно (тест на 10 000 ₽ → 1 000 ₽ комиссия)
+- Реальный тестовый платёж через ЮКасса sandbox проходит end-to-end
+- Webhook с невалидной подписью возвращает 401
+- Идемпотентность: повторный webhook не создаёт дубль транзакции
+- Подписка PRO расширяет лимит до 5 откликов
+- Комиссия рассчитывается корректно (тест на 10 000 ₽ → 1 000 ₽ комиссия)
 
 ---
 
@@ -190,29 +202,31 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                                    | Флаг     | Описание                                           |
-| ----------------------------------------- | -------- | -------------------------------------------------- |
-| `slaWorker` — `reaction-sla`              | `[AUTO]` | Фриз вакансии через 7 дней без реакции             |
-| `slaWorker` — `payment-deadline`          | `[AUTO]` | Отмена платежа через 5 дней                        |
-| `slaWorker` — `resume-handoff-sla`        | `[AUTO]` | Возврат + бан реферальщика через 5 дней            |
-| `slaWorker` — `cancel-ack-sla`            | `[AUTO]` | Авто-возврат через 3 дня                           |
-| `slaWorker` — `company-decision-sla`      | `[AUTO]` | Авто-открытие спора через 30 дней                  |
-| `slaWorker` — `vacancy-unfreeze`          | `[AUTO]` | Разморозка вакансии через 14 дней                  |
+
+| Задача                                    | Флаг     | Описание                                                                         |
+| ----------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `slaWorker` — `reaction-sla`              | `[AUTO]` | Фриз вакансии через 7 дней без реакции                                           |
+| `slaWorker` — `payment-deadline`          | `[AUTO]` | Отмена платежа через 5 дней                                                      |
+| `slaWorker` — `resume-handoff-sla`        | `[AUTO]` | Возврат + бан реферальщика через 5 дней                                          |
+| `slaWorker` — `cancel-ack-sla`            | `[AUTO]` | Авто-возврат через 3 дня                                                         |
+| `slaWorker` — `company-decision-sla`      | `[AUTO]` | Авто-открытие спора через 30 дней                                                |
+| `slaWorker` — `vacancy-unfreeze`          | `[AUTO]` | Разморозка вакансии через 14 дней                                                |
 | `slaWorker` — регенерация попыток         | `[AUTO]` | Восстановление попытки через 60 дней (логика в `slaWorker`, не отдельный воркер) |
-| Авто-удаление вакансии при OFFER_ACCEPTED | `[AUTO]` | Внутри команды `acceptOffer`                       |
-| `vacancyDeletedCascade`                   | `[AUTO]` | Возврат средств и попыток при ручном удалении      |
-| `ReferrerSanction` проверка в guards      | `[AUTO]` | `isReferrerBanned()` в `confirmReferralIntent`     |
-| `deadline` поля в `Application`           | `[AUTO]` | Устанавливаются в командах; проверяются в воркерах |
-| Уникальность `jobId` в BullMQ             | `[AUTO]` | Нет дубликатов при рестарте воркера                |
-| Дашборд реферальщика: пул попыток         | `[AUTO]` | Отображение доступных попыток и дат регенерации    |
+| Авто-удаление вакансии при OFFER_ACCEPTED | `[AUTO]` | Внутри команды `acceptOffer`                                                     |
+| `vacancyDeletedCascade`                   | `[AUTO]` | Возврат средств и попыток при ручном удалении                                    |
+| `ReferrerSanction` проверка в guards      | `[AUTO]` | `isReferrerBanned()` в `confirmReferralIntent`                                   |
+| `deadline` поля в `Application`           | `[AUTO]` | Устанавливаются в командах; проверяются в воркерах                               |
+| Уникальность `jobId` в BullMQ             | `[AUTO]` | Нет дубликатов при рестарте воркера                                              |
+| Дашборд реферальщика: пул попыток         | `[AUTO]` | Отображение доступных попыток и дат регенерации                                  |
+
 
 ### Definition of Done
 
-- [ ] Integration-тест: `resume-handoff-sla` срабатывает (mockdate + 5 дней) → деньги возвращены, бан создан
-- [ ] Integration-тест: `reaction-sla` срабатывает → вакансия FROZEN, не в ленте
-- [ ] Unit-тест: `getAvailableAttempts` = 3 при пустом ledger, 0 после 3 CONSUMED
-- [ ] Тест на noop при изменившемся статусе заявки при срабатывании SLA
-- [ ] `attempt-regen` не создаёт дубль `REGENERATED` при двойном срабатывании
+- Integration-тест: `resume-handoff-sla` срабатывает (mockdate + 5 дней) → деньги возвращены, бан создан
+- Integration-тест: `reaction-sla` срабатывает → вакансия FROZEN, не в ленте
+- Unit-тест: `getAvailableAttempts` = 3 при пустом ledger, 0 после 3 CONSUMED
+- Тест на noop при изменившемся статусе заявки при срабатывании SLA
+- `attempt-regen` не создаёт дубль `REGENERATED` при двойном срабатывании
 
 ---
 
@@ -222,22 +236,24 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                                    | Флаг    | Описание                                                  |
-| ----------------------------------------- | ------- | --------------------------------------------------------- |
-| `moderation.*` роутеры                    | `[MOD]` | Процедуры из spec-design-api (resolve, abuse reports)    |
-| Admin-панель `/admin`                     | `[MOD]` | Список споров + жалоб + кнопки разрешения                 |
-| `reports.submitAbuseReport`               | `[MOD]` | tRPC mutation; запись `AbuseReport`                       |
-| `moderation.resolveForReferrer`           | `[MOD]` | постановка выплаты по Safe deal (воркер) → закрыть `ModeratorCase` |
-| `moderation.resolveForSeeker`             | `[MOD]` | refund → закрыть `ModeratorCase`                          |
-| Страница `/dashboard/applications/[id]`   | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                 |
-| Блокировка пользователя / вакансии        | `[MOD]` | `moderation.blockUser`; вакансия — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
-| UI контакта модерации                     | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` после жалобы и в настройках |
+
+| Задача                                  | Флаг    | Описание                                                                                 |
+| --------------------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `moderation.`* роутеры                  | `[MOD]` | Процедуры из spec-design-api (resolve, abuse reports)                                    |
+| Admin-панель `/admin`                   | `[MOD]` | Список споров + жалоб + кнопки разрешения                                                |
+| `reports.submitAbuseReport`             | `[MOD]` | tRPC mutation; запись `AbuseReport`                                                      |
+| `moderation.resolveForReferrer`         | `[MOD]` | постановка выплаты по Safe deal (воркер) → закрыть `ModeratorCase`                       |
+| `moderation.resolveForSeeker`           | `[MOD]` | refund → закрыть `ModeratorCase`                                                         |
+| Страница `/dashboard/applications/[id]` | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                                                |
+| Блокировка пользователя / вакансии      | `[MOD]` | `moderation.blockUser`; вакансия — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
+| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` после жалобы и в настройках               |
+
 
 ### Definition of Done
 
-- [ ] Спор в статусе `DISPUTED` виден модератору в admin-панели
-- [ ] Модератор через admin-панель разрешает спор → деньги уходят корректной стороне
-- [ ] Жалоба из UI сохраняется и отображается модераторам в admin-панели
+- Спор в статусе `DISPUTED` виден модератору в admin-панели
+- Модератор через admin-панель разрешает спор → деньги уходят корректной стороне
+- Жалоба из UI сохраняется и отображается модераторам в admin-панели
 
 ---
 
@@ -247,41 +263,46 @@ flowchart LR
 
 ### Deliverables
 
-| Задача                         | Флаг     | Описание                                                           |
-| ------------------------------ | -------- | ------------------------------------------------------------------ |
+
+| Задача                         | Флаг     | Описание                                                                                                                              |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Rate limiting (tRPC)           | `[CORE]` | `FEATURE_RATE_LIMITING` + Redis в `src/lib/rateLimiter.ts`, проверка в `src/app/api/trpc/[trpc]/route.ts` (см. spec-design-api §4.10) |
-| Полировка UI                   | `[CORE]` | Единый UI shell (шапки, `--app-page-surface`, shadcn); адаптивность, accessibility (Lighthouse ≥ 95), темизация |
-| Страница настроек пользователя | `[CORE]` | Профиль, подписка; опционально блок «Связь с модерацией» по `NEXT_PUBLIC_MODERATION_CONTACT_URL` |
-| Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                      |
-| Дашборд реферальщика           | `[CORE]` | Вакансия, список кандидатов, пул попыток                           |
-| E2E-тесты Playwright           | `[CORE]` | Сценарии: регистрация, создание вакансии, полный цикл заявки, спор |
-| `docker-compose.prod.yml`      | `[CORE]` | Production конфигурация с env из secrets                           |
-| CI/CD деплой                   | `[CORE]` | GitHub Actions → деплой на Yandex Cloud / Railway                  |
-| Мониторинг                     | `[CORE]` | Sentry (ошибки) + базовые метрики BullMQ                           |
-| Документация `.env.example`    | `[CORE]` | Все переменные с описаниями                                        |
-| Seed-данные для демо           | `[CORE]` | `prisma/seed.ts` — демо-данные для staging                         |
+| Полировка UI                   | `[CORE]` | Единый UI shell (шапки, `--app-page-surface`, shadcn); адаптивность, accessibility (Lighthouse ≥ 95), темизация                       |
+| Страница настроек пользователя | `[CORE]` | Профиль, подписка; опционально блок «Связь с модерацией» по `NEXT_PUBLIC_MODERATION_CONTACT_URL`                                      |
+| Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                                                                                         |
+| Дашборд реферальщика           | `[CORE]` | Вакансия, список кандидатов, пул попыток                                                                                              |
+| E2E-тесты Playwright           | `[CORE]` | Сценарии: регистрация, создание вакансии, полный цикл заявки, спор                                                                    |
+| `docker-compose.prod.yml`      | `[CORE]` | Production конфигурация с env из secrets                                                                                              |
+| CI/CD деплой                   | `[CORE]` | GitHub Actions → деплой на Yandex Cloud / Railway                                                                                     |
+| Мониторинг                     | `[CORE]` | Sentry (ошибки) + базовые метрики BullMQ                                                                                              |
+| Документация `.env.example`    | `[CORE]` | Все переменные с описаниями                                                                                                           |
+| Seed-данные для демо           | `[CORE]` | `prisma/seed.ts` — демо-данные для staging                                                                                            |
+
 
 ### Definition of Done
 
-- [ ] Все E2E-тесты Playwright проходят на staging
-- [ ] Lighthouse Performance ≥ 85, Accessibility ≥ 95 на главных страницах
-- [ ] `npm run build` без ошибок TypeScript
-- [ ] Деплой на production работает через CI/CD pipeline
-- [ ] Sentry подключён и получает тестовую ошибку
-- [ ] `prisma/seed.ts` создаёт демо-данные без ошибок
+- Все E2E-тесты Playwright проходят на staging
+- Lighthouse Performance ≥ 85, Accessibility ≥ 95 на главных страницах
+- `npm run build` без ошибок TypeScript
+- Деплой на production работает через CI/CD pipeline
+- Sentry подключён и получает тестовую ошибку
+- `prisma/seed.ts` создаёт демо-данные без ошибок
 
 ---
 
 ## Post-Launch: v1.1
 
-| Фича                              | Описание                                                              |
-| --------------------------------- | --------------------------------------------------------------------- |
-| Push-уведомления / доп. каналы    | По продуктовому решению (сторонние сервисы, не SMTP из Referi)       |
-| Базовый антифрод                  | Детектор аномального поведения (множество откликов с одного IP)       |
-| Расширенная аналитика             | Дашборд для реферальщика: конверсия, среднее время цикла              |
-| Уведомления о дедлайнах           | Напоминания соискателю/реферальщику за 24 часа до дедлайна            |
+
+| Фича                           | Описание                                                        |
+| ------------------------------ | --------------------------------------------------------------- |
+| Push-уведомления / доп. каналы | По продуктовому решению (сторонние сервисы, не SMTP из Referi)  |
+| Базовый антифрод               | Детектор аномального поведения (множество откликов с одного IP) |
+| Расширенная аналитика          | Дашборд для реферальщика: конверсия, среднее время цикла        |
+| Уведомления о дедлайнах        | Напоминания соискателю/реферальщику за 24 часа до дедлайна      |
+
 
 ## Post-Launch: v2.0
+
 
 | Фича                       | Описание                                                       |
 | -------------------------- | -------------------------------------------------------------- |
@@ -290,11 +311,12 @@ flowchart LR
 | API для ATS                | Интеграция с системами подбора персонала                       |
 | Корпоративные тарифы       | Для компаний с несколькими вакансиями одновременно             |
 
+
 ---
 
 ## Фича-флаги (Feature Flags)
 
-В [`src/shared/constants/featureFlags.ts`](../src/shared/constants/featureFlags.ts) значения берутся из провалидированного [`src/env.ts`](../src/env.ts) (`FEATURE_REAL_PAYMENTS` и `FEATURE_RATE_LIMITING` — строго `"true"` / `"false"` в окружении):
+В `[src/shared/constants/featureFlags.ts](../src/shared/constants/featureFlags.ts)` значения берутся из провалидированного `[src/env.ts](../src/env.ts)` (`FEATURE_REAL_PAYMENTS` и `FEATURE_RATE_LIMITING` — строго `"true"` / `"false"` в окружении):
 
 ```typescript
 export const FEATURE_FLAGS = {
@@ -309,15 +331,17 @@ export const FEATURE_FLAGS = {
 
 ## Общий прогресс
 
-| Фаза                          | Статус    |
-| ----------------------------- | --------- |
-| Phase 0 — Foundation          | ✅ done    |
-| Phase 1 — Auth                | ✅ done    |
-| Phase 2 — Vacancies           | ✅ done    |
-| Phase 3 — Application FSM     | ✅ done    |
-| Phase 4 — Payments            | ✅ done    |
-| Phase 5 — SLA & Automation    | ✅ done    |
-| Phase 6 — Moderation          | ✅ done    |
-| Phase 7 — Polish & Production | ✅ done    |
+
+| Фаза                          | Статус |
+| ----------------------------- | ------ |
+| Phase 0 — Foundation          | ✅ done |
+| Phase 1 — Auth                | ✅ done |
+| Phase 2 — Vacancies           | ✅ done |
+| Phase 3 — Application FSM     | ✅ done |
+| Phase 4 — Payments            | ✅ done |
+| Phase 5 — SLA & Automation    | ✅ done |
+| Phase 6 — Moderation          | ✅ done |
+| Phase 7 — Polish & Production | ✅ done |
+
 
 *Статусы обновляются по мере прохождения Definition of Done каждой фазы.*

@@ -1,10 +1,10 @@
 ---
-title: Referi — API Design Specification (tRPC + REST Webhooks)
+
+## title: Referi — API Design Specification (tRPC + REST Webhooks)
 version: 1.0
 date_created: 2026-04-17
 owner: Referi Engineering
 tags: design, architecture, app
----
 
 # Introduction
 
@@ -17,6 +17,7 @@ tags: design, architecture, app
 **Аудитория**: фронтенд-разработчики, AI-агенты, QA.
 
 **Допущения**:
+
 - tRPC v11 с App Router Next.js интеграцией.
 - Авторизация через Auth.js v5; `session.user.id` доступен в tRPC context.
 - Все мутации требуют аутентификации (кроме явно отмеченных `public`).
@@ -25,25 +26,27 @@ tags: design, architecture, app
 
 ## 2. Definitions
 
-| Термин         | Определение                                                         |
-| -------------- | ------------------------------------------------------------------- |
-| **Query**      | tRPC процедура для чтения данных (GET-семантика)                    |
-| **Mutation**   | tRPC процедура для записи/изменения данных (POST-семантика)         |
-| **Middleware** | tRPC middleware для проверки прав (isAuth, isModerator) |
-| **Zod schema** | TypeScript-схема валидации входных данных                           |
+
+| Термин         | Определение                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| **Query**      | tRPC процедура для чтения данных (GET-семантика)                                          |
+| **Mutation**   | tRPC процедура для записи/изменения данных (POST-семантика)                               |
+| **Middleware** | tRPC middleware для проверки прав (isAuth, isModerator)                                   |
+| **Zod schema** | TypeScript-схема валидации входных данных                                                 |
 | **ctx**        | Базовый context: `{ session, db, ip }`; после `protectedProcedure` — ещё `userId: string` |
+
 
 ---
 
 ## 3. Requirements, Constraints & Guidelines
 
 - **REQ-001**: Каждая процедура валидирует input через Zod-схему.
-- **REQ-002**: Проверка сессии и ролей модератора — через tRPC middleware (`protectedProcedure`, `moderatorProcedure` в `src/server/trpc/trpc.ts`). Доменные guard-ы (владелец вакансии, статус заявки) остаются в процедурах или в `src/server/commands/*`.
+- **REQ-002**: Проверка сессии и ролей модератора — через tRPC middleware (`protectedProcedure`, `moderatorProcedure` в `src/server/trpc/trpc.ts`). Доменные guard-ы (владелец вакансии, статус заявки) остаются в процедурах или в `src/server/commands/`*.
 - **REQ-003**: Все денежные поля в ответах API (kopecks) сериализуются как строки (`string`) из-за ограничений JSON и BigInt.
 - **REQ-004**: Процедуры чтения (`query`) не должны менять состояние системы.
-- **REQ-005**: REST-вебхуки (`/api/webhooks/*`) не используют tRPC; обрабатываются напрямую в Next.js Route Handlers.
+- **REQ-005**: REST-вебхуки (`/api/webhooks/`*) не используют tRPC; обрабатываются напрямую в Next.js Route Handlers.
 - **SEC-001**: tRPC context проверяет наличие валидной сессии Auth.js для всех non-public процедур.
-- **SEC-002**: Rate limits (опционально): Redis sliding-window в [`src/lib/rateLimiter.ts`](../src/lib/rateLimiter.ts), вызов из [`src/app/api/trpc/[trpc]/route.ts`](../src/app/api/trpc/%5Btrpc%5D/route.ts) при `FEATURE_RATE_LIMITING=true`.
+- **SEC-002**: Rate limits (опционально): Redis sliding-window в `[src/lib/rateLimiter.ts](../src/lib/rateLimiter.ts)`, вызов из `[src/app/api/trpc/[trpc]/route.ts](../src/app/api/trpc/%5Btrpc%5D/route.ts)` при `FEATURE_RATE_LIMITING=true`.
 - **GUD-001**: Названия процедур в camelCase; формат `{resource}.{action}` (например: `vacancies.list`, `applications.submit`).
 
 ---
@@ -52,7 +55,7 @@ tags: design, architecture, app
 
 ### 4.1 tRPC context и middleware
 
-Файлы: [`src/server/trpc/context.ts`](../src/server/trpc/context.ts) (создание context), [`src/server/trpc/trpc.ts`](../src/server/trpc/trpc.ts) (`protectedProcedure`, `moderatorProcedure`, superjson).
+Файлы: `[src/server/trpc/context.ts](../src/server/trpc/context.ts)` (создание context), `[src/server/trpc/trpc.ts](../src/server/trpc/trpc.ts)` (`protectedProcedure`, `moderatorProcedure`, superjson).
 
 ```typescript
 // src/server/trpc/context.ts
@@ -84,24 +87,29 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 
 ### 4.2 Router: `auth`
 
-| Процедура                          | Тип      | Auth   | Входные данные                             | Описание                                      |
-| ---------------------------------- | -------- | ------ | ------------------------------------------ | --------------------------------------------- |
-| `auth.me`                          | query    | isAuth | —                                          | Текущий пользователь + профиль + `staffRoles` (MODERATOR/ADMIN); объект `subscription` (если есть): период, статус, `autoRenewEnabled` для автопродления при `ACTIVE`; `availableAttempts` |
-| `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo?, bio? }`      | Обновить профиль пользователя                     |
-| `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                               | Создать платёж за регистрацию (молодой GitHub); сумма — `BUSINESS_RULES.REGISTRATION_FEE_KOP`; `confirmationUrl` |
+
+| Процедура                          | Тип      | Auth   | Входные данные                        | Описание                                                                                                                                                                                   |
+| ---------------------------------- | -------- | ------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth.me`                          | query    | isAuth | —                                     | Текущий пользователь + профиль + `staffRoles` (MODERATOR/ADMIN); объект `subscription` (если есть): период, статус, `autoRenewEnabled` для автопродления при `ACTIVE`; `availableAttempts` |
+| `auth.updateProfile`               | mutation | isAuth | `{ displayName, contactInfo?, bio? }` | Обновить профиль пользователя                                                                                                                                                              |
+| `auth.initiateRegistrationPayment` | mutation | public | `{ userId }`                          | Создать платёж за регистрацию (молодой GitHub); сумма — `BUSINESS_RULES.REGISTRATION_FEE_KOP`; `confirmationUrl`                                                                           |
+
 
 ### 4.3 Router: `vacancies`
 
-| Процедура              | Тип      | Auth   | Входные данные                                                                                             | Описание                                                    |
-| ---------------------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `vacancies.list`       | query    | public | `{ specialty?: Specialty[], grade?: Grade[], workFormat?: WorkFormat[], salaryCurrency?: SalaryCurrency, salaryFrom?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами; при `salaryFrom` без `salaryCurrency` подразумевается `RUB`; нижняя граница сравнивается только с вакансиями в выбранной валюте; сортировка `salary_desc` по сырым минорным суммам — при смешанных валютах порядок условный |
-| `vacancies.getById`    | query    | public | `{ id }`                                                                                                   | Детальная страница вакансии (без данных реферальщика)       |
-| `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryCurrency?, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия, пул попыток > 0 |
-| `vacancies.delete`     | mutation | isAuth | `{ id }`                                                                                                   | Удалить вакансию; cascade refund                            |
-| `vacancies.myActive`   | query    | isAuth | —                                                                                                          | Активная вакансия текущего реферальщика                     |
-| `vacancies.applicants` | query    | isAuth | `{ vacancyId }`                                                                                            | Список заявок на вою вакансию (только контакты, bio, cover) |
+
+| Процедура              | Тип      | Auth   | Входные данные                                                                                                                                        | Описание                                                                                                                                                                                                                                                         |
+| ---------------------- | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vacancies.list`       | query    | public | `{ specialty?: Specialty[], grade?: Grade[], workFormat?: WorkFormat[], salaryCurrency?: SalaryCurrency, salaryFrom?, query?, sort?, page?, limit? }` | Лента активных вакансий с фильтрами; при `salaryFrom` без `salaryCurrency` подразумевается `RUB`; нижняя граница сравнивается только с вакансиями в выбранной валюте; сортировка `salary_desc` по сырым минорным суммам — при смешанных валютах порядок условный |
+| `vacancies.getById`    | query    | public | `{ id }`                                                                                                                                              | Детальная страница вакансии (без данных реферальщика)                                                                                                                                                                                                            |
+| `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryCurrency?, salaryFrom?, salaryTo?, description, rewardKopecks }`                           | Создать вакансию; guard: 1 активная вакансия, пул попыток > 0                                                                                                                                                                                                    |
+| `vacancies.delete`     | mutation | isAuth | `{ id }`                                                                                                                                              | Удалить вакансию; cascade refund                                                                                                                                                                                                                                 |
+| `vacancies.myActive`   | query    | isAuth | —                                                                                                                                                     | Активная вакансия текущего реферальщика                                                                                                                                                                                                                          |
+| `vacancies.applicants` | query    | isAuth | `{ vacancyId }`                                                                                                                                       | Список заявок на вою вакансию (только контакты, bio, cover)                                                                                                                                                                                                      |
+
 
 **Схема ответа `vacancies.list`** (элемент):
+
 ```typescript
 type VacancyListItem = {
   id: string;
@@ -122,73 +130,87 @@ type VacancyListItem = {
 
 ### 4.4 Router: `applications`
 
-| Процедура                        | Тип      | Auth   | Входные данные                                  | Описание                                                            |
-| -------------------------------- | -------- | ------ | ----------------------------------------------- | ------------------------------------------------------------------- |
-| `applications.submit`            | mutation | isAuth | `{ vacancyId, contactInfo, bio, coverLetter?, paidTokenId? }` | Откликнуться; guard: лимиты, статус вакансии                        |
-| `applications.cancel`            | mutation | isAuth | `{ applicationId }`                             | Отозвать отклик (SUBMITTED / AWAITING_PAYMENT)                      |
-| `applications.requestCancel`     | mutation | isAuth | `{ applicationId }`                             | Запросить отмену (AWAITING_RESUME_HANDOFF)                          |
-| `applications.myList`            | query    | isAuth | `{ status? }`                                   | Мои заявки как соискателя                                           |
-| `applications.activeVacancyIds` | query    | isAuth | —                                               | `vacancyId[]` с незавершёнными заявками текущего соискателя (лимиты) |
-| `applications.getById`           | query    | isAuth | `{ applicationId }`                             | Детали заявки (для соискателя или реферальщика)                     |
-| `applications.confirmIntent`     | mutation | isAuth | `{ applicationId }`                             | Реферальщик: подтвердить намерение рефералить                       |
-| `applications.reject`            | mutation | isAuth | `{ applicationId }`                             | Реферальщик: отклонить кандидата                                    |
-| `applications.acknowledgeCancel` | mutation | isAuth | `{ applicationId }`                             | Реферальщик: подтвердить запрос отмены соискателя                   |
-| `applications.confirmHandoff`    | mutation | isAuth | `{ applicationId }`                             | Реферальщик: подтвердить передачу резюме HR                         |
-| `applications.acceptOffer`       | mutation | isAuth | `{ applicationId }`                             | Соискатель: принял оффер                                            |
-| `applications.reportRejection`   | mutation | isAuth | `{ applicationId }`                             | Соискатель: получил отказ компании                                  |
-| `applications.confirmRejection`  | mutation | isAuth | `{ applicationId }`                             | Реферальщик: подтвердить отказ компании                             |
-| `applications.denyRejection`     | mutation | isAuth | `{ applicationId }`                             | Реферальщик: опровергнуть отказ компании (→ disputed)               |
-| `applications.getAuditLog`       | query    | isAuth | `{ applicationId }`                             | История переходов состояний (только для участников или модераторов) |
+
+| Процедура                        | Тип      | Auth   | Входные данные                                                | Описание                                                             |
+| -------------------------------- | -------- | ------ | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `applications.submit`            | mutation | isAuth | `{ vacancyId, contactInfo, bio, coverLetter?, paidTokenId? }` | Откликнуться; guard: лимиты, статус вакансии                         |
+| `applications.cancel`            | mutation | isAuth | `{ applicationId }`                                           | Отозвать отклик (SUBMITTED / AWAITING_PAYMENT)                       |
+| `applications.requestCancel`     | mutation | isAuth | `{ applicationId }`                                           | Запросить отмену (AWAITING_RESUME_HANDOFF)                           |
+| `applications.myList`            | query    | isAuth | `{ status? }`                                                 | Мои заявки как соискателя                                            |
+| `applications.activeVacancyIds`  | query    | isAuth | —                                                             | `vacancyId[]` с незавершёнными заявками текущего соискателя (лимиты) |
+| `applications.getById`           | query    | isAuth | `{ applicationId }`                                           | Детали заявки (для соискателя или реферальщика)                      |
+| `applications.confirmIntent`     | mutation | isAuth | `{ applicationId }`                                           | Реферальщик: подтвердить намерение рефералить                        |
+| `applications.reject`            | mutation | isAuth | `{ applicationId }`                                           | Реферальщик: отклонить кандидата                                     |
+| `applications.acknowledgeCancel` | mutation | isAuth | `{ applicationId }`                                           | Реферальщик: подтвердить запрос отмены соискателя                    |
+| `applications.confirmHandoff`    | mutation | isAuth | `{ applicationId }`                                           | Реферальщик: подтвердить передачу резюме HR                          |
+| `applications.acceptOffer`       | mutation | isAuth | `{ applicationId }`                                           | Соискатель: принял оффер                                             |
+| `applications.reportRejection`   | mutation | isAuth | `{ applicationId }`                                           | Соискатель: получил отказ компании                                   |
+| `applications.confirmRejection`  | mutation | isAuth | `{ applicationId }`                                           | Реферальщик: подтвердить отказ компании                              |
+| `applications.denyRejection`     | mutation | isAuth | `{ applicationId }`                                           | Реферальщик: опровергнуть отказ компании (→ disputed)                |
+| `applications.getAuditLog`       | query    | isAuth | `{ applicationId }`                                           | История переходов состояний (только для участников или модераторов)  |
+
 
 **Правила видимости данных в `applications.getById`**:
+
 - Соискатель видит: всё своё содержимое + статус + deadline-даты.
 - Реферальщик видит: `contactInfo`, `bio`, `coverLetter`, `status`, `displayName` соискателя (если заявка в активном статусе).
 - Реферальщик НЕ видит данные по заявке после перехода в терминальное состояние (кроме `OFFER_ACCEPTED` — виден результат).
 
 ### 4.5 Router: `payments`
 
-| Процедура                 | Тип      | Auth   | Входные данные      | Описание                                                                                                                     |
-| ------------------------- | -------- | ------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `payments.initiateEscrow` | mutation | isAuth | `{ applicationId }` | Инициировать оплату соискателя по заявке (`AWAITING_PAYMENT`) через Safe deal; возвращает `{ confirmationUrl?, paymentId?, dealId?, amountKopecks? }` |
-| `payments.initiatePaidApplicationToken` | mutation | isAuth | `{ vacancyId }` | Купить разовый токен отклика; возвращает `{ confirmationUrl, paymentId, tokenId }` |
-| `payments.escrowStatus`   | query    | isAuth | `{ applicationId }` | Зеркало `EscrowTransaction` для участников заявки (`paymentId`, суммы, даты)                                                 |
+
+| Процедура                               | Тип      | Auth   | Входные данные      | Описание                                                                                                                                              |
+| --------------------------------------- | -------- | ------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `payments.initiateEscrow`               | mutation | isAuth | `{ applicationId }` | Инициировать оплату соискателя по заявке (`AWAITING_PAYMENT`) через Safe deal; возвращает `{ confirmationUrl?, paymentId?, dealId?, amountKopecks? }` |
+| `payments.initiatePaidApplicationToken` | mutation | isAuth | `{ vacancyId }`     | Купить разовый токен отклика; возвращает `{ confirmationUrl, paymentId, tokenId }`                                                                    |
+| `payments.escrowStatus`                 | query    | isAuth | `{ applicationId }` | Зеркало `EscrowTransaction` для участников заявки (`paymentId`, суммы, даты)                                                                          |
+
 
 Токен оплачивается отдельной процедурой `payments.initiatePaidApplicationToken`; после webhook `payment.succeeded` запись `PaidApplicationToken.paidAt` заполняется и токен может быть использован в `applications.submit`.
 
 ### 4.6 Router: `subscriptions`
 
-| Процедура                   | Тип      | Auth   | Входные данные | Описание                                            |
-| --------------------------- | -------- | ------ | -------------- | --------------------------------------------------- |
-| `subscriptions.me`          | query    | isAuth | —              | Текущая подписка (период, статус, `autoRenewEnabled` — автопродление для статуса `ACTIVE`) |
+
+| Процедура                   | Тип      | Auth   | Входные данные | Описание                                                                                                    |
+| --------------------------- | -------- | ------ | -------------- | ----------------------------------------------------------------------------------------------------------- |
+| `subscriptions.me`          | query    | isAuth | —              | Текущая подписка (период, статус, `autoRenewEnabled` — автопродление для статуса `ACTIVE`)                  |
 | `subscriptions.initiatePro` | mutation | isAuth | —              | Оплата подписки «Соискатель PRO»; `confirmationUrl` (блокируется, если уже есть активный оплаченный период) |
-| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить подписку PRO (лимит откликов 2 для новых заявок; автоплатежи прекращаются)                          |
+| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить подписку PRO (лимит откликов 2 для новых заявок; автоплатежи прекращаются)                         |
+
 
 ### 4.7 Router: `moderation` (только MODERATOR / ADMIN)
 
-| Процедура                       | Тип      | Auth        | Входные данные                         | Описание                      |
-| ------------------------------- | -------- | ----------- | -------------------------------------- | ----------------------------- |
-| `moderation.openCases`          | query    | isModerator | —                                      | Список открытых споров        |
-| `moderation.getCaseById`        | query    | isModerator | `{ caseId }`                           | Детали спора + история заявки |
-| `moderation.resolveForReferrer` | mutation | isModerator | `{ caseId, notes? }`                   | Решение в пользу реферальщика |
-| `moderation.resolveForSeeker`   | mutation | isModerator | `{ caseId, notes? }`                   | Решение в пользу соискателя   |
-| `moderation.abuseReports`       | query    | isModerator | `{ status? }`                          | Список жалоб                  |
+
+| Процедура                       | Тип      | Auth        | Входные данные                                        | Описание                                                                                      |
+| ------------------------------- | -------- | ----------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `moderation.openCases`          | query    | isModerator | —                                                     | Список открытых споров                                                                        |
+| `moderation.getCaseById`        | query    | isModerator | `{ caseId }`                                          | Детали спора + история заявки                                                                 |
+| `moderation.resolveForReferrer` | mutation | isModerator | `{ caseId, notes? }`                                  | Решение в пользу реферальщика                                                                 |
+| `moderation.resolveForSeeker`   | mutation | isModerator | `{ caseId, notes? }`                                  | Решение в пользу соискателя                                                                   |
+| `moderation.abuseReports`       | query    | isModerator | `{ status? }`                                         | Список жалоб                                                                                  |
 | `moderation.resolveAbuseReport` | mutation | isModerator | `{ reportId, resolution, blockUser?, blockVacancy? }` | Разрешить жалобу; при `blockVacancy: true` и привязанной вакансии — статус вакансии `BLOCKED` |
-| `moderation.blockUser`          | mutation | isModerator | `{ userId, reason, expiresAt }`        | Санкция на реферальщика (`ReferrerSanction`) |
+| `moderation.blockUser`          | mutation | isModerator | `{ userId, reason, expiresAt }`                       | Санкция на реферальщика (`ReferrerSanction`)                                                  |
+
 
 ### 4.8 Router: `reports` (жалобы, публичный)
+
 
 | Процедура                   | Тип      | Auth   | Входные данные                     | Описание         |
 | --------------------------- | -------- | ------ | ---------------------------------- | ---------------- |
 | `reports.submitAbuseReport` | mutation | isAuth | `{ vacancyId?, reason, comment? }` | Отправить жалобу |
 
+
 ### 4.9 REST Webhook Routes
 
-| Путь                      | Метод    | Описание                             |
-| ------------------------- | -------- | ------------------------------------ |
+
+| Путь                      | Метод    | Описание                                  |
+| ------------------------- | -------- | ----------------------------------------- |
 | `/api/webhooks/yookassa`  | POST     | Входящие события ЮKassa (платежи, сделки) |
-| `/api/auth/[...nextauth]` | GET/POST | Auth.js handler                      |
+| `/api/auth/[...nextauth]` | GET/POST | Auth.js handler                           |
+
 
 **Верификация `/api/webhooks/yookassa`**:
+
 ```
 Header: Authorization: Basic {base64(shopId:secretKey)}
 или
@@ -197,20 +219,24 @@ Header: Authorization: Basic {base64(shopId:secretKey)}
 
 ### 4.10 Rate Limits
 
-Включение: **`FEATURE_RATE_LIMITING=true`**. Реализация: Redis в [`src/lib/rateLimiter.ts`](../src/lib/rateLimiter.ts), проверка в [`src/app/api/trpc/[trpc]/route.ts`](../src/app/api/trpc/%5Btrpc%5D/route.ts) (Node runtime, не Edge).
+Включение: `**FEATURE_RATE_LIMITING=true**`. Реализация: Redis в `[src/lib/rateLimiter.ts](../src/lib/rateLimiter.ts)`, проверка в `[src/app/api/trpc/[trpc]/route.ts](../src/app/api/trpc/%5Btrpc%5D/route.ts)` (Node runtime, не Edge).
+
 
 | Ключ в коде (`RATE_LIMIT_RULES`) | Условие             | Лимит (текущая реализация)     |
 | -------------------------------- | ------------------- | ------------------------------ |
 | `publicApi`                      | Нет сессии          | 60 запросов / 60 с / IP        |
 | `authedApi`                      | Есть `session.user` | 120 запросов / 60 с / `userId` |
 
+
 При превышении — **HTTP 429**, JSON `{ error, retryAfter }`, заголовки `Retry-After`, `X-RateLimit-Remaining`.
 
 Отдельных лимитов на `applications.submit` и `reports.submitAbuseReport` в коде нет.
 
+
 | Вебхуки | Политика                                                             |
 | ------- | -------------------------------------------------------------------- |
 | ЮKassa  | Не проходит через общий tRPC rate-limit handler; защита — Basic Auth |
+
 
 ---
 
@@ -242,7 +268,7 @@ Header: Authorization: Basic {base64(shopId:secretKey)}
 
 **BigInt → string в JSON**: JSON.stringify не поддерживает BigInt. Используется кастомный serializer или `superjson` через tRPC transformer.
 
-**Разделение роутеров по доменам**: `vacancies`, `applications`, `payments`, `subscriptions`, `moderation`, `reports` — в [`src/server/trpc/root.ts`](../src/server/trpc/root.ts); `reports` — отдельный роутер для жалоб.
+**Разделение роутеров по доменам**: `vacancies`, `applications`, `payments`, `subscriptions`, `moderation`, `reports` — в `[src/server/trpc/root.ts](../src/server/trpc/root.ts)`; `reports` — отдельный роутер для жалоб.
 
 ---
 
@@ -312,3 +338,4 @@ const t = initTRPC.context<Context>().create({
 - [spec-data-payments-escrow.md](spec-data-payments-escrow.md)
 - [spec-tool-github-auth.md](spec-tool-github-auth.md)
 - [spec-moderation-contact.md](spec-moderation-contact.md) — публичная ссылка контакта модерации в UI
+

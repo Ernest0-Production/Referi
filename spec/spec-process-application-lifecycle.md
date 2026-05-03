@@ -1,14 +1,14 @@
 ---
-title: Referi — Application Lifecycle State Machine Specification
+
+## title: Referi — Application Lifecycle State Machine Specification
 version: 1.0
 date_created: 2026-04-17
 owner: Referi Engineering
 tags: process, design, app
----
 
 # Introduction
 
-Данная спецификация определяет полную машину состояний заявки (`Application`) — все состояния, разрешённые переходы, guard-условия и инварианты. Реализация: `src/server/commands/*.ts` и процедуры [`src/server/trpc/routers/applications.ts`](../src/server/trpc/routers/applications.ts) (и связанные воркеры).
+Данная спецификация определяет полную машину состояний заявки (`Application`) — все состояния, разрешённые переходы, guard-условия и инварианты. Реализация: `src/server/commands/*.ts` и процедуры `[src/server/trpc/routers/applications.ts](../src/server/trpc/routers/applications.ts)` (и связанные воркеры).
 
 ## 1. Purpose & Scope
 
@@ -17,6 +17,7 @@ tags: process, design, app
 **Аудитория**: инженеры, AI-агенты, QA.
 
 **Допущения**:
+
 - Каждый переход атомарен (выполняется в транзакции БД).
 - Каждый переход создаёт запись в `AuditLog`.
 - Неразрешённый переход приводит к исключению `BusinessError`.
@@ -26,13 +27,15 @@ tags: process, design, app
 
 ## 2. Definitions
 
-| Термин                     | Определение                                                         |
-| -------------------------- | ------------------------------------------------------------------- |
-| **Терминальное состояние** | Состояние, из которого нет переходов; заявка завершена              |
-| **Активная заявка**        | Заявка в нетерминальном состоянии; учитывается в лимитах соискателя |
-| **Guard**                  | Предусловие, которое должно быть истинным для выполнения перехода   |
+
+| Термин                     | Определение                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| **Терминальное состояние** | Состояние, из которого нет переходов; заявка завершена                                      |
+| **Активная заявка**        | Заявка в нетерминальном состоянии; учитывается в лимитах соискателя                         |
+| **Guard**                  | Предусловие, которое должно быть истинным для выполнения перехода                           |
 | **Command**                | Функция в `src/server/commands/` и/или мутация в `applications` router, выполняющая переход |
-| **Actor**                  | Инициатор перехода: `SEEKER`, `REFERRER`, `SYSTEM`, `MODERATOR`     |
+| **Actor**                  | Инициатор перехода: `SEEKER`, `REFERRER`, `SYSTEM`, `MODERATOR`                             |
+
 
 ---
 
@@ -84,6 +87,8 @@ stateDiagram-v2
     DISPUTED --> REFUNDED_BY_MODERATOR: moderatorResolveForSeeker
 ```
 
+
+
 `[T]` = терминальные состояния: `CANCELLED`, `REJECTED_BY_REFERRER`, `REFUNDED_BY_SLA`, `REFUNDED_BY_CANCEL_ACK`, `REFUNDED_BY_CANCEL_AUTO`, `REJECTED_BY_COMPANY`, `OFFER_ACCEPTED`, `REFUNDED_BY_MODERATOR`, `REFUNDED_BY_VACANCY_DELETED`.
 
 `vacancyDeletedCascade`: из **любого нетерминального** состояния (см. таблицу команд) в `REFUNDED_BY_VACANCY_DELETED` — на диаграмме не все рёбра нарисованы, смысл зафиксирован в табл. 4.2.
@@ -92,36 +97,39 @@ stateDiagram-v2
 
 ### 4.2 Таблица переходов
 
-| Команда                        | Из состояния                    | В состояние                            | Актор     | Guards         |
-| ------------------------------ | ------------------------------- | -------------------------------------- | --------- | -------------- |
-| `seekerSubmitsApplication`     | — (новая запись)                | `SUBMITTED`                            | SEEKER    | G1, G2, G3     |
-| `referrerConfirmIntent`        | `SUBMITTED`                     | `AWAITING_PAYMENT`                     | REFERRER  | G4, G5, G6, G7 |
-| `seekerCancelApplication`      | `SUBMITTED`, `AWAITING_PAYMENT` | `CANCELLED`                            | SEEKER    | G8             |
-| `referrerRejectApplication`    | `SUBMITTED`                     | `REJECTED_BY_REFERRER`                 | REFERRER  | G4             |
-| `escrowHoldSucceeded`          | `AWAITING_PAYMENT`              | `AWAITING_RESUME_HANDOFF`              | SYSTEM    | G9             |
-| `paymentDeadlineExpired`       | `AWAITING_PAYMENT`              | `CANCELLED`                            | SYSTEM    | G10            |
-| `referrerConfirmResumeHandoff` | `AWAITING_RESUME_HANDOFF`       | `AWAITING_COMPANY_DECISION`            | REFERRER  | G4, G11        |
-| `resumeHandoffSLAExpired`      | `AWAITING_RESUME_HANDOFF`       | `REFUNDED_BY_SLA`                      | SYSTEM    | G12            |
-| `seekerRequestCancel`          | `AWAITING_RESUME_HANDOFF`       | `SEEKER_CANCEL_REQUESTED`              | SEEKER    | G8, G13        |
-| `referrerAcknowledgeCancel`    | `SEEKER_CANCEL_REQUESTED`       | `REFUNDED_BY_CANCEL_ACK`               | REFERRER  | G4             |
-| `cancelAckSLAExpired`          | `SEEKER_CANCEL_REQUESTED`       | `REFUNDED_BY_CANCEL_AUTO`              | SYSTEM    | G14            |
-| `seekerAcceptsOffer`           | `AWAITING_COMPANY_DECISION`     | `OFFER_ACCEPTED`                       | SEEKER    | G8             |
-| `seekerReportsRejection`       | `AWAITING_COMPANY_DECISION`     | `DISPUTED` или `REJECTED_BY_COMPANY`\* | SEEKER    | G8             |
-| `referrerConfirmsRejection`    | `AWAITING_COMPANY_DECISION`     | `REJECTED_BY_COMPANY`                  | REFERRER  | G4             |
-| `referrerDeniesRejection`      | `AWAITING_COMPANY_DECISION`     | `DISPUTED`                             | REFERRER  | G4             |
-| `moderatorResolveForReferrer`  | `DISPUTED`                      | `OFFER_ACCEPTED`                       | MODERATOR | G15            |
-| `moderatorResolveForSeeker`    | `DISPUTED`                      | `REFUNDED_BY_MODERATOR`                | MODERATOR | G15            |
-| `vacancyDeletedCascade`        | любое нетерм.                   | `REFUNDED_BY_VACANCY_DELETED`          | SYSTEM    | —              |
 
-\* `seekerReportsRejection`: если реферальщик уже нажал «подтвердить отказ» — `REJECTED_BY_COMPANY`; иначе флаг `seekerReportedRejection = true` и ждём реферальщика.
+| Команда                        | Из состояния                    | В состояние                          | Актор     | Guards         |
+| ------------------------------ | ------------------------------- | ------------------------------------ | --------- | -------------- |
+| `seekerSubmitsApplication`     | — (новая запись)                | `SUBMITTED`                          | SEEKER    | G1, G2, G3     |
+| `referrerConfirmIntent`        | `SUBMITTED`                     | `AWAITING_PAYMENT`                   | REFERRER  | G4, G5, G6, G7 |
+| `seekerCancelApplication`      | `SUBMITTED`, `AWAITING_PAYMENT` | `CANCELLED`                          | SEEKER    | G8             |
+| `referrerRejectApplication`    | `SUBMITTED`                     | `REJECTED_BY_REFERRER`               | REFERRER  | G4             |
+| `escrowHoldSucceeded`          | `AWAITING_PAYMENT`              | `AWAITING_RESUME_HANDOFF`            | SYSTEM    | G9             |
+| `paymentDeadlineExpired`       | `AWAITING_PAYMENT`              | `CANCELLED`                          | SYSTEM    | G10            |
+| `referrerConfirmResumeHandoff` | `AWAITING_RESUME_HANDOFF`       | `AWAITING_COMPANY_DECISION`          | REFERRER  | G4, G11        |
+| `resumeHandoffSLAExpired`      | `AWAITING_RESUME_HANDOFF`       | `REFUNDED_BY_SLA`                    | SYSTEM    | G12            |
+| `seekerRequestCancel`          | `AWAITING_RESUME_HANDOFF`       | `SEEKER_CANCEL_REQUESTED`            | SEEKER    | G8, G13        |
+| `referrerAcknowledgeCancel`    | `SEEKER_CANCEL_REQUESTED`       | `REFUNDED_BY_CANCEL_ACK`             | REFERRER  | G4             |
+| `cancelAckSLAExpired`          | `SEEKER_CANCEL_REQUESTED`       | `REFUNDED_BY_CANCEL_AUTO`            | SYSTEM    | G14            |
+| `seekerAcceptsOffer`           | `AWAITING_COMPANY_DECISION`     | `OFFER_ACCEPTED`                     | SEEKER    | G8             |
+| `seekerReportsRejection`       | `AWAITING_COMPANY_DECISION`     | `DISPUTED` или `REJECTED_BY_COMPANY` | SEEKER    | G8             |
+| `referrerConfirmsRejection`    | `AWAITING_COMPANY_DECISION`     | `REJECTED_BY_COMPANY`                | REFERRER  | G4             |
+| `referrerDeniesRejection`      | `AWAITING_COMPANY_DECISION`     | `DISPUTED`                           | REFERRER  | G4             |
+| `moderatorResolveForReferrer`  | `DISPUTED`                      | `OFFER_ACCEPTED`                     | MODERATOR | G15            |
+| `moderatorResolveForSeeker`    | `DISPUTED`                      | `REFUNDED_BY_MODERATOR`              | MODERATOR | G15            |
+| `vacancyDeletedCascade`        | любое нетерм.                   | `REFUNDED_BY_VACANCY_DELETED`        | SYSTEM    | —              |
+
+
+ `seekerReportsRejection`: если реферальщик уже нажал «подтвердить отказ» — `REJECTED_BY_COMPANY`; иначе флаг `seekerReportedRejection = true` и ждём реферальщика.
 
 Имя `escrowHoldSucceeded` — устоявшийся идентификатор перехода; по смыслу это подтверждение успешной оплаты заказчика в **безопасной сделке** ЮKassa (событие после webhook).
 
 ### 4.3 Guards (предусловия)
 
+
 | ID      | Описание                                                                                                                                                                                           |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **G1**  | Пользователь аутентифицирован как автор заявки (`seekerId` совпадает с сессией). Отдельная глобальная роль «соискатель» не требуется.                                                            |
+| **G1**  | Пользователь аутентифицирован как автор заявки (`seekerId` совпадает с сессией). Отдельная глобальная роль «соискатель» не требуется.                                                              |
 | **G2**  | Количество активных заявок соискателя < лимита (2 бесплатно; 5 с PRO).                                                                                                                             |
 | **G3**  | По паре `(seekerId, vacancyId)` нет существующей нетерминальной заявки. Вакансия в статусе `ACTIVE`.                                                                                               |
 | **G4**  | Актор является реферальщиком данной вакансии.                                                                                                                                                      |
@@ -137,24 +145,27 @@ stateDiagram-v2
 | **G14** | Текущее время > `Application.cancelAckDeadline`. Статус всё ещё `SEEKER_CANCEL_REQUESTED`.                                                                                                         |
 | **G15** | Актор имеет роль `MODERATOR`. Существует `ModeratorCase` для данной заявки в статусе `OPEN`.                                                                                                       |
 
+
 ### 4.4 Side Effects по переходам
 
-| Переход                        | Side Effects                                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `seekerSubmitsApplication`     | Установить `firstApplicationAt` в `Vacancy` если NULL                                                  |
-| `referrerConfirmIntent`        | Потратить попытку в `ReferrerAttemptLedger`; запланировать SLA-таймер оплаты; запланировать BullMQ job |
-| `escrowHoldSucceeded`          | Создать `EscrowTransaction` со статусом `HELD`; запланировать SLA-таймер передачи резюме               |
-| `paymentDeadlineExpired`       | Отменить BullMQ job передачи резюме (если был)                                                         |
-| `resumeHandoffSLAExpired`      | Инициировать возврат; создать `ReferrerSanction` (бан 30 дней); уведомить обоих                        |
-| `seekerRequestCancel`          | Уведомить реферальщика; запланировать cancelAck SLA-таймер                                             |
-| `refundedByCancelAck / Auto`   | Инициировать возврат; освободить слот активного отклика                                                |
-| `referrerConfirmResumeHandoff` | Отменить SLA-таймер передачи резюме; запланировать SLA-таймер решения компании                         |
-| `seekerAcceptsOffer`           | Инициировать закрытие сделки в пользу исполнителя (`capture` → выплата); авто-удаление вакансии                           |
-| `rejectedByCompany`            | Инициировать возврат; освободить слот                                                                  |
-| `disputed`                     | Создать `ModeratorCase`; модераторы обрабатывают спор в админ-панели                                      |
-| `moderatorResolveForReferrer`  | Инициировать закрытие в пользу исполнителя (`capture` → выплату); закрыть `ModeratorCase`                                              |
-| `moderatorResolveForSeeker`    | Инициировать возврат; закрыть `ModeratorCase`                                                          |
-| `vacancyDeletedCascade`        | Для заявок с удержанием по сделке — инициировать возврат заказчику; вернуть попытки через `RETURNED` в ledger                  |
+
+| Переход                        | Side Effects                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `seekerSubmitsApplication`     | Установить `firstApplicationAt` в `Vacancy` если NULL                                                         |
+| `referrerConfirmIntent`        | Потратить попытку в `ReferrerAttemptLedger`; запланировать SLA-таймер оплаты; запланировать BullMQ job        |
+| `escrowHoldSucceeded`          | Создать `EscrowTransaction` со статусом `HELD`; запланировать SLA-таймер передачи резюме                      |
+| `paymentDeadlineExpired`       | Отменить BullMQ job передачи резюме (если был)                                                                |
+| `resumeHandoffSLAExpired`      | Инициировать возврат; создать `ReferrerSanction` (бан 30 дней); уведомить обоих                               |
+| `seekerRequestCancel`          | Уведомить реферальщика; запланировать cancelAck SLA-таймер                                                    |
+| `refundedByCancelAck / Auto`   | Инициировать возврат; освободить слот активного отклика                                                       |
+| `referrerConfirmResumeHandoff` | Отменить SLA-таймер передачи резюме; запланировать SLA-таймер решения компании                                |
+| `seekerAcceptsOffer`           | Инициировать закрытие сделки в пользу исполнителя (`capture` → выплата); авто-удаление вакансии               |
+| `rejectedByCompany`            | Инициировать возврат; освободить слот                                                                         |
+| `disputed`                     | Создать `ModeratorCase`; модераторы обрабатывают спор в админ-панели                                          |
+| `moderatorResolveForReferrer`  | Инициировать закрытие в пользу исполнителя (`capture` → выплату); закрыть `ModeratorCase`                     |
+| `moderatorResolveForSeeker`    | Инициировать возврат; закрыть `ModeratorCase`                                                                 |
+| `vacancyDeletedCascade`        | Для заявок с удержанием по сделке — инициировать возврат заказчику; вернуть попытки через `RETURNED` в ledger |
+
 
 ### 4.5 Инварианты (всегда истинны)
 
@@ -270,3 +281,4 @@ referrerConfirmIntent → AWAITING_PAYMENT
 - [spec-process-referrer-sla.md](spec-process-referrer-sla.md)
 - [spec-data-payments-escrow.md](spec-data-payments-escrow.md)
 - [spec-architecture-referi-system.md](spec-architecture-referi-system.md)
+

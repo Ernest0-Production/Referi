@@ -39,3 +39,22 @@ export function getPaymentQueue() {
   }
   return _paymentQueue;
 }
+
+export async function cancelPaymentJob(jobId: string): Promise<void> {
+  const queue = getPaymentQueue();
+  const job = await queue.getJob(jobId);
+  if (job) await job.remove();
+}
+
+/** Удаляет отложенные subscription-renewal / subscription-renew-retry для пользователя (по полю userId в payload). */
+export async function cancelSubscriptionPaymentJobsForUser(userId: string): Promise<void> {
+  const queue = getPaymentQueue();
+  const jobs = [...(await queue.getWaiting(0, 1000)), ...(await queue.getDelayed(0, 1000))];
+  for (const job of jobs) {
+    const data = job.data;
+    if (!data?.userId || data.userId !== userId) continue;
+    if (data.type === "subscription-renewal" || data.type === "subscription-renew-retry") {
+      await job.remove();
+    }
+  }
+}

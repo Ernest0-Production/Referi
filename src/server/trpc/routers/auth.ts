@@ -5,6 +5,18 @@ import { env } from "@/env";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { paymentProvider } from "@/server/services/paymentService";
 import { randomUUID } from "crypto";
+import { deleteAccountAndAllData } from "@/server/commands/deleteAccount";
+import { BusinessError } from "@/server/commands/submitApplication";
+
+function handleAuthBusinessError(err: unknown): never {
+  if (err instanceof BusinessError) {
+    throw new TRPCError({
+      code: err.code === "NOT_FOUND" ? "NOT_FOUND" : "PRECONDITION_FAILED",
+      message: err.code,
+    });
+  }
+  throw err;
+}
 
 export const authRouter = router({
   /** Current user, staff flags, attempt pool */
@@ -138,4 +150,14 @@ export const authRouter = router({
 
       return { confirmationUrl: payment.confirmationUrl };
     }),
+
+  /** Безвозвратно удаляет пользователя и связанные данные. Недоступно для staff. */
+  deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
+    try {
+      await deleteAccountAndAllData(ctx.db, ctx.userId);
+      return { ok: true as const };
+    } catch (err) {
+      handleAuthBusinessError(err);
+    }
+  }),
 });
