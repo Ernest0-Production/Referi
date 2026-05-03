@@ -1,7 +1,9 @@
 "use client";
 
+import { IconFilter } from "@tabler/icons-react";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
+import type { ComponentProps } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppRouter } from "@/server/trpc/root";
 import {
@@ -12,6 +14,9 @@ import {
 import { trpcReact } from "@/trpc/client";
 import { VacancyCard } from "@/components/VacancyCard";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useMdUp } from "@/hooks/useMdUp";
+import { cn } from "@/lib/utils";
 import { VacancyFilters } from "./VacancyFilters";
 import { VacancyListChrome } from "./VacancyListChrome";
 import { vacancyFlatToTrpcListInput, vacancyListInputStableKey } from "./vacancyFlatToTrpcListInput";
@@ -19,6 +24,38 @@ import { vacancyFlatToTrpcListInput, vacancyListInputStableKey } from "./vacancy
 type ListOut = inferRouterOutputs<AppRouter>["vacancies"]["list"];
 
 type PresetRow = { id: string; name: string; params: unknown };
+
+type VacancyFiltersProps = ComponentProps<typeof VacancyFilters>;
+
+function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="flex max-h-[min(90dvh,90vh)] flex-col gap-0 p-0">
+          <SheetTitle className="sr-only">Фильтры</SheetTitle>
+          <div className="flex min-h-0 flex-1 flex-col px-3 pt-10">
+            <VacancyFilters {...props} variant="sheet" />
+          </div>
+        </SheetContent>
+      </Sheet>
+      <Button
+        type="button"
+        variant="default"
+        size="icon"
+        aria-label="Открыть фильтры"
+        className={cn(
+          "fixed right-5 bottom-6 z-40 h-14 w-14 rounded-full shadow-lg",
+          open && "pointer-events-none opacity-0",
+        )}
+        onClick={() => setOpen(true)}
+      >
+        <IconFilter className="size-6 shrink-0" aria-hidden stroke={1.75} />
+      </Button>
+    </>
+  );
+}
 
 export function VacancyCatalogClient({
   initialParams,
@@ -40,6 +77,7 @@ export function VacancyCatalogClient({
   const [vacancyPresetSidebarCleared, setVacancyPresetSidebarCleared] = useState(false);
   const [savedPresetSelectLayoutKey, setSavedPresetSelectLayoutKey] = useState(0);
   const lastMatchedVacancyPresetIdRef = useRef<string | undefined>(undefined);
+  const isMdUp = useMdUp();
 
   const matchedVacancyPresetId = useMemo(
     () => findMatchingVacancySearchPresetId(params, presets),
@@ -116,6 +154,20 @@ export function VacancyCatalogClient({
     setActiveVacancyPresetId(id);
   };
 
+  const vacancyFilterProps = {
+    currentParams: params,
+    onApplyPatch: applyPatch,
+    onReplaceFromPreset: replaceFromPreset,
+    onReset: resetCatalog,
+    presets,
+    isLoggedIn,
+    matchedPresetId: matchedVacancyPresetId,
+    activePresetId: activeVacancyPresetId,
+    onPickSavedVacancyPreset: handlePickSavedVacancyPreset,
+    vacancyPresetSidebarCleared,
+    savedPresetSelectLayoutKey,
+  };
+
   const data = listQuery.data;
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 0;
@@ -125,21 +177,13 @@ export function VacancyCatalogClient({
 
   return (
     <>
-      <aside className="w-full shrink-0 md:sticky md:top-20 md:w-80 md:self-start">
-        <VacancyFilters
-          currentParams={params}
-          onApplyPatch={applyPatch}
-          onReplaceFromPreset={replaceFromPreset}
-          onReset={resetCatalog}
-          presets={presets}
-          isLoggedIn={isLoggedIn}
-          matchedPresetId={matchedVacancyPresetId}
-          activePresetId={activeVacancyPresetId}
-          onPickSavedVacancyPreset={handlePickSavedVacancyPreset}
-          vacancyPresetSidebarCleared={vacancyPresetSidebarCleared}
-          savedPresetSelectLayoutKey={savedPresetSelectLayoutKey}
-        />
-      </aside>
+      {isMdUp ? (
+        <aside className="sticky top-20 w-80 shrink-0 self-start">
+          <VacancyFilters {...vacancyFilterProps} />
+        </aside>
+      ) : (
+        <VacancyCatalogMobileFiltersPanel {...vacancyFilterProps} />
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-6">
         <VacancyListChrome

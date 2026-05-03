@@ -180,6 +180,8 @@ interface Props {
   vacancyPresetSidebarCleared?: boolean;
   /** Увеличивается при сбросе каталога — перемонтирование Select, чтобы Radix сбросил отображение. */
   savedPresetSelectLayoutKey?: number;
+  /** Нижний `CardFooter` закреплён, скроллится только тело (например в мобильном Sheet). */
+  variant?: "default" | "sheet";
 }
 
 export function VacancyFilters({
@@ -194,6 +196,7 @@ export function VacancyFilters({
   onPickSavedVacancyPreset,
   vacancyPresetSidebarCleared = false,
   savedPresetSelectLayoutKey = 0,
+  variant = "default",
 }: Props) {
   const router = useRouter();
   const [saveOpen, setSaveOpen] = useState(false);
@@ -296,15 +299,27 @@ export function VacancyFilters({
   const formatValues =
     parseCsvEnumParam(currentParams.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES) ?? [];
 
+  const isSheet = variant === "sheet";
+
   return (
-    <Card className="border-border shadow-sm">
-      <CardHeader className="pb-3">
+    <Card
+      className={cn(
+        "border-border shadow-sm",
+        isSheet && "h-full min-h-0 gap-0 overflow-hidden py-0",
+      )}
+    >
+      <CardHeader className={cn("pb-3", isSheet && "shrink-0 pt-4")}>
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
           Фильтры
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5 px-4 pb-4">
+      <CardContent
+        className={cn(
+          "flex flex-col gap-5 px-4 pb-4",
+          isSheet && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
+        )}
+      >
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label className="text-foreground text-sm font-medium">Ваши фильтры</Label>
@@ -424,7 +439,12 @@ export function VacancyFilters({
           apply={apply}
         />
       </CardContent>
-      <CardFooter className="border-border flex flex-col gap-3 border-t px-4 py-4">
+      <CardFooter
+        className={cn(
+          "border-border flex flex-col gap-3 border-t bg-card px-4 py-4",
+          isSheet && "shrink-0 rounded-b-xl pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4",
+        )}
+      >
         <div className="flex w-full min-w-0 flex-1 items-center gap-2">
           <Button
             type="button"
