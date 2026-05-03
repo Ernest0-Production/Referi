@@ -22,6 +22,9 @@ CREATE TYPE "Grade" AS ENUM ('JUNIOR', 'MIDDLE', 'SENIOR', 'LEAD', 'PRINCIPAL');
 CREATE TYPE "WorkFormat" AS ENUM ('OFFICE', 'HYBRID', 'REMOTE');
 
 -- CreateEnum
+CREATE TYPE "SalaryCurrency" AS ENUM ('RUB', 'USD', 'EUR');
+
+-- CreateEnum
 CREATE TYPE "AttemptEvent" AS ENUM ('CONSUMED', 'REGENERATED', 'RETURNED');
 
 -- CreateEnum
@@ -105,6 +108,7 @@ CREATE TABLE "vacancies" (
     "specialty" "Specialty" NOT NULL,
     "grade" "Grade" NOT NULL,
     "workFormat" "WorkFormat" NOT NULL,
+    "salaryCurrency" "SalaryCurrency" NOT NULL DEFAULT 'RUB',
     "salaryFromKopecks" BIGINT,
     "salaryToKopecks" BIGINT,
     "description" VARCHAR(3000) NOT NULL,
