@@ -2,6 +2,10 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  formatVacancySalaryRange,
+  type VacancySalaryCurrency,
+} from "@/lib/vacancySalaryCurrency";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -37,26 +41,12 @@ interface Vacancy {
   specialty: string;
   grade: string;
   workFormat: string;
+  salaryCurrency: VacancySalaryCurrency;
   salaryFromKopecks: string | null;
   salaryToKopecks: string | null;
   rewardKopecks: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-function formatSalary(fromKop: string | null, toKop: string | null): string | null {
-  const from = fromKop ? Math.round(Number(fromKop) / 100) : null;
-  const to = toKop ? Math.round(Number(toKop) / 100) : null;
-  if (!from && !to) return null;
-  const fmt = (v: number) =>
-    new Intl.NumberFormat("ru-RU", {
-      style: "currency",
-      currency: "RUB",
-      maximumFractionDigits: 0,
-    }).format(v);
-  if (from && to) return `${fmt(from)} — ${fmt(to)}`;
-  if (from) return `от ${fmt(from)}`;
-  return `до ${fmt(to!)}`;
 }
 
 function formatUpdatedRelative(updatedAt: Date): string {
@@ -76,7 +66,11 @@ export function VacancyCard({
   vacancy: Vacancy;
   hasActiveSeekerApplication?: boolean;
 }) {
-  const salary = formatSalary(vacancy.salaryFromKopecks, vacancy.salaryToKopecks);
+  const salary = formatVacancySalaryRange(
+    vacancy.salaryFromKopecks,
+    vacancy.salaryToKopecks,
+    vacancy.salaryCurrency,
+  );
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
 
   return (

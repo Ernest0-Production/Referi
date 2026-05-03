@@ -16,6 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  VACANCY_SALARY_CURRENCY_LABELS,
+  VACANCY_SALARY_CURRENCY_VALUES,
+  type VacancySalaryCurrency,
+} from "@/lib/vacancySalaryCurrency";
 
 const SPECIALTIES = [
   "FRONTEND",
@@ -41,6 +46,7 @@ export function CreateVacancyForm() {
     specialty: "BACKEND" as (typeof SPECIALTIES)[number],
     grade: "MIDDLE" as (typeof GRADES)[number],
     workFormat: "REMOTE" as (typeof FORMATS)[number],
+    salaryCurrency: "RUB" as VacancySalaryCurrency,
     salaryFrom: "",
     salaryTo: "",
     description: "",
@@ -65,6 +71,7 @@ export function CreateVacancyForm() {
       specialty: form.specialty,
       grade: form.grade,
       workFormat: form.workFormat,
+      salaryCurrency: form.salaryCurrency,
       salaryFrom: form.salaryFrom ? Number(form.salaryFrom) : undefined,
       salaryTo: form.salaryTo ? Number(form.salaryTo) : undefined,
       description: form.description,
@@ -169,9 +176,9 @@ export function CreateVacancyForm() {
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Field>
-            <FieldLabel htmlFor="vac-sal-from">Зарплата от (₽)</FieldLabel>
+            <FieldLabel htmlFor="vac-sal-from">Зарплата от</FieldLabel>
             <Input
               id="vac-sal-from"
               type="number"
@@ -182,7 +189,7 @@ export function CreateVacancyForm() {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="vac-sal-to">Зарплата до (₽)</FieldLabel>
+            <FieldLabel htmlFor="vac-sal-to">Зарплата до</FieldLabel>
             <Input
               id="vac-sal-to"
               type="number"
@@ -191,6 +198,28 @@ export function CreateVacancyForm() {
               onChange={(e) => setForm((f) => ({ ...f, salaryTo: e.target.value }))}
               placeholder="200000"
             />
+          </Field>
+          <Field>
+            <FieldLabel>Валюта зарплаты</FieldLabel>
+            <Select
+              value={form.salaryCurrency}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectGroup>
+                  {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {VACANCY_SALARY_CURRENCY_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </Field>
         </div>
 

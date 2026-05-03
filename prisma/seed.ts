@@ -85,6 +85,7 @@ async function main() {
       specialty: "BACKEND",
       grade: "SENIOR",
       workFormat: "REMOTE",
+      salaryCurrency: "RUB",
       salaryFromKopecks: BigInt(250_000_00),
       salaryToKopecks: BigInt(350_000_00),
       description:
@@ -106,6 +107,7 @@ async function main() {
       specialty: "FRONTEND",
       grade: "MIDDLE",
       workFormat: "HYBRID",
+      salaryCurrency: "RUB",
       salaryFromKopecks: BigInt(150_000_00),
       salaryToKopecks: BigInt(220_000_00),
       description:

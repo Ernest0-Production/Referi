@@ -5,6 +5,7 @@ import { createReferrerAttemptRepository } from "@/server/repositories/referrerA
 import { cancelSLAJob } from "@/server/workers/slaWorker";
 import { scheduleRefundSeeker, scheduleRefundPaidToken } from "@/server/workers/paymentWorker";
 import { Prisma } from "@prisma/client";
+import { VACANCY_SALARY_CURRENCY_VALUES } from "@/lib/vacancySalaryCurrency";
 
 const specialtyEnum = z.enum([
   "FRONTEND",
@@ -20,6 +21,7 @@ const specialtyEnum = z.enum([
 ]);
 const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"]);
 const workFormatEnum = z.enum(["OFFICE", "HYBRID", "REMOTE"]);
+const salaryCurrencyEnum = z.enum(VACANCY_SALARY_CURRENCY_VALUES);
 
 const createVacancySchema = z.object({
   title: z.string().min(3).max(200),
@@ -27,6 +29,7 @@ const createVacancySchema = z.object({
   specialty: specialtyEnum,
   grade: gradeEnum,
   workFormat: workFormatEnum,
+  salaryCurrency: salaryCurrencyEnum.default("RUB"),
   salaryFrom: z.number().int().positive().optional(),
   salaryTo: z.number().int().positive().optional(),
   description: z.string().min(10).max(3000),
@@ -37,6 +40,7 @@ const vacancyListSchema = z.object({
   specialty: z.array(specialtyEnum).optional(),
   grade: z.array(gradeEnum).optional(),
   workFormat: z.array(workFormatEnum).optional(),
+  salaryCurrency: salaryCurrencyEnum.optional(),
   salaryFrom: z.number().int().positive().optional(),
   query: z.string().max(200).optional(),
   sort: z.enum(["created_desc", "salary_desc"]).default("created_desc"),
@@ -47,6 +51,7 @@ const vacancyListSchema = z.object({
 
 function serializeVacancy<
   T extends {
+    salaryCurrency: "RUB" | "USD" | "EUR";
     salaryFromKopecks?: bigint | null;
     salaryToKopecks?: bigint | null;
     rewardKopecks: bigint;
@@ -62,7 +67,7 @@ function serializeVacancy<
 
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
-    const { specialty, grade, workFormat, salaryFrom, query, sort, page, limit, excludeIds } =
+    const { specialty, grade, workFormat, salaryCurrency, salaryFrom, query, sort, page, limit, excludeIds } =
       input;
     const q = query?.trim();
     let ftsIds: string[] | undefined;
@@ -88,12 +93,16 @@ export const vacanciesRouter = router({
     if (ftsIds?.length) idFilter.in = ftsIds;
     if (excludeIds?.length) idFilter.notIn = excludeIds;
 
+    const effectiveSalaryCurrency =
+      salaryFrom != null ? salaryCurrency ?? "RUB" : salaryCurrency;
+
     const where: Prisma.VacancyWhereInput = {
       status: "ACTIVE",
       ...(Object.keys(idFilter).length > 0 && { id: idFilter }),
       ...(specialty?.length && { specialty: { in: specialty } }),
       ...(grade?.length && { grade: { in: grade } }),
       ...(workFormat?.length && { workFormat: { in: workFormat } }),
+      ...(effectiveSalaryCurrency && { salaryCurrency: effectiveSalaryCurrency }),
       ...(salaryFrom && {
         salaryToKopecks: { gte: BigInt(salaryFrom * 100) },
       }),
@@ -117,6 +126,7 @@ export const vacanciesRouter = router({
           specialty: true,
           grade: true,
           workFormat: true,
+          salaryCurrency: true,
           salaryFromKopecks: true,
           salaryToKopecks: true,
           rewardKopecks: true,
@@ -148,6 +158,7 @@ export const vacanciesRouter = router({
           specialty: true,
           grade: true,
           workFormat: true,
+          salaryCurrency: true,
           salaryFromKopecks: true,
           salaryToKopecks: true,
           rewardKopecks: true,
@@ -194,6 +205,7 @@ export const vacanciesRouter = router({
         specialty: input.specialty,
         grade: input.grade,
         workFormat: input.workFormat,
+        salaryCurrency: input.salaryCurrency,
         salaryFromKopecks: input.salaryFrom ? BigInt(input.salaryFrom * 100) : null,
         salaryToKopecks: input.salaryTo ? BigInt(input.salaryTo * 100) : null,
         description: input.description,

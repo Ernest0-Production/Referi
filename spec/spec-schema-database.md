@@ -224,6 +224,12 @@ enum WorkFormat {
   REMOTE
 }
 
+enum SalaryCurrency {
+  RUB
+  USD
+  EUR
+}
+
 model Vacancy {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   referrerId String   @db.Uuid
@@ -235,8 +241,9 @@ model Vacancy {
   specialty       Specialty
   grade           Grade
   workFormat      WorkFormat
-  salaryFromKopecks BigInt?   // NULL = не указана; >= 0
-  salaryToKopecks   BigInt?   // NULL = не указана; >= salaryFrom if both set
+  salaryCurrency  SalaryCurrency @default(RUB)
+  salaryFromKopecks BigInt?   // NULL = не указана; минорные единицы salaryCurrency (копейки / центы); >= 0
+  salaryToKopecks   BigInt?   // NULL = не указана; минорные единицы salaryCurrency; >= salaryFrom if both set
   description     String     @db.VarChar(3000)
   rewardKopecks   BigInt     @default(0)  // 0 = бесплатный реферал; >= 0
 

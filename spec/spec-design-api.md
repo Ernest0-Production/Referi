@@ -94,9 +94,9 @@ export const moderatorProcedure = t.procedure.use(enforceUserIsModerator);
 
 | Процедура              | Тип      | Auth   | Входные данные                                                                                             | Описание                                                    |
 | ---------------------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `vacancies.list`       | query    | public | `{ specialty?: Specialty[], grade?: Grade[], workFormat?: WorkFormat[], salaryFrom?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами                         |
+| `vacancies.list`       | query    | public | `{ specialty?: Specialty[], grade?: Grade[], workFormat?: WorkFormat[], salaryCurrency?: SalaryCurrency, salaryFrom?, query?, sort?, page?, limit? }`                       | Лента активных вакансий с фильтрами; при `salaryFrom` без `salaryCurrency` подразумевается `RUB`; нижняя граница сравнивается только с вакансиями в выбранной валюте; сортировка `salary_desc` по сырым минорным суммам — при смешанных валютах порядок условный |
 | `vacancies.getById`    | query    | public | `{ id }`                                                                                                   | Детальная страница вакансии (без данных реферальщика)       |
-| `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия, пул попыток > 0 |
+| `vacancies.create`     | mutation | isAuth | `{ title, companyName, specialty, grade, workFormat, salaryCurrency?, salaryFrom?, salaryTo?, description, rewardKopecks }` | Создать вакансию; guard: 1 активная вакансия, пул попыток > 0 |
 | `vacancies.delete`     | mutation | isAuth | `{ id }`                                                                                                   | Удалить вакансию; cascade refund                            |
 | `vacancies.myActive`   | query    | isAuth | —                                                                                                          | Активная вакансия текущего реферальщика                     |
 | `vacancies.applicants` | query    | isAuth | `{ vacancyId }`                                                                                            | Список заявок на вою вакансию (только контакты, bio, cover) |
@@ -110,7 +110,8 @@ type VacancyListItem = {
   specialty: Specialty;
   grade: Grade;
   workFormat: WorkFormat;
-  salaryFromKopecks: string | null;  // BigInt → string
+  salaryCurrency: "RUB" | "USD" | "EUR";
+  salaryFromKopecks: string | null;  // BigInt → string; минорные единицы salaryCurrency
   salaryToKopecks: string | null;
   rewardKopecks: string;
   description: string;

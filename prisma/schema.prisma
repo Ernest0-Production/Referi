@@ -156,6 +156,12 @@ enum WorkFormat {
   REMOTE
 }
 
+enum SalaryCurrency {
+  RUB
+  USD
+  EUR
+}
+
 model Vacancy {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   referrerId String   @db.Uuid
@@ -167,6 +173,7 @@ model Vacancy {
   specialty         Specialty
   grade             Grade
   workFormat        WorkFormat
+  salaryCurrency    SalaryCurrency @default(RUB)
   salaryFromKopecks BigInt?
   salaryToKopecks   BigInt?
   description       String     @db.VarChar(3000)

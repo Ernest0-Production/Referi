@@ -1,3 +1,5 @@
+import { isVacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
+
 export const VACANCY_LIST_SPECIALTY_VALUES = [
   "FRONTEND",
   "BACKEND",
@@ -56,6 +58,7 @@ export type VacancyListFlatSearchParams = {
   specialty?: string;
   grade?: string;
   workFormat?: string;
+  salaryCurrency?: string;
   salaryFrom?: string;
   sort?: string;
   query?: string;
@@ -67,6 +70,7 @@ export type VacancyListSearchParamsInput = {
   specialty?: string | string[];
   grade?: string | string[];
   workFormat?: string | string[];
+  salaryCurrency?: string | string[];
   salaryFrom?: string | string[];
   sort?: string | string[];
   query?: string | string[];
@@ -89,6 +93,7 @@ export function normalizeVacancyListSearchParams(
     specialty: scalarSearchParam(raw.specialty),
     grade: scalarSearchParam(raw.grade),
     workFormat: scalarSearchParam(raw.workFormat),
+    salaryCurrency: scalarSearchParam(raw.salaryCurrency),
     salaryFrom: scalarSearchParam(raw.salaryFrom),
     sort: scalarSearchParam(raw.sort),
     query: scalarSearchParam(raw.query),
@@ -106,6 +111,7 @@ export function vacancyListFlatToSearchParams(
   if (params.specialty?.trim()) q.set("specialty", params.specialty.trim());
   if (params.grade?.trim()) q.set("grade", params.grade.trim());
   if (params.workFormat?.trim()) q.set("workFormat", params.workFormat.trim());
+  if (params.salaryCurrency?.trim()) q.set("salaryCurrency", params.salaryCurrency.trim());
   if (params.salaryFrom?.trim()) q.set("salaryFrom", params.salaryFrom.trim());
   if (params.page) q.set("page", params.page);
   if (params.hideViewed === "1") q.set("hideViewed", "1");
@@ -137,7 +143,15 @@ export function mergeVacancyListQueryParams(
 }
 
 export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Record<string, string> {
-  const keys = ["specialty", "grade", "workFormat", "salaryFrom", "sort", "query"] as const;
+  const keys = [
+    "specialty",
+    "grade",
+    "workFormat",
+    "salaryCurrency",
+    "salaryFrom",
+    "sort",
+    "query",
+  ] as const;
   const out: Record<string, string> = {};
   for (const k of keys) {
     const v = flat[k];
@@ -153,7 +167,7 @@ export function presetParamsFromJson(
 ): Partial<
   Pick<
     VacancyListFlatSearchParams,
-    "specialty" | "grade" | "workFormat" | "salaryFrom" | "sort" | "query"
+    "specialty" | "grade" | "workFormat" | "salaryCurrency" | "salaryFrom" | "sort" | "query"
   >
 > {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -163,6 +177,7 @@ export function presetParamsFromJson(
     specialty: s("specialty"),
     grade: s("grade"),
     workFormat: s("workFormat"),
+    salaryCurrency: s("salaryCurrency"),
     salaryFrom: s("salaryFrom"),
     sort: s("sort"),
     query: s("query"),
@@ -173,6 +188,7 @@ const PRESET_SAVE_KEYS = [
   "specialty",
   "grade",
   "workFormat",
+  "salaryCurrency",
   "salaryFrom",
   "sort",
   "query",
@@ -193,6 +209,8 @@ function canonicalPresetSaveRecord(rec: Record<string, string>): Record<string, 
   if (gr) out.grade = gr;
   const wf = canonCsv(rec.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
   if (wf) out.workFormat = wf;
+  const cur = rec.salaryCurrency?.trim();
+  if (cur && isVacancySalaryCurrency(cur)) out.salaryCurrency = cur;
   for (const k of ["salaryFrom", "sort", "query"] as const) {
     const v = rec[k];
     if (typeof v === "string" && v.trim()) out[k] = v.trim();

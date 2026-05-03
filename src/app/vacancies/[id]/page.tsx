@@ -8,6 +8,7 @@ import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -51,15 +52,14 @@ export default async function VacancyDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const salaryFrom = vacancy.salaryFromKopecks
-    ? Math.round(Number(vacancy.salaryFromKopecks) / 100)
-    : null;
-  const salaryTo = vacancy.salaryToKopecks
-    ? Math.round(Number(vacancy.salaryToKopecks) / 100)
-    : null;
+  const salaryLine = formatVacancySalaryRange(
+    vacancy.salaryFromKopecks,
+    vacancy.salaryToKopecks,
+    vacancy.salaryCurrency,
+  );
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
 
-  const fmt = (v: number) =>
+  const fmtRub = (v: number) =>
     new Intl.NumberFormat("ru-RU", {
       style: "currency",
       currency: "RUB",
@@ -84,7 +84,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
             </div>
             {reward > 0 ? (
               <Badge variant="secondary" className="shrink-0 text-sm font-medium">
-                Бонус: {fmt(reward)}
+                Бонус: {fmtRub(reward)}
               </Badge>
             ) : null}
           </CardHeader>
@@ -99,16 +99,10 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               </Badge>
             </div>
 
-            {salaryFrom || salaryTo ? (
+            {salaryLine ? (
               <div className="border-border bg-muted/50 rounded-xl border px-4 py-3">
                 <p className="text-muted-foreground text-sm">Зарплата</p>
-                <p className="text-foreground font-semibold">
-                  {salaryFrom && salaryTo
-                    ? `${fmt(salaryFrom)} — ${fmt(salaryTo)}`
-                    : salaryFrom
-                      ? `от ${fmt(salaryFrom)}`
-                      : `до ${fmt(salaryTo!)}`}
-                </p>
+                <p className="text-foreground font-semibold">{salaryLine}</p>
               </div>
             ) : null}
 

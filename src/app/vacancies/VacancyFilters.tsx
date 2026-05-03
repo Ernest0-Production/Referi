@@ -16,6 +16,11 @@ import {
   VACANCY_LIST_SPECIALTY_VALUES,
   VACANCY_LIST_WORK_FORMAT_VALUES,
 } from "@/lib/vacancyListQuery";
+import {
+  isVacancySalaryCurrency,
+  VACANCY_SALARY_CURRENCY_VALUES,
+  type VacancySalaryCurrency,
+} from "@/lib/vacancySalaryCurrency";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,29 +87,76 @@ const FORMATS: { value: (typeof VACANCY_LIST_WORK_FORMAT_VALUES)[number]; label:
   { value: "OFFICE", label: "Офис" },
 ];
 
-function VacancyFilterSalaryFromField({
+function VacancyFilterSalaryBlock({
   committedSalary,
-  onCommit,
+  committedSalaryCurrency,
+  apply,
 }: {
   committedSalary: string | undefined;
-  onCommit: (next: string | undefined) => void;
+  committedSalaryCurrency: string | undefined;
+  apply: (patch: Partial<VacancyListFlatSearchParams>) => void;
 }) {
+  const selectValueFromCommitted: VacancySalaryCurrency =
+    committedSalaryCurrency && isVacancySalaryCurrency(committedSalaryCurrency)
+      ? committedSalaryCurrency
+      : "RUB";
+
   const [salaryFrom, setSalaryFrom] = useState(committedSalary ?? "");
+  const [salaryCurrencySelect, setSalaryCurrencySelect] =
+    useState<VacancySalaryCurrency>(selectValueFromCommitted);
+
+  function commit(nextSalary: string | undefined, currency: VacancySalaryCurrency) {
+    const trimmed = nextSalary?.trim();
+    const hasSalary = Boolean(trimmed);
+    if (!hasSalary) {
+      if (currency === "RUB") {
+        apply({ salaryFrom: undefined, salaryCurrency: undefined });
+      } else {
+        apply({ salaryFrom: undefined, salaryCurrency: currency });
+      }
+      return;
+    }
+    apply({ salaryFrom: trimmed, salaryCurrency: currency });
+  }
+
   return (
     <FieldGroup>
-      <Field>
-        <FieldLabel htmlFor="salary-from">Зарплата не ниже (₽)</FieldLabel>
-        <Input
-          id="salary-from"
-          type="number"
-          min={0}
-          value={salaryFrom}
-          onChange={(e) => setSalaryFrom(e.target.value)}
-          onBlur={() => onCommit(salaryFrom.trim() || undefined)}
-          placeholder="Минимум"
-          className="h-9 rounded-lg"
-        />
-      </Field>
+      <FieldLabel htmlFor="salary-from">Зарплата не ниже</FieldLabel>
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1">
+          <Input
+            id="salary-from"
+            type="number"
+            min={0}
+            value={salaryFrom}
+            onChange={(e) => setSalaryFrom(e.target.value)}
+            onBlur={() => commit(salaryFrom.trim() || undefined, salaryCurrencySelect)}
+            placeholder="Минимум"
+            className="h-9 w-full min-w-0 rounded-lg"
+          />
+        </div>
+        <div className="flex shrink-0 justify-end sm:justify-start">
+          <Select
+            value={salaryCurrencySelect}
+            onValueChange={(v) => {
+              const c = v as VacancySalaryCurrency;
+              setSalaryCurrencySelect(c);
+              commit(salaryFrom.trim() || undefined, c);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[4.75rem] shrink-0 gap-1 px-2 font-medium tabular-nums">
+              <SelectValue placeholder="…" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </FieldGroup>
   );
 }
@@ -369,10 +421,11 @@ export function VacancyFilters({
           </ToggleGroup>
         </div>
 
-        <VacancyFilterSalaryFromField
-          key={currentParams.salaryFrom ?? "__salary_empty__"}
+        <VacancyFilterSalaryBlock
+          key={`${currentParams.salaryFrom ?? ""}|${currentParams.salaryCurrency ?? ""}`}
           committedSalary={currentParams.salaryFrom}
-          onCommit={(next) => apply({ salaryFrom: next })}
+          committedSalaryCurrency={currentParams.salaryCurrency}
+          apply={apply}
         />
       </CardContent>
       <CardFooter className="border-border flex flex-col gap-3 border-t px-4 py-4">
