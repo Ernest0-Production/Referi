@@ -178,12 +178,36 @@ const PRESET_SAVE_KEYS = [
   "query",
 ] as const;
 
+/** Снимок полей пресета с фиксированным порядком значений в CSV мультивыборов (как после `parseCsvEnumParam`). */
+function canonicalPresetSaveRecord(rec: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  const canonCsv = <T extends string>(raw: string | undefined, allowed: readonly T[]) => {
+    const parsed = parseCsvEnumParam(raw, allowed);
+    const s = serializeCsvParam(parsed ?? []);
+    if (s) return s;
+    return undefined;
+  };
+  const sp = canonCsv(rec.specialty, VACANCY_LIST_SPECIALTY_VALUES);
+  if (sp) out.specialty = sp;
+  const gr = canonCsv(rec.grade, VACANCY_LIST_GRADE_VALUES);
+  if (gr) out.grade = gr;
+  const wf = canonCsv(rec.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
+  if (wf) out.workFormat = wf;
+  for (const k of ["salaryFrom", "sort", "query"] as const) {
+    const v = rec[k];
+    if (typeof v === "string" && v.trim()) out[k] = v.trim();
+  }
+  return out;
+}
+
 function presetSaveRecordsEqual(
   a: Record<string, string>,
   b: Record<string, string>,
 ): boolean {
+  const ca = canonicalPresetSaveRecord(a);
+  const cb = canonicalPresetSaveRecord(b);
   for (const k of PRESET_SAVE_KEYS) {
-    if ((a[k] ?? "") !== (b[k] ?? "")) return false;
+    if ((ca[k] ?? "") !== (cb[k] ?? "")) return false;
   }
   return true;
 }
@@ -192,6 +216,17 @@ function presetSaveRecordsEqual(
 export function normalizedPresetParamsRecord(raw: unknown): Record<string, string> {
   const partial = presetParamsFromJson(raw);
   return flatParamsForPresetSave(partial);
+}
+
+/** Поля каталога, участвующие в пресете, совпадают со снимком `presetParams` (как при сохранении). */
+export function isVacancyFlatMatchingPresetParams(
+  flat: VacancyListFlatSearchParams,
+  presetParams: unknown,
+): boolean {
+  return presetSaveRecordsEqual(
+    flatParamsForPresetSave(flat),
+    normalizedPresetParamsRecord(presetParams),
+  );
 }
 
 /** Первый пресет из списка, чьи параметры совпадают с текущим набором фильтров каталога. */

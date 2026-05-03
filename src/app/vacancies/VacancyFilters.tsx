@@ -10,6 +10,7 @@ import {
   presetParamsFromJson,
   serializeCsvParam,
   flatParamsForPresetSave,
+  isVacancyFlatMatchingPresetParams,
   type VacancyListFlatSearchParams,
   VACANCY_LIST_GRADE_VALUES,
   VACANCY_LIST_SPECIALTY_VALUES,
@@ -174,6 +175,15 @@ export function VacancyFilters({
   }
 
   const resolvedPresetId = activePresetId ?? matchedPresetId;
+
+  const resolvedPresetRow = useMemo(
+    () => (resolvedPresetId ? presets.find((x) => x.id === resolvedPresetId) : undefined),
+    [resolvedPresetId, presets],
+  );
+
+  const presetUpdateHasChanges =
+    resolvedPresetRow != null &&
+    !isVacancyFlatMatchingPresetParams(currentParams, resolvedPresetRow.params);
 
   const pendingDeletePresetName = useMemo(() => {
     if (!presetIdPendingDelete) return "";
@@ -351,7 +361,7 @@ export function VacancyFilters({
                 type="button"
                 variant="default"
                 className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
-                disabled={updatePreset.isPending}
+                disabled={updatePreset.isPending || !presetUpdateHasChanges}
                 onClick={() => {
                   updatePreset.mutate({
                     id: resolvedPresetId,
