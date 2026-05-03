@@ -143,21 +143,19 @@ export function mergeVacancyListQueryParams(
 }
 
 export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Record<string, string> {
-  const keys = [
-    "specialty",
-    "grade",
-    "workFormat",
-    "salaryCurrency",
-    "salaryFrom",
-    "sort",
-    "query",
-  ] as const;
+  const keys = ["specialty", "grade", "workFormat", "sort", "query"] as const;
   const out: Record<string, string> = {};
   for (const k of keys) {
     const v = flat[k];
     if (typeof v === "string" && v.trim()) {
       out[k] = v.trim();
     }
+  }
+  const salaryFrom = flat.salaryFrom?.trim();
+  if (salaryFrom) {
+    out.salaryFrom = salaryFrom;
+    const cur = flat.salaryCurrency?.trim();
+    if (cur && isVacancySalaryCurrency(cur)) out.salaryCurrency = cur;
   }
   return out;
 }
@@ -173,12 +171,21 @@ export function presetParamsFromJson(
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const o = raw as Record<string, unknown>;
   const s = (k: keyof typeof o) => (typeof o[k] === "string" ? o[k] : undefined);
+  const salaryFromRaw = s("salaryFrom");
+  const salaryFrom = salaryFromRaw?.trim() ? salaryFromRaw.trim() : undefined;
+  const salaryCurrencyRaw = s("salaryCurrency");
+  const salaryCurrency =
+    salaryFrom &&
+    salaryCurrencyRaw?.trim() &&
+    isVacancySalaryCurrency(salaryCurrencyRaw.trim())
+      ? salaryCurrencyRaw.trim()
+      : undefined;
   return {
     specialty: s("specialty"),
     grade: s("grade"),
     workFormat: s("workFormat"),
-    salaryCurrency: s("salaryCurrency"),
-    salaryFrom: s("salaryFrom"),
+    salaryCurrency,
+    salaryFrom,
     sort: s("sort"),
     query: s("query"),
   };
@@ -209,9 +216,13 @@ function canonicalPresetSaveRecord(rec: Record<string, string>): Record<string, 
   if (gr) out.grade = gr;
   const wf = canonCsv(rec.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
   if (wf) out.workFormat = wf;
-  const cur = rec.salaryCurrency?.trim();
-  if (cur && isVacancySalaryCurrency(cur)) out.salaryCurrency = cur;
-  for (const k of ["salaryFrom", "sort", "query"] as const) {
+  const sf = rec.salaryFrom?.trim();
+  if (typeof sf === "string" && sf) {
+    out.salaryFrom = sf;
+    const cur = rec.salaryCurrency?.trim();
+    if (cur && isVacancySalaryCurrency(cur)) out.salaryCurrency = cur;
+  }
+  for (const k of ["sort", "query"] as const) {
     const v = rec[k];
     if (typeof v === "string" && v.trim()) out[k] = v.trim();
   }

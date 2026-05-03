@@ -1,15 +1,25 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { VACANCY_SALARY_CURRENCY_VALUES } from "@/lib/vacancySalaryCurrency";
 import { router, protectedProcedure } from "../trpc";
 
-const presetParamsSchema = z.object({
-  specialty: z.string().max(500).optional(),
-  grade: z.string().max(200).optional(),
-  workFormat: z.string().max(100).optional(),
-  salaryFrom: z.string().max(20).optional(),
-  sort: z.string().max(32).optional(),
-  query: z.string().max(200).optional(),
-});
+const presetParamsSchema = z
+  .object({
+    specialty: z.string().max(500).optional(),
+    grade: z.string().max(200).optional(),
+    workFormat: z.string().max(100).optional(),
+    salaryFrom: z.string().max(20).optional(),
+    salaryCurrency: z.enum(VACANCY_SALARY_CURRENCY_VALUES).optional(),
+    sort: z.string().max(32).optional(),
+    query: z.string().max(200).optional(),
+  })
+  .transform((p) => {
+    const salaryFrom = p.salaryFrom?.trim() || undefined;
+    if (!salaryFrom) {
+      return { ...p, salaryFrom: undefined, salaryCurrency: undefined };
+    }
+    return { ...p, salaryFrom };
+  });
 
 export const vacancySearchPresetsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {

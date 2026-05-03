@@ -109,11 +109,7 @@ function VacancyFilterSalaryBlock({
     const trimmed = nextSalary?.trim();
     const hasSalary = Boolean(trimmed);
     if (!hasSalary) {
-      if (currency === "RUB") {
-        apply({ salaryFrom: undefined, salaryCurrency: undefined });
-      } else {
-        apply({ salaryFrom: undefined, salaryCurrency: currency });
-      }
+      apply({ salaryFrom: undefined, salaryCurrency: undefined });
       return;
     }
     apply({ salaryFrom: trimmed, salaryCurrency: currency });
