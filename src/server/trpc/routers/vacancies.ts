@@ -180,6 +180,7 @@ export const vacanciesRouter = router({
         where: { id: input.id, status: "ACTIVE" },
         select: {
           id: true,
+          referrerId: true,
           title: true,
           companyName: true,
           specialty: true,
@@ -198,7 +199,10 @@ export const vacanciesRouter = router({
 
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
 
-      return vacancyWithApplicationCount(vacancy);
+      const isMine = ctx.session?.user?.id === vacancy.referrerId;
+      const { referrerId: _referrerId, ...vacancyPublic } = vacancy;
+
+      return { ...vacancyWithApplicationCount(vacancyPublic), isMine };
     }),
 
   create: protectedProcedure.input(createVacancySchema).mutation(async ({ ctx, input }) => {

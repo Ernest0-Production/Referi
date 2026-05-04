@@ -46,6 +46,8 @@ export function SubmitApplicationForm({
         );
       } else if (msg === "DUPLICATE_APPLICATION") {
         setError("Вы уже откликались на эту вакансию.");
+      } else if (msg === "CANNOT_APPLY_TO_OWN_VACANCY") {
+        setError("Нельзя откликаться на собственную вакансию.");
       } else if (msg === "VACANCY_NOT_ACTIVE") {
         setError("Вакансия больше не активна.");
       } else if (msg.startsWith("PAID_TOKEN_")) {

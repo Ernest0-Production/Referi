@@ -51,6 +51,10 @@ export async function submitApplication(db: PrismaClient, input: SubmitApplicati
     throw new BusinessError("VACANCY_NOT_ACTIVE");
   }
 
+  if (vacancy.referrerId === input.seekerId) {
+    throw new BusinessError("CANNOT_APPLY_TO_OWN_VACANCY");
+  }
+
   const isFirstApplicationOnVacancy = !vacancy.firstApplicationAt;
 
   const application = await db.$transaction(async (tx: Prisma.TransactionClient) => {

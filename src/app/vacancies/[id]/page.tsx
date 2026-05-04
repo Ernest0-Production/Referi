@@ -47,12 +47,14 @@ export default async function VacancyDetailPage({ params }: PageProps) {
   const { id } = await params;
   const session = await auth();
 
-  let vacancy;
+  let vacancy: Awaited<ReturnType<typeof trpc.vacancies.getById>>;
   try {
     vacancy = await trpc.vacancies.getById({ id });
   } catch {
     notFound();
   }
+
+  const isAuthor = vacancy.isMine;
 
   const salaryLine = formatVacancySalaryRange(
     vacancy.salaryFromKopecks,
@@ -120,11 +122,17 @@ export default async function VacancyDetailPage({ params }: PageProps) {
           </CardContent>
           <CardFooter className="flex flex-col items-stretch gap-4 border-t pt-6">
             {session?.user ? (
-              <Button asChild className="w-full sm:w-auto">
-                <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
-                  Откликнуться
-                </Link>
-              </Button>
+              isAuthor ? (
+                <Button asChild variant="default" className="w-full sm:w-auto">
+                  <Link href="/dashboard/vacancy">Редактировать</Link>
+                </Button>
+              ) : (
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
+                    Откликнуться
+                  </Link>
+                </Button>
+              )
             ) : (
               <Button asChild className="w-full sm:w-auto">
                 <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>
