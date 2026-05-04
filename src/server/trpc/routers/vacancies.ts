@@ -332,6 +332,21 @@ export const vacanciesRouter = router({
         referrerId: ctx.userId,
         status: { in: ["ACTIVE", "FROZEN"] },
       },
+      select: {
+        id: true,
+        title: true,
+        companyName: true,
+        specialty: true,
+        grade: true,
+        workFormat: true,
+        salaryCurrency: true,
+        salaryFromKopecks: true,
+        salaryToKopecks: true,
+        rewardKopecks: true,
+        createdAt: true,
+        updatedAt: true,
+        status: true,
+      },
     });
     if (!vacancy) return null;
     return serializeVacancy(vacancy);

@@ -59,9 +59,11 @@ function formatUpdatedRelative(updatedAt: Date): string {
 export function VacancyCard({
   vacancy,
   hasActiveSeekerApplication = false,
+  detailHref,
 }: {
   vacancy: Vacancy;
   hasActiveSeekerApplication?: boolean;
+  detailHref?: string;
 }) {
   const salary = formatVacancySalaryRange(
     vacancy.salaryFromKopecks,
@@ -69,10 +71,11 @@ export function VacancyCard({
     vacancy.salaryCurrency,
   );
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
+  const href = detailHref ?? `/vacancies/${vacancy.id}`;
 
   return (
     <Link
-      href={`/vacancies/${vacancy.id}`}
+      href={href}
       className="group block transition-shadow hover:shadow-md"
     >
       <Card className="border-border bg-card overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
