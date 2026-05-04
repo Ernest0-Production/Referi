@@ -65,6 +65,22 @@ function serializeVacancy<
   };
 }
 
+function vacancyWithApplicationCount<
+  T extends {
+    salaryCurrency: "RUB" | "USD" | "EUR";
+    salaryFromKopecks?: bigint | null;
+    salaryToKopecks?: bigint | null;
+    rewardKopecks: bigint;
+    _count: { applications: number };
+  },
+>(row: T) {
+  const { _count, ...rest } = row;
+  return {
+    ...serializeVacancy(rest),
+    applicationCount: _count.applications,
+  };
+}
+
 export const vacanciesRouter = router({
   list: publicProcedure.input(vacancyListSchema).query(async ({ ctx, input }) => {
     const {
@@ -142,13 +158,14 @@ export const vacanciesRouter = router({
           description: true,
           createdAt: true,
           updatedAt: true,
+          _count: { select: { applications: true } },
         },
       }),
       ctx.db.vacancy.count({ where }),
     ]);
 
     return {
-      items: items.map(serializeVacancy),
+      items: items.map(vacancyWithApplicationCount),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -174,12 +191,13 @@ export const vacanciesRouter = router({
           description: true,
           createdAt: true,
           updatedAt: true,
+          _count: { select: { applications: true } },
         },
       });
 
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
 
-      return serializeVacancy(vacancy);
+      return vacancyWithApplicationCount(vacancy);
     }),
 
   create: protectedProcedure.input(createVacancySchema).mutation(async ({ ctx, input }) => {

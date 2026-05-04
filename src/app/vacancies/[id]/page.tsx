@@ -8,6 +8,7 @@ import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 
 const SPECIALTY_LABELS: Record<string, string> = {
@@ -96,6 +97,9 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               <Badge variant="secondary">{GRADE_LABELS[vacancy.grade] ?? vacancy.grade}</Badge>
               <Badge variant="secondary">
                 {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+              </Badge>
+              <Badge variant="outline" className="font-normal">
+                {formatApplicationCountLabel(vacancy.applicationCount)}
               </Badge>
             </div>
 

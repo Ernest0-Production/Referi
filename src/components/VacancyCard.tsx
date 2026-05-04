@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange, type VacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
 
 const SPECIALTY_LABELS: Record<string, string> = {
@@ -42,6 +43,7 @@ interface Vacancy {
   salaryFromKopecks: string | null;
   salaryToKopecks: string | null;
   rewardKopecks: string;
+  applicationCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -120,6 +122,9 @@ export function VacancyCard({
                 {salary}
               </Badge>
             ) : null}
+            <Badge variant="outline" className="font-normal">
+              {formatApplicationCountLabel(vacancy.applicationCount)}
+            </Badge>
             {reward > 0 ? (
               <Badge
                 className={cn(
