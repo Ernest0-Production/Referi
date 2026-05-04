@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import { IconFilter } from "@tabler/icons-react";
 import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import {
+  flatParamsForPresetSave,
   parseCsvEnumParam,
+  parseVacancyListSpecialtyCsvParam,
   presetParamsFromJson,
   serializeCsvParam,
-  flatParamsForPresetSave,
   isVacancyFlatMatchingPresetParams,
   type VacancyListFlatSearchParams,
   VACANCY_LIST_GRADE_VALUES,
@@ -63,7 +64,8 @@ const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; labe
   { value: "FRONTEND", label: "Frontend" },
   { value: "BACKEND", label: "Backend" },
   { value: "FULLSTACK", label: "Fullstack" },
-  { value: "MOBILE", label: "Mobile" },
+  { value: "IOS_MOBILE", label: "iOS" },
+  { value: "ANDROID_MOBILE", label: "Android" },
   { value: "DEVOPS", label: "DevOps" },
   { value: "QA", label: "QA" },
   { value: "DATA", label: "Data" },
@@ -286,8 +288,7 @@ export function VacancyFilters({
     "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
   );
 
-  const specialtyValues =
-    parseCsvEnumParam(currentParams.specialty, VACANCY_LIST_SPECIALTY_VALUES) ?? [];
+  const specialtyValues = parseVacancyListSpecialtyCsvParam(currentParams.specialty) ?? [];
   const specialtySelectValue =
     specialtyValues.length === 0
       ? SPECIALTY_SELECT_ANY

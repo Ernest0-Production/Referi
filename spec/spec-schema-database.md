@@ -202,7 +202,8 @@ enum Specialty {
   FRONTEND
   BACKEND
   FULLSTACK
-  MOBILE
+  IOS_MOBILE
+  ANDROID_MOBILE
   DEVOPS
   QA
   DATA
@@ -530,6 +531,8 @@ model AuditLog {
   @@map("audit_logs")
 }
 ```
+
+При обновлении существующей БД значение `MOBILE` в данных вакансий переносится в `OTHER` (платформа из старого значения не выводится); миграция `20260504000000_specialty_ios_android_mobile` пересобирает enum `Specialty`.
 
 ---
 
