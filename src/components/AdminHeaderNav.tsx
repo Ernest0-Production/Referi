@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { Badge } from "@/components/ui/badge";
+import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -102,10 +103,7 @@ export function AdminHeaderNav({ session }: { session: Session }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- NextAuth signOut GET */}
-              <a href="/api/auth/signout">Выйти</a>
-            </DropdownMenuItem>
+            <SignOutMenuItem />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
