@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { TRPCProvider } from "@/trpc/provider";
+import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -39,10 +40,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TRPCProvider>
-            {children}
-            <Toaster position="top-center" richColors />
-          </TRPCProvider>
+          <AuthSessionProvider>
+            <TRPCProvider>
+              {children}
+              <Toaster position="top-center" richColors />
+            </TRPCProvider>
+          </AuthSessionProvider>
         </ThemeProvider>
       </body>
     </html>
