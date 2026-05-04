@@ -40,7 +40,7 @@ export default async function SettingsPage() {
       <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Настройки аккаунта</h1>
-          <p className="text-muted-foreground text-sm">Профиль, подписка и ссылки</p>
+          <p className="text-muted-foreground text-sm">Профиль и подписка</p>
         </div>
 
         <Card>
@@ -127,28 +127,6 @@ export default async function SettingsPage() {
         ) : null}
 
         <DeleteAccountCard allowDelete={user.staffRoles.length === 0} />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Быстрые ссылки</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Button variant="link" className="h-auto justify-start p-0" asChild>
-                <Link href="/dashboard/attempts">Пул попыток реферала</Link>
-              </Button>
-              <Button variant="link" className="h-auto justify-start p-0" asChild>
-                <Link href="/dashboard/vacancy">Моя вакансия</Link>
-              </Button>
-              <Button variant="link" className="h-auto justify-start p-0" asChild>
-                <Link href="/dashboard/applications">Мои заявки</Link>
-              </Button>
-              <Button variant="link" className="h-auto justify-start p-0" asChild>
-                <Link href="/">Все вакансии</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </main>
   );
