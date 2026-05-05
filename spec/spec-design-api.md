@@ -123,10 +123,13 @@ type VacancyListItem = {
   salaryToKopecks: string | null;
   rewardKopecks: string;
   description: string;
+  applicationCount: number;  // число заявок (Application) по вакансии
   createdAt: string;  // ISO 8601
   // Имя/контакты реферальщика НЕ возвращаются
 };
 ```
+
+Ответ `vacancies.getById` для активной вакансии содержит тот же состав полей, что элемент ленты (включая `applicationCount`).
 
 ### 4.4 Router: `applications`
 
