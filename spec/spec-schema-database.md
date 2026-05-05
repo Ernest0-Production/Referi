@@ -532,7 +532,7 @@ model AuditLog {
 }
 ```
 
-При обновлении существующей БД значение `MOBILE` в данных вакансий переносится в `OTHER` (платформа из старого значения не выводится); миграция `20260504000000_specialty_ios_android_mobile` пересобирает enum `Specialty`.
+DDL для PostgreSQL задаётся исходной миграцией `prisma/migrations/20260101000000_init_schema` (enum `Specialty` сразу с `IOS_MOBILE` / `ANDROID_MOBILE`, без `MOBILE`). Инкрементальные каталоги в `prisma/migrations/` не добавляются; при смене схемы локально — полный сброс и повторное применение (`prisma migrate reset` и т.п., см. `.cursor/rules/organic-redesign.mdc`).
 
 ---
 
