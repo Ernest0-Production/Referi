@@ -74,10 +74,7 @@ export function VacancyCard({
   const href = detailHref ?? `/vacancies/${vacancy.id}`;
 
   return (
-    <Link
-      href={href}
-      className="group block transition-shadow hover:shadow-md"
-    >
+    <Link href={href} className="group block transition-shadow hover:shadow-md">
       <Card className="border-border bg-card overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
         <CardHeader className="flex flex-col gap-3 space-y-0 pt-5 pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
