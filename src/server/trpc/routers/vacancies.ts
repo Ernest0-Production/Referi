@@ -365,10 +365,13 @@ export const vacanciesRouter = router({
         createdAt: true,
         updatedAt: true,
         status: true,
+        _count: {
+          select: { applications: true },
+        },
       },
     });
     if (!vacancy) return null;
-    return serializeVacancy(vacancy);
+    return vacancyWithApplicationCount(vacancy);
   }),
 
   applicants: protectedProcedure

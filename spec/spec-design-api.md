@@ -131,6 +131,8 @@ type VacancyListItem = {
 
 Ответ `vacancies.getById` для активной вакансии содержит тот же состав полей, что элемент ленты (включая `applicationCount`).
 
+Ответ `vacancies.myActive` включает `applicationCount` (число заявок), как и элемент ленты / карточка каталога.
+
 ### 4.4 Router: `applications`
 
 
