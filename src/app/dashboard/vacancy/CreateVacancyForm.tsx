@@ -26,7 +26,8 @@ const SPECIALTIES = [
   "FRONTEND",
   "BACKEND",
   "FULLSTACK",
-  "MOBILE",
+  "IOS_MOBILE",
+  "ANDROID_MOBILE",
   "DEVOPS",
   "QA",
   "DATA",
@@ -34,6 +35,20 @@ const SPECIALTIES = [
   "SECURITY",
   "OTHER",
 ] as const;
+
+const SPECIALTY_LABELS: Record<(typeof SPECIALTIES)[number], string> = {
+  FRONTEND: "Frontend",
+  BACKEND: "Backend",
+  FULLSTACK: "Fullstack",
+  IOS_MOBILE: "iOS",
+  ANDROID_MOBILE: "Android",
+  DEVOPS: "DevOps",
+  QA: "QA",
+  DATA: "Data",
+  ML_AI: "ML / AI",
+  SECURITY: "Security",
+  OTHER: "Другое",
+};
 const GRADES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"] as const;
 const FORMATS = ["OFFICE", "HYBRID", "REMOTE"] as const;
 
@@ -125,7 +140,7 @@ export function CreateVacancyForm() {
                 <SelectGroup>
                   {SPECIALTIES.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {s}
+                      {SPECIALTY_LABELS[s]}
                     </SelectItem>
                   ))}
                 </SelectGroup>

@@ -4,7 +4,8 @@ export const VACANCY_LIST_SPECIALTY_VALUES = [
   "FRONTEND",
   "BACKEND",
   "FULLSTACK",
-  "MOBILE",
+  "IOS_MOBILE",
+  "ANDROID_MOBILE",
   "DEVOPS",
   "QA",
   "DATA",
@@ -47,6 +48,28 @@ export function parseCsvEnumParam<T extends string>(
   }
   if (!picked.size) return undefined;
   return allowed.filter((a) => picked.has(a));
+}
+
+/** Распознаёт устаревший токен `MOBILE` как выбор iOS и Android. */
+export function parseVacancyListSpecialtyCsvParam(
+  raw: string | string[] | undefined,
+): VacancyListSpecialty[] | undefined {
+  const s = normalizeSearchParamRaw(raw)?.trim();
+  if (!s) return undefined;
+  const allow = new Set<string>(VACANCY_LIST_SPECIALTY_VALUES);
+  const picked = new Set<string>();
+  for (const part of s.split(",")) {
+    const v = part.trim();
+    if (!v) continue;
+    if (v === "MOBILE") {
+      if (allow.has("IOS_MOBILE")) picked.add("IOS_MOBILE");
+      if (allow.has("ANDROID_MOBILE")) picked.add("ANDROID_MOBILE");
+      continue;
+    }
+    if (allow.has(v)) picked.add(v);
+  }
+  if (!picked.size) return undefined;
+  return VACANCY_LIST_SPECIALTY_VALUES.filter((a) => picked.has(a));
 }
 
 export function serializeCsvParam(values: readonly string[]): string | undefined {
@@ -143,8 +166,10 @@ export function mergeVacancyListQueryParams(
 }
 
 export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Record<string, string> {
-  const keys = ["specialty", "grade", "workFormat", "sort", "query"] as const;
+  const keys = ["grade", "workFormat", "sort", "query"] as const;
   const out: Record<string, string> = {};
+  const sp = serializeCsvParam(parseVacancyListSpecialtyCsvParam(flat.specialty) ?? []);
+  if (sp) out.specialty = sp;
   for (const k of keys) {
     const v = flat[k];
     if (typeof v === "string" && v.trim()) {
@@ -208,7 +233,7 @@ function canonicalPresetSaveRecord(rec: Record<string, string>): Record<string, 
     if (s) return s;
     return undefined;
   };
-  const sp = canonCsv(rec.specialty, VACANCY_LIST_SPECIALTY_VALUES);
+  const sp = serializeCsvParam(parseVacancyListSpecialtyCsvParam(rec.specialty) ?? []);
   if (sp) out.specialty = sp;
   const gr = canonCsv(rec.grade, VACANCY_LIST_GRADE_VALUES);
   if (gr) out.grade = gr;

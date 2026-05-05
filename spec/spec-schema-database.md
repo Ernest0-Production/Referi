@@ -202,7 +202,8 @@ enum Specialty {
   FRONTEND
   BACKEND
   FULLSTACK
-  MOBILE
+  IOS_MOBILE
+  ANDROID_MOBILE
   DEVOPS
   QA
   DATA
@@ -530,6 +531,8 @@ model AuditLog {
   @@map("audit_logs")
 }
 ```
+
+DDL для PostgreSQL задаётся исходной миграцией `prisma/migrations/20260101000000_init_schema` (enum `Specialty` сразу с `IOS_MOBILE` / `ANDROID_MOBILE`, без `MOBILE`). Инкрементальные каталоги в `prisma/migrations/` не добавляются; при смене схемы локально — полный сброс и повторное применение (`prisma migrate reset` и т.п., см. `.cursor/rules/organic-redesign.mdc`).
 
 ---
 

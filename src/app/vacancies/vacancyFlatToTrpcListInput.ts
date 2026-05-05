@@ -2,9 +2,9 @@ import type { inferRouterInputs } from "@trpc/server";
 import type { AppRouter } from "@/server/trpc/root";
 import {
   parseCsvEnumParam,
+  parseVacancyListSpecialtyCsvParam,
   type VacancyListFlatSearchParams,
   VACANCY_LIST_GRADE_VALUES,
-  VACANCY_LIST_SPECIALTY_VALUES,
   VACANCY_LIST_WORK_FORMAT_VALUES,
 } from "@/lib/vacancyListQuery";
 import { isVacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
@@ -35,7 +35,7 @@ export function vacancyFlatToTrpcListInput(
   const salaryCurrencyRaw = flat.salaryCurrency?.trim();
   const salaryCurrency =
     salaryCurrencyRaw && isVacancySalaryCurrency(salaryCurrencyRaw) ? salaryCurrencyRaw : undefined;
-  const specialtyParsed = parseCsvEnumParam(flat.specialty, VACANCY_LIST_SPECIALTY_VALUES);
+  const specialtyParsed = parseVacancyListSpecialtyCsvParam(flat.specialty);
   const gradeParsed = parseCsvEnumParam(flat.grade, VACANCY_LIST_GRADE_VALUES);
   const workFormatParsed = parseCsvEnumParam(flat.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
   const excludeIds =
