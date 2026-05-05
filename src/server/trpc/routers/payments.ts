@@ -115,6 +115,13 @@ export const paymentsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "VACANCY_NOT_ACTIVE" });
       }
 
+      if (vacancy.referrerId === ctx.userId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "CANNOT_APPLY_TO_OWN_VACANCY",
+        });
+      }
+
       const idempotencyKey = randomUuid();
       const expiresAt = new Date(
         Date.now() + BUSINESS_RULES.PAID_APPLICATION_TOKEN_VALIDITY_DAYS * 24 * 60 * 60 * 1000,

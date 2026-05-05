@@ -47,6 +47,10 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
     throw e;
   }
 
+  if (v.isMine) {
+    redirect("/dashboard/vacancy");
+  }
+
   const vacancy = { ...v, me };
 
   return (
