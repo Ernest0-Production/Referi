@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "@/server/trpc/root";
 import {
   normalizeVacancyListSearchParams,
   type VacancyListSearchParamsInput,
@@ -25,6 +27,11 @@ export async function VacancyListing({ params }: { params: VacancyListSearchPara
     ? await trpc.applications.activeVacancyIds()
     : [];
 
+  let employerVacancyPreview: inferRouterOutputs<AppRouter>["vacancies"]["myActive"] = null;
+  if (session?.user?.id) {
+    employerVacancyPreview = await trpc.vacancies.myActive();
+  }
+
   let presets: { id: string; name: string; params: unknown }[] = [];
   if (session?.user?.id) {
     presets = await trpc.vacancySearchPresets.list();
@@ -43,6 +50,7 @@ export async function VacancyListing({ params }: { params: VacancyListSearchPara
             presets={presets}
             isLoggedIn={Boolean(session?.user)}
             initialActiveVacancyIds={initialActiveVacancyIds}
+            employerVacancyPreview={employerVacancyPreview}
           />
         </div>
       </div>

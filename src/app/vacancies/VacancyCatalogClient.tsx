@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useMdUp } from "@/hooks/useMdUp";
 import { cn } from "@/lib/utils";
+import { EmployerHomeVacancySection } from "./EmployerHomeVacancySection";
 import { VacancyFilters } from "./VacancyFilters";
 import { VacancyListChrome } from "./VacancyListChrome";
 import {
@@ -25,6 +26,7 @@ import {
 } from "./vacancyFlatToTrpcListInput";
 
 type ListOut = inferRouterOutputs<AppRouter>["vacancies"]["list"];
+type MyActiveOut = inferRouterOutputs<AppRouter>["vacancies"]["myActive"];
 
 type PresetRow = { id: string; name: string; params: unknown };
 
@@ -67,6 +69,7 @@ export function VacancyCatalogClient({
   presets,
   isLoggedIn,
   initialActiveVacancyIds,
+  employerVacancyPreview,
 }: {
   initialParams: VacancyListFlatSearchParams;
   initialList: ListOut;
@@ -74,6 +77,7 @@ export function VacancyCatalogClient({
   presets: PresetRow[];
   isLoggedIn: boolean;
   initialActiveVacancyIds: string[];
+  employerVacancyPreview: MyActiveOut;
 }) {
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
   const [activeVacancyPresetId, setActiveVacancyPresetId] = useState<string | undefined>(undefined);
@@ -186,6 +190,10 @@ export function VacancyCatalogClient({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <EmployerHomeVacancySection
+          employerVacancyPreview={employerVacancyPreview}
+          isLoggedIn={isLoggedIn}
+        />
         <VacancyListChrome
           key={params.query?.trim() ? params.query.trim() : "__q_empty__"}
           currentParams={params}
