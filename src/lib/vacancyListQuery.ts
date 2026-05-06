@@ -11,16 +11,9 @@ export const VACANCY_LIST_SPECIALTY_VALUES = [
   "DATA",
   "ML_AI",
   "SECURITY",
-  "OTHER",
 ] as const;
 
-export const VACANCY_LIST_GRADE_VALUES = [
-  "JUNIOR",
-  "MIDDLE",
-  "SENIOR",
-  "LEAD",
-  "PRINCIPAL",
-] as const;
+export const VACANCY_LIST_GRADE_VALUES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD"] as const;
 
 export const VACANCY_LIST_WORK_FORMAT_VALUES = ["REMOTE", "HYBRID", "OFFICE"] as const;
 
@@ -99,6 +92,7 @@ export type VacancyListSearchParamsInput = {
   query?: string | string[];
   page?: string | string[];
   hideViewed?: string | string[];
+  openVacancyPresetSave?: string | string[];
 };
 
 function scalarSearchParam(raw: string | string[] | undefined): string | undefined {
@@ -139,6 +133,30 @@ export function vacancyListFlatToSearchParams(
   if (params.page) q.set("page", params.page);
   if (params.hideViewed === "1") q.set("hideViewed", "1");
   return q;
+}
+
+export function peelOpenVacancyPresetSaveFromSearchParamsInput(
+  raw: VacancyListSearchParamsInput,
+): { params: VacancyListSearchParamsInput; openVacancyPresetSave: boolean } {
+  const { openVacancyPresetSave: rawFlag, ...rest } = raw;
+  let openVacancyPresetSave = false;
+  if (rawFlag !== undefined) {
+    const s =
+      typeof rawFlag === "string"
+        ? rawFlag.trim()
+        : rawFlag.filter(Boolean).join(",").trim();
+    if (s === "1" || s.toLowerCase() === "true" || s.toLowerCase() === "yes") {
+      openVacancyPresetSave = true;
+    }
+  }
+  return { params: rest, openVacancyPresetSave };
+}
+
+export function buildVacancyCatalogLoginReturnHref(flat: VacancyListFlatSearchParams): string {
+  const q = vacancyListFlatToSearchParams(flat);
+  q.set("openVacancyPresetSave", "1");
+  const s = q.toString();
+  return s.length > 0 ? `/?${s}` : "/?openVacancyPresetSave=1";
 }
 
 export function mergeVacancyListFlat(

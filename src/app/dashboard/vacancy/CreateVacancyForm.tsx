@@ -13,7 +13,6 @@ import {
   IconCurrencyEuro,
   IconCurrencyRubel,
   IconDatabase,
-  IconDots,
   IconHomeShare,
   IconLayout,
   IconServer,
@@ -53,7 +52,6 @@ const SPECIALTIES = [
   "DATA",
   "ML_AI",
   "SECURITY",
-  "OTHER",
 ] as const;
 
 const SPECIALTY_LABELS: Record<(typeof SPECIALTIES)[number], string> = {
@@ -67,9 +65,8 @@ const SPECIALTY_LABELS: Record<(typeof SPECIALTIES)[number], string> = {
   DATA: "Data",
   ML_AI: "ML / AI",
   SECURITY: "Security",
-  OTHER: "Другое",
 };
-const GRADES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"] as const;
+const GRADES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD"] as const;
 const FORMATS = ["OFFICE", "HYBRID", "REMOTE"] as const;
 
 const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
@@ -77,7 +74,6 @@ const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
   MIDDLE: "Middle",
   SENIOR: "Senior",
   LEAD: "Lead",
-  PRINCIPAL: "Principal",
 };
 
 const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
@@ -127,8 +123,6 @@ function SpecialtyIcon({
       return <IconBrain className={c} aria-hidden />;
     case "SECURITY":
       return <IconShield className={c} aria-hidden />;
-    default:
-      return <IconDots className={c} aria-hidden />;
   }
 }
 

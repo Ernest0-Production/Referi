@@ -209,7 +209,6 @@ enum Specialty {
   DATA
   ML_AI
   SECURITY
-  OTHER
 }
 
 enum Grade {
@@ -217,7 +216,6 @@ enum Grade {
   MIDDLE
   SENIOR
   LEAD
-  PRINCIPAL
 }
 
 enum WorkFormat {

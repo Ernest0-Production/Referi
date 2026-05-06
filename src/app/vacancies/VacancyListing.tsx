@@ -4,6 +4,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@/server/trpc/root";
 import {
   normalizeVacancyListSearchParams,
+  peelOpenVacancyPresetSaveFromSearchParamsInput,
   type VacancyListSearchParamsInput,
 } from "@/lib/vacancyListQuery";
 import { readVacancyViewedIdsFromCookies } from "@/lib/vacancyViewedCookie";
@@ -15,7 +16,9 @@ import { vacancyFlatToTrpcListInput } from "./vacancyFlatToTrpcListInput";
 export type VacancyListSearchParams = VacancyListSearchParamsInput;
 
 export async function VacancyListing({ params }: { params: VacancyListSearchParams }) {
-  const flat = normalizeVacancyListSearchParams(params);
+  const { params: listingParams, openVacancyPresetSave } =
+    peelOpenVacancyPresetSaveFromSearchParamsInput(params);
+  const flat = normalizeVacancyListSearchParams(listingParams);
   const session = await auth();
   const cookieStore = await cookies();
   const viewedVacancyIds = readVacancyViewedIdsFromCookies(cookieStore);
@@ -51,6 +54,7 @@ export async function VacancyListing({ params }: { params: VacancyListSearchPara
             isLoggedIn={Boolean(session?.user)}
             initialActiveVacancyIds={initialActiveVacancyIds}
             employerVacancyPreview={employerVacancyPreview}
+            resumeVacancyPresetSave={openVacancyPresetSave}
           />
         </div>
       </div>

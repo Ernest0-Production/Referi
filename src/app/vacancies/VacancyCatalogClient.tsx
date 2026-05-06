@@ -5,10 +5,12 @@ import { keepPreviousData } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { ComponentProps } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AppRouter } from "@/server/trpc/root";
 import {
   findMatchingVacancySearchPresetId,
   mergeVacancyListFlat,
+  vacancyListFlatToSearchParams,
   type VacancyListFlatSearchParams,
 } from "@/lib/vacancyListQuery";
 import { trpcReact } from "@/trpc/client";
@@ -70,6 +72,7 @@ export function VacancyCatalogClient({
   isLoggedIn,
   initialActiveVacancyIds,
   employerVacancyPreview,
+  resumeVacancyPresetSave = false,
 }: {
   initialParams: VacancyListFlatSearchParams;
   initialList: ListOut;
@@ -78,7 +81,10 @@ export function VacancyCatalogClient({
   isLoggedIn: boolean;
   initialActiveVacancyIds: string[];
   employerVacancyPreview: MyActiveOut;
+  resumeVacancyPresetSave?: boolean;
 }) {
+  const router = useRouter();
+  const resumeUrlCleanupDone = useRef(false);
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
   const [activeVacancyPresetId, setActiveVacancyPresetId] = useState<string | undefined>(undefined);
   const [vacancyPresetSidebarCleared, setVacancyPresetSidebarCleared] = useState(false);
@@ -101,6 +107,13 @@ export function VacancyCatalogClient({
       }
     }
   }, [matchedVacancyPresetId, activeVacancyPresetId, vacancyPresetSidebarCleared]);
+
+  useEffect(() => {
+    if (!resumeVacancyPresetSave || !isLoggedIn || resumeUrlCleanupDone.current) return;
+    resumeUrlCleanupDone.current = true;
+    const q = vacancyListFlatToSearchParams(initialParams).toString();
+    void router.replace(q ? `/?${q}` : "/", { scroll: false });
+  }, [resumeVacancyPresetSave, isLoggedIn, initialParams, router]);
 
   useEffect(() => {
     if (activeVacancyPresetId != null && !presets.some((p) => p.id === activeVacancyPresetId)) {
@@ -170,6 +183,7 @@ export function VacancyCatalogClient({
     onPickSavedVacancyPreset: handlePickSavedVacancyPreset,
     vacancyPresetSidebarCleared,
     savedPresetSelectLayoutKey,
+    resumeVacancyPresetSave,
   };
 
   const data = listQuery.data;
