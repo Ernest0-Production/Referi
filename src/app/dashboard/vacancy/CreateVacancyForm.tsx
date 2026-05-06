@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { trpcReact } from "@/trpc/client";
@@ -171,8 +172,19 @@ function initialFormState(
 
 type VacancyFormState = ReturnType<typeof initialFormState>;
 
-/** Сообщение об ошибке или null, если всё ок. */
-function validateSalaryRange(fromRaw: string, toRaw: string): string | null {
+type VacancyFieldFocusId = "vac-title" | "vac-company" | "vac-sal-from" | "vac-sal-to" | "vac-desc";
+
+function focusVacancyFormField(id: VacancyFieldFocusId) {
+  const el = document.getElementById(id);
+  if (!el || !("focus" in el)) return;
+  (el as HTMLElement).focus();
+  (el as HTMLElement).scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+type SalaryRangeInvalid = { message: string; focusId: "vac-sal-from" | "vac-sal-to" };
+
+/** Ошибка диапазона зарплаты или null, если всё ок. */
+function validateSalaryRange(fromRaw: string, toRaw: string): SalaryRangeInvalid | null {
   const fromDigits = sanitizeMoneyIntegerDigits(fromRaw);
   const toDigits = sanitizeMoneyIntegerDigits(toRaw);
   const from = parseMoneyIntegerDigitsToNumber(fromDigits);
@@ -181,19 +193,28 @@ function validateSalaryRange(fromRaw: string, toRaw: string): string | null {
   const toTouched = toDigits !== "";
 
   if (fromTouched && from === null) {
-    return "В поле «Зарплата от» укажите целое неотрицательное число.";
+    return {
+      message: "В поле «Зарплата от» укажите целое неотрицательное число.",
+      focusId: "vac-sal-from",
+    };
   }
   if (toTouched && to === null) {
-    return "В поле «Зарплата до» укажите целое неотрицательное число.";
+    return {
+      message: "В поле «Зарплата до» укажите целое неотрицательное число.",
+      focusId: "vac-sal-to",
+    };
   }
   if (from !== null && from < 0) {
-    return "Зарплата «от» не может быть отрицательной.";
+    return { message: "Зарплата «от» не может быть отрицательной.", focusId: "vac-sal-from" };
   }
   if (to !== null && to < 0) {
-    return "Зарплата «до» не может быть отрицательной.";
+    return { message: "Зарплата «до» не может быть отрицательной.", focusId: "vac-sal-to" };
   }
   if (from !== null && to !== null && from >= to) {
-    return "«Зарплата от» должна быть меньше «Зарплаты до».";
+    return {
+      message: "Минимальная зарплата не может быть меньше максимальной",
+      focusId: "vac-sal-from",
+    };
   }
   return null;
 }
@@ -335,41 +356,50 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     setDescriptionError(null);
     setSalaryError(null);
 
-    const salaryErr = validateSalaryRange(form.salaryFrom, form.salaryTo);
-    if (salaryErr) {
-      setSalaryError(salaryErr);
+    const salaryInvalid = validateSalaryRange(form.salaryFrom, form.salaryTo);
+    if (salaryInvalid) {
+      flushSync(() => setSalaryError(salaryInvalid.message));
+      focusVacancyFormField(salaryInvalid.focusId);
       return;
     }
 
     const titleTrim = form.title.trim();
     if (titleTrim.length < 3) {
-      setTitleError("Введите название (минимум 3 символа).");
+      flushSync(() => setTitleError("Введите название (минимум 3 символа)."));
+      focusVacancyFormField("vac-title");
       return;
     }
     if (titleTrim.length > 200) {
-      setTitleError("Не более 200 символов.");
+      flushSync(() => setTitleError("Не более 200 символов."));
+      focusVacancyFormField("vac-title");
       return;
     }
 
     const companyTrim = form.companyName.trim();
     if (companyTrim.length < 2) {
-      setCompanyError("Введите компанию (минимум 2 символа).");
+      flushSync(() => setCompanyError("Введите компанию (минимум 2 символа)."));
+      focusVacancyFormField("vac-company");
       return;
     }
     if (companyTrim.length > 200) {
-      setCompanyError("Не более 200 символов.");
+      flushSync(() => setCompanyError("Не более 200 символов."));
+      focusVacancyFormField("vac-company");
       return;
     }
 
     const descTrim = form.description.trim();
     if (descTrim.length < 10) {
-      setDescriptionError("Описание должно содержать минимум 10 символов.");
+      flushSync(() => setDescriptionError("Описание должно содержать минимум 10 символов."));
+      focusVacancyFormField("vac-desc");
       return;
     }
     if (descTrim.length > VACANCY_DESCRIPTION_MAX_LEN) {
-      setDescriptionError(
-        `Не более ${VACANCY_DESCRIPTION_MAX_LEN.toLocaleString("ru-RU")} символов.`,
+      flushSync(() =>
+        setDescriptionError(
+          `Не более ${VACANCY_DESCRIPTION_MAX_LEN.toLocaleString("ru-RU")} символов.`,
+        ),
       );
+      focusVacancyFormField("vac-desc");
       return;
     }
 
@@ -546,7 +576,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           data-invalid={salaryError ? "true" : undefined}
         >
           <FieldLegend>Зарплата</FieldLegend>
-          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="flex min-w-0 flex-row items-center gap-2 sm:gap-3">
             <Field className="min-w-0 flex-1">
               <Input
                 id="vac-sal-from"
@@ -568,6 +598,12 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 className="tabular-nums"
               />
             </Field>
+            <span
+              className="text-muted-foreground flex h-8 shrink-0 items-center justify-center px-1 text-base font-medium tabular-nums select-none"
+              aria-hidden="true"
+            >
+              –
+            </span>
             <Field className="min-w-0 flex-1">
               <Input
                 id="vac-sal-to"
@@ -589,7 +625,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 className="tabular-nums"
               />
             </Field>
-            <Field className="w-full min-w-0 shrink-0 sm:w-fit">
+            <Field className="w-fit min-w-0 shrink-0">
               <Select
                 value={form.salaryCurrency}
                 onValueChange={(v) =>

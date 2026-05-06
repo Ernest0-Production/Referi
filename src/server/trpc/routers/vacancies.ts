@@ -41,7 +41,7 @@ const vacancyWriteSchema = z
     rewardKopecks: z.number().int().min(0).max(REFERRER_BONUS_MAX_KOPECKS).default(0),
   })
   .refine((d) => d.salaryFrom == null || d.salaryTo == null || d.salaryFrom < d.salaryTo, {
-    message: "Зарплата «от» должна быть меньше «до».",
+    message: "Минимальная зарплата не может быть меньше максимальной",
     path: ["salaryTo"],
   })
   .refine((d) => d.rewardKopecks % REFERRER_BONUS_STEP_KOPECKS === 0, {
