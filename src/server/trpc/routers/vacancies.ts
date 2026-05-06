@@ -18,9 +18,8 @@ const specialtyEnum = z.enum([
   "DATA",
   "ML_AI",
   "SECURITY",
-  "OTHER",
 ]);
-const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"]);
+const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD"]);
 const workFormatEnum = z.enum(["OFFICE", "HYBRID", "REMOTE"]);
 const salaryCurrencyEnum = z.enum(VACANCY_SALARY_CURRENCY_VALUES);
 

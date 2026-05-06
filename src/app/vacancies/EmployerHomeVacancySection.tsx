@@ -46,7 +46,7 @@ export function EmployerHomeVacancySection({
 
     return (
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-row items-center justify-between gap-2">
           <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
             Ваша вакансия
           </h2>

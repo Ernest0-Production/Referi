@@ -1,5 +1,6 @@
 "use client";
 
+import { IconFlag } from "@tabler/icons-react";
 import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
 import { ModerationContactLink } from "@/components/ModerationContactLink";
@@ -43,13 +44,14 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
 
   if (!open) {
     return (
-      <div className="flex w-full flex-col gap-3 border-t pt-4">
+      <div className="flex w-full flex-col gap-3">
         <Button
           type="button"
           variant="outline"
-          className="text-destructive border-destructive/40 hover:bg-destructive/10 self-start"
+          className="text-destructive border-destructive/40 hover:bg-destructive/10 self-end"
           onClick={() => setOpen(true)}
         >
+          <IconFlag data-icon="inline-start" className="size-4 shrink-0" aria-hidden />
           Пожаловаться
         </Button>
         {msg === "registered" ? (

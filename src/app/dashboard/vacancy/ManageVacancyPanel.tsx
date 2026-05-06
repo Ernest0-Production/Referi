@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradeIcon, SpecialtyIcon, WorkFormatIcon } from "@/components/vacancy/VacancyFieldIcons";
 import { VacancyOwnerActions } from "./VacancyOwnerActions";
 
 const SPECIALTY_LABELS: Record<string, string> = {
@@ -15,7 +16,20 @@ const SPECIALTY_LABELS: Record<string, string> = {
   DATA: "Data",
   ML_AI: "ML/AI",
   SECURITY: "Security",
-  OTHER: "Другое",
+};
+
+const GRADE_LABELS: Record<string, string> = {
+  JUNIOR: "Junior",
+  MIDDLE: "Middle",
+  SENIOR: "Senior",
+  LEAD: "Lead",
+  PRINCIPAL: "Principal",
+};
+
+const FORMAT_LABELS: Record<string, string> = {
+  OFFICE: "Офис",
+  HYBRID: "Гибрид",
+  REMOTE: "Удалённо",
 };
 
 interface Vacancy {
@@ -46,10 +60,17 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">
+            <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
             {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
           </Badge>
-          <Badge variant="secondary">{vacancy.grade}</Badge>
-          <Badge variant="secondary">{vacancy.workFormat}</Badge>
+          <Badge variant="secondary">
+            <GradeIcon className="text-current" />
+            {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+          </Badge>
+          <Badge variant="secondary">
+            <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
+            {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+          </Badge>
         </div>
 
         <VacancyOwnerActions vacancyId={vacancy.id} />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
+import { IconSettings } from "@tabler/icons-react";
 import { LayoutDashboard, Briefcase, Send, Settings } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
           >
             <span className="text-lg leading-none">R</span>
           </span>
-          <span className="hidden truncate text-lg sm:inline">Referi</span>
+          <span className="truncate text-lg">Referi</span>
         </Link>
 
         <DropdownMenu>
@@ -151,7 +152,10 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
                 <Link href="/dashboard">Обзор</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Настройки</Link>
+                <Link href="/dashboard/settings" className="flex items-center gap-2">
+                  <IconSettings className="size-4 shrink-0" aria-hidden />
+                  Настройки
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

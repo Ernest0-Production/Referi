@@ -3,12 +3,12 @@
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
-export function LoginButton() {
+export function LoginButton({ callbackUrl }: { callbackUrl: string }) {
   return (
     <Button
       type="button"
       className="bg-primary text-primary-foreground hover:bg-primary/90 w-full gap-3"
-      onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+      onClick={() => void signIn("github", { callbackUrl })}
     >
       <svg
         data-icon="inline-start"

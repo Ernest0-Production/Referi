@@ -1,5 +1,6 @@
 "use client";
 
+import { IconClockHour4, IconCoins } from "@tabler/icons-react";
 import { Search } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,6 +43,8 @@ export function VacancyListChrome({
   }
 
   const hideViewedOn = currentParams.hideViewed === "1";
+
+  const sortValue = currentParams.sort ?? "created_desc";
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,16 +93,31 @@ export function VacancyListChrome({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-4">
-          <Select
-            value={currentParams.sort ?? "created_desc"}
-            onValueChange={(v) => onApplyPatch({ sort: v || undefined })}
-          >
-            <SelectTrigger className="border-border bg-card h-9 w-[200px] rounded-lg">
+          <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>
+            <SelectTrigger className="border-border bg-card h-9 w-[min(100%,220px)] rounded-lg">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
-            <SelectContent sideOffset={4} align="start">
-              <SelectItem value="created_desc">Сначала новые</SelectItem>
-              <SelectItem value="salary_desc">По зарплате</SelectItem>
+            <SelectContent position="popper" sideOffset={4} align="start">
+              <SelectItem value="created_desc" textValue="Сначала новые">
+                <span className="flex items-center gap-2">
+                  <IconClockHour4
+                    className="text-muted-foreground size-4 shrink-0"
+                    stroke={1.75}
+                    aria-hidden
+                  />
+                  Сначала новые
+                </span>
+              </SelectItem>
+              <SelectItem value="salary_desc" textValue="По зарплате">
+                <span className="flex items-center gap-2">
+                  <IconCoins
+                    className="text-muted-foreground size-4 shrink-0"
+                    stroke={1.75}
+                    aria-hidden
+                  />
+                  По зарплате
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
 

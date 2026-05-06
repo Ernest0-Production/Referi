@@ -3,25 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import {
-  IconBrandAndroid,
-  IconBrandApple,
-  IconBrain,
-  IconBug,
-  IconBuildingSkyscraper,
-  IconCloudComputing,
-  IconCurrencyDollar,
-  IconCurrencyEuro,
-  IconCurrencyRubel,
-  IconDatabase,
-  IconDots,
-  IconHomeShare,
-  IconLayout,
-  IconServer,
-  IconShield,
-  IconStack2,
-  IconWorld,
-} from "@tabler/icons-react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -43,11 +24,21 @@ import {
   isVacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
 import {
+  GradeIcon,
+  SalaryCurrencyIcon,
+  SpecialtyIcon,
+  WorkFormatIcon,
+} from "@/components/vacancy/VacancyFieldIcons";
+import {
+  formatRuMoneyIntegerDisplay,
+  parseMoneyIntegerDigitsToNumber,
+  sanitizeMoneyIntegerDigits,
+} from "@/lib/moneyIntegerInput";
+import {
   clearVacancyCreateDraft,
   loadVacancyCreateDraft,
   saveVacancyCreateDraft,
 } from "@/lib/vacancyCreateDraftStorage";
-import { cn } from "@/lib/utils";
 
 const SPECIALTIES = [
   "FRONTEND",
@@ -60,7 +51,6 @@ const SPECIALTIES = [
   "DATA",
   "ML_AI",
   "SECURITY",
-  "OTHER",
 ] as const;
 
 const SPECIALTY_LABELS: Record<(typeof SPECIALTIES)[number], string> = {
@@ -74,9 +64,8 @@ const SPECIALTY_LABELS: Record<(typeof SPECIALTIES)[number], string> = {
   DATA: "Data",
   ML_AI: "ML / AI",
   SECURITY: "Security",
-  OTHER: "Другое",
 };
-const GRADES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"] as const;
+const GRADES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD"] as const;
 const FORMATS = ["OFFICE", "HYBRID", "REMOTE"] as const;
 
 const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
@@ -84,7 +73,6 @@ const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
   MIDDLE: "Middle",
   SENIOR: "Senior",
   LEAD: "Lead",
-  PRINCIPAL: "Principal",
 };
 
 const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
@@ -106,73 +94,6 @@ function snapReferrerBonusRublesFromKopecks(raw: string): number {
 function snapReferrerBonusRubles(rubles: number): number {
   const clamped = Math.min(REFERRER_BONUS_MAX_RUBLES, Math.max(0, rubles));
   return Math.round(clamped / REFERRER_BONUS_STEP_RUBLES) * REFERRER_BONUS_STEP_RUBLES;
-}
-
-const SELECT_TRIGGER_ICON = "text-muted-foreground size-4 shrink-0 pointer-events-none";
-
-function SpecialtyIcon({
-  specialty,
-  className,
-}: {
-  specialty: (typeof SPECIALTIES)[number];
-  className?: string;
-}) {
-  const c = cn(SELECT_TRIGGER_ICON, className);
-  switch (specialty) {
-    case "FRONTEND":
-      return <IconLayout className={c} aria-hidden />;
-    case "BACKEND":
-      return <IconServer className={c} aria-hidden />;
-    case "FULLSTACK":
-      return <IconStack2 className={c} aria-hidden />;
-    case "IOS_MOBILE":
-      return <IconBrandApple className={c} aria-hidden />;
-    case "ANDROID_MOBILE":
-      return <IconBrandAndroid className={c} aria-hidden />;
-    case "DEVOPS":
-      return <IconCloudComputing className={c} aria-hidden />;
-    case "QA":
-      return <IconBug className={c} aria-hidden />;
-    case "DATA":
-      return <IconDatabase className={c} aria-hidden />;
-    case "ML_AI":
-      return <IconBrain className={c} aria-hidden />;
-    case "SECURITY":
-      return <IconShield className={c} aria-hidden />;
-    default:
-      return <IconDots className={c} aria-hidden />;
-  }
-}
-
-function WorkFormatIcon({
-  format,
-  className,
-}: {
-  format: (typeof FORMATS)[number];
-  className?: string;
-}) {
-  const c = cn(SELECT_TRIGGER_ICON, className);
-  switch (format) {
-    case "OFFICE":
-      return <IconBuildingSkyscraper className={c} aria-hidden />;
-    case "HYBRID":
-      return <IconHomeShare className={c} aria-hidden />;
-    case "REMOTE":
-      return <IconWorld className={c} aria-hidden />;
-  }
-}
-
-function SalaryCurrencyIcon({
-  code,
-  className,
-}: {
-  code: VacancySalaryCurrency;
-  className?: string;
-}) {
-  const c = cn(SELECT_TRIGGER_ICON, className);
-  if (code === "RUB") return <IconCurrencyRubel className={c} aria-hidden />;
-  if (code === "USD") return <IconCurrencyDollar className={c} aria-hidden />;
-  return <IconCurrencyEuro className={c} aria-hidden />;
 }
 
 export type EditVacancyFormVacancy = {
@@ -207,11 +128,11 @@ function initialFormState(
   if (mode === "edit" && vacancy) {
     const fromRub =
       vacancy.salaryFromKopecks != null && vacancy.salaryFromKopecks !== ""
-        ? String(Number(vacancy.salaryFromKopecks) / 100)
+        ? String(Math.round(Number(vacancy.salaryFromKopecks) / 100))
         : "";
     const toRub =
       vacancy.salaryToKopecks != null && vacancy.salaryToKopecks !== ""
-        ? String(Number(vacancy.salaryToKopecks) / 100)
+        ? String(Math.round(Number(vacancy.salaryToKopecks) / 100))
         : "";
     return {
       title: vacancy.title,
@@ -242,20 +163,14 @@ function initialFormState(
 
 type VacancyFormState = ReturnType<typeof initialFormState>;
 
-function parseSalaryInput(raw: string): number | null {
-  const t = raw.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
-  return n;
-}
-
 /** Сообщение об ошибке или null, если всё ок. */
 function validateSalaryRange(fromRaw: string, toRaw: string): string | null {
-  const from = parseSalaryInput(fromRaw);
-  const to = parseSalaryInput(toRaw);
-  const fromTouched = fromRaw.trim() !== "";
-  const toTouched = toRaw.trim() !== "";
+  const fromDigits = sanitizeMoneyIntegerDigits(fromRaw);
+  const toDigits = sanitizeMoneyIntegerDigits(toRaw);
+  const from = parseMoneyIntegerDigitsToNumber(fromDigits);
+  const to = parseMoneyIntegerDigitsToNumber(toDigits);
+  const fromTouched = fromDigits !== "";
+  const toTouched = toDigits !== "";
 
   if (fromTouched && from === null) {
     return "В поле «Зарплата от» укажите целое неотрицательное число.";
@@ -424,8 +339,8 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       }
     }
 
-    const fromTrim = form.salaryFrom.trim();
-    const toTrim = form.salaryTo.trim();
+    const fromDigits = sanitizeMoneyIntegerDigits(form.salaryFrom);
+    const toDigits = sanitizeMoneyIntegerDigits(form.salaryTo);
 
     const payload = {
       title: form.title,
@@ -434,8 +349,8 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       grade: form.grade,
       workFormat: form.workFormat,
       salaryCurrency: form.salaryCurrency,
-      salaryFrom: fromTrim === "" ? undefined : Number(fromTrim),
-      salaryTo: toTrim === "" ? undefined : Number(toTrim),
+      salaryFrom: fromDigits === "" ? undefined : Number(BigInt(fromDigits)),
+      salaryTo: toDigits === "" ? undefined : Number(BigInt(toDigits)),
       description: form.description,
       rewardKopecks: form.referrerBonusRubles * 100,
     };
@@ -510,13 +425,17 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               onValueChange={(v) => setForm((f) => ({ ...f, grade: v as (typeof GRADES)[number] }))}
             >
               <SelectTrigger className="w-full *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:justify-center">
+                <GradeIcon />
                 <SelectValue className="min-w-0">{GRADE_LABELS[form.grade]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {GRADES.map((g) => (
                     <SelectItem key={g} value={g} textValue={GRADE_LABELS[g]}>
-                      {GRADE_LABELS[g]}
+                      <span className="flex items-center gap-2">
+                        <GradeIcon className="size-4" />
+                        {GRADE_LABELS[g]}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -551,32 +470,44 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           </Field>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
           <Field className="min-w-0 flex-1">
             <FieldLabel htmlFor="vac-sal-from">Зарплата от</FieldLabel>
             <Input
               id="vac-sal-from"
-              type="number"
-              min={0}
-              step={1}
-              value={form.salaryFrom}
-              onChange={(e) => setForm((f) => ({ ...f, salaryFrom: e.target.value }))}
-              placeholder="100000"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={formatRuMoneyIntegerDisplay(form.salaryFrom)}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  salaryFrom: sanitizeMoneyIntegerDigits(e.target.value),
+                }))
+              }
+              placeholder="100 000"
+              className="tabular-nums"
             />
           </Field>
           <Field className="min-w-0 flex-1">
             <FieldLabel htmlFor="vac-sal-to">Зарплата до</FieldLabel>
             <Input
               id="vac-sal-to"
-              type="number"
-              min={0}
-              step={1}
-              value={form.salaryTo}
-              onChange={(e) => setForm((f) => ({ ...f, salaryTo: e.target.value }))}
-              placeholder="200000"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={formatRuMoneyIntegerDisplay(form.salaryTo)}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  salaryTo: sanitizeMoneyIntegerDigits(e.target.value),
+                }))
+              }
+              placeholder="200 000"
+              className="tabular-nums"
             />
           </Field>
-          <Field className="w-full sm:w-fit sm:shrink-0">
+          <Field className="w-full min-w-0 shrink-0 sm:w-fit">
             <FieldLabel>Валюта зарплаты</FieldLabel>
             <Select
               value={form.salaryCurrency}
@@ -584,7 +515,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
               }
             >
-              <SelectTrigger className="!w-fit max-w-full font-medium tabular-nums">
+              <SelectTrigger className="h-8 max-w-full min-w-0 gap-1.5 font-medium tabular-nums">
                 <SalaryCurrencyIcon code={form.salaryCurrency} />
                 <SelectValue className="min-w-0">{form.salaryCurrency}</SelectValue>
               </SelectTrigger>
