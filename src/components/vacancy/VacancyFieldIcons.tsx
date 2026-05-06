@@ -16,6 +16,7 @@ import {
   IconLayout,
   IconServer,
   IconShield,
+  IconSend,
   IconStack2,
   IconTopologyStar3,
   IconWorld,
@@ -82,4 +83,8 @@ export function SalaryCurrencyIcon({
 
 export function GradeIcon({ className }: { className?: string }) {
   return <IconTopologyStar3 className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />;
+}
+
+export function ApplicationCountIcon({ className }: { className?: string }) {
+  return <IconSend className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />;
 }

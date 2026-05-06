@@ -4,6 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange, type VacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
+import {
+  ApplicationCountIcon,
+  GradeIcon,
+  SalaryCurrencyIcon,
+  SpecialtyIcon,
+  WorkFormatIcon,
+} from "@/components/vacancy/VacancyFieldIcons";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -79,7 +86,7 @@ export function VacancyCard({
   return (
     <Link href={href} className="group block transition-shadow hover:shadow-md">
       <Card className="border-border bg-card overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
-        <CardHeader className="flex flex-col gap-3 space-y-0 pt-5 pb-3">
+        <CardHeader className="flex flex-col gap-3 space-y-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <span className="text-muted-foreground truncate text-sm font-medium">
@@ -87,9 +94,11 @@ export function VacancyCard({
               </span>
               <div className="flex flex-wrap gap-1.5">
                 <Badge variant="secondary" className="font-normal">
+                  <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
                   {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
                 </Badge>
                 <Badge variant="secondary" className="font-normal">
+                  <GradeIcon className="text-current" />
                   {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
                 </Badge>
                 {hasActiveSeekerApplication ? (
@@ -113,17 +122,20 @@ export function VacancyCard({
             {vacancy.title}
           </h3>
         </CardHeader>
-        <CardContent className="pt-0 pb-4">
+        <CardContent>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="font-normal">
+              <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
               {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
             </Badge>
             {salary ? (
               <Badge variant="outline" className="font-normal">
+                <SalaryCurrencyIcon code={vacancy.salaryCurrency} className="text-current" />
                 {salary}
               </Badge>
             ) : null}
             <Badge variant="outline" className="font-normal">
+              <ApplicationCountIcon className="text-current" />
               {formatApplicationCountLabel(vacancy.applicationCount)}
             </Badge>
             {reward > 0 ? (
@@ -133,6 +145,7 @@ export function VacancyCard({
                   "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200",
                 )}
               >
+                <SalaryCurrencyIcon code="RUB" className="text-current" />
                 Бонус:{" "}
                 {new Intl.NumberFormat("ru-RU", {
                   style: "currency",

@@ -11,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
+import {
+  GradeIcon,
+  SpecialtyIcon,
+  WorkFormatIcon,
+  ApplicationCountIcon,
+} from "@/components/vacancy/VacancyFieldIcons";
 
 const SPECIALTY_LABELS: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -87,22 +93,23 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               <CardTitle className="text-2xl">{vacancy.title}</CardTitle>
               <p className="text-muted-foreground text-sm">{vacancy.companyName}</p>
             </div>
-            {reward > 0 ? (
-              <Badge variant="secondary" className="shrink-0 text-sm font-medium">
-                Бонус: {fmtRub(reward)}
-              </Badge>
-            ) : null}
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">
+              <Badge variant="outline" className="font-normal">
+                <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
                 {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
               </Badge>
-              <Badge variant="secondary">{GRADE_LABELS[vacancy.grade] ?? vacancy.grade}</Badge>
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="font-normal">
+                <GradeIcon className="text-current" />
+                {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+              </Badge>
+              <Badge variant="secondary" className="font-normal">
+                <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
                 {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
               </Badge>
               <Badge variant="outline" className="font-normal">
+                <ApplicationCountIcon className="text-current" />
                 {formatApplicationCountLabel(vacancy.applicationCount)}
               </Badge>
             </div>
@@ -111,6 +118,13 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               <div className="border-border bg-muted/50 rounded-xl border px-4 py-3">
                 <p className="text-muted-foreground text-sm">Зарплата</p>
                 <p className="text-foreground font-semibold">{salaryLine}</p>
+              </div>
+            ) : null}
+
+            {reward > 0 ? (
+              <div className="border-border bg-muted/50 rounded-xl border px-4 py-3">
+                <p className="text-muted-foreground text-sm">Бонус</p>
+                <p className="text-foreground font-semibold">{fmtRub(reward)}</p>
               </div>
             ) : null}
 
@@ -130,14 +144,14 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                   redirectAfterDelete="/"
                 />
               ) : (
-                <Button asChild className="w-full sm:w-auto">
+                <Button asChild size="lg" className="w-full sm:w-auto">
                   <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
                     Откликнуться
                   </Link>
                 </Button>
               )
             ) : (
-              <Button asChild className="w-full sm:w-auto">
+              <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>
                   Войти чтобы откликнуться
                 </Link>
