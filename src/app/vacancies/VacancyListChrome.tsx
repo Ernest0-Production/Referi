@@ -95,22 +95,7 @@ export function VacancyListChrome({
         <div className="flex flex-wrap items-center gap-4">
           <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>
             <SelectTrigger className="border-border bg-card h-9 w-[min(100%,220px)] rounded-lg">
-              <span className="flex min-w-0 flex-1 items-center gap-2">
-                {sortValue === "salary_desc" ? (
-                  <IconCoins
-                    className="text-muted-foreground size-4 shrink-0"
-                    stroke={1.75}
-                    aria-hidden
-                  />
-                ) : (
-                  <IconClockHour4
-                    className="text-muted-foreground size-4 shrink-0"
-                    stroke={1.75}
-                    aria-hidden
-                  />
-                )}
-                <SelectValue placeholder="Сортировка" />
-              </span>
+              <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} align="start">
               <SelectItem value="created_desc" textValue="Сначала новые">
