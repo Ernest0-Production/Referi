@@ -216,7 +216,8 @@ export const vacanciesRouter = router({
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
 
       const isMine = ctx.session?.user?.id === vacancy.referrerId;
-      const { referrerId: _referrerId, ...vacancyPublic } = vacancy;
+      const { referrerId, ...vacancyPublic } = vacancy;
+      void referrerId;
 
       return { ...vacancyWithApplicationCount(vacancyPublic), isMine };
     }),

@@ -27,6 +27,7 @@ import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -136,7 +137,7 @@ function VacancyFilterSalaryBlock({
               commit(salaryFrom.trim() || undefined, c);
             }}
           >
-            <SelectTrigger className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-9 w-[4.75rem] shrink-0 gap-1 rounded-lg px-2 font-medium tabular-nums">
+            <SelectTrigger className="h-9 w-[4.75rem] shrink-0 gap-1 rounded-lg border-0 bg-transparent px-2 font-medium tabular-nums shadow-none focus-visible:ring-0">
               <SelectValue placeholder="…" />
             </SelectTrigger>
             <SelectContent position="popper">

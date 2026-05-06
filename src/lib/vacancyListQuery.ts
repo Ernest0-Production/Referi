@@ -135,16 +135,15 @@ export function vacancyListFlatToSearchParams(
   return q;
 }
 
-export function peelOpenVacancyPresetSaveFromSearchParamsInput(
-  raw: VacancyListSearchParamsInput,
-): { params: VacancyListSearchParamsInput; openVacancyPresetSave: boolean } {
+export function peelOpenVacancyPresetSaveFromSearchParamsInput(raw: VacancyListSearchParamsInput): {
+  params: VacancyListSearchParamsInput;
+  openVacancyPresetSave: boolean;
+} {
   const { openVacancyPresetSave: rawFlag, ...rest } = raw;
   let openVacancyPresetSave = false;
   if (rawFlag !== undefined) {
     const s =
-      typeof rawFlag === "string"
-        ? rawFlag.trim()
-        : rawFlag.filter(Boolean).join(",").trim();
+      typeof rawFlag === "string" ? rawFlag.trim() : rawFlag.filter(Boolean).join(",").trim();
     if (s === "1" || s.toLowerCase() === "true" || s.toLowerCase() === "yes") {
       openVacancyPresetSave = true;
     }
