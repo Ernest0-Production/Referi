@@ -101,7 +101,9 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
               <Link href="/">Каталог вакансий</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={userId ? "/dashboard/vacancy" : "/vacancies/new"}>Разместить вакансию</Link>
+              <Link href={userId ? "/dashboard/vacancy" : "/vacancies/new"}>
+                Разместить вакансию
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

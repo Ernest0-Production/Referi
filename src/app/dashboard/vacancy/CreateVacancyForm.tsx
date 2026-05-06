@@ -347,7 +347,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     const salaryCurrency = isVacancySalaryCurrency(draft.salaryCurrency)
       ? draft.salaryCurrency
       : base.salaryCurrency;
-    setForm({
+    const next: VacancyFormState = {
       ...base,
       title: draft.title,
       companyName: draft.companyName,
@@ -359,6 +359,9 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       salaryTo: draft.salaryTo,
       description: draft.description,
       referrerBonusRubles: snapReferrerBonusRubles(draft.referrerBonusRubles),
+    };
+    queueMicrotask(() => {
+      setForm(next);
     });
   }, [mode]);
 
@@ -388,9 +391,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
   const pending = mode === "edit" ? update.isPending : create.isPending;
   const submitBlocked =
-    pending ||
-    authRedirectPending ||
-    (mode === "create" && sessionStatus === "loading");
+    pending || authRedirectPending || (mode === "create" && sessionStatus === "loading");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

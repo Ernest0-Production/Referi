@@ -41,7 +41,8 @@ export default async function NewVacancyPage() {
                   <Alert>
                     <AlertTitle>Нет попыток</AlertTitle>
                     <AlertDescription>
-                      Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60 дней.
+                      Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60
+                      дней.
                     </AlertDescription>
                   </Alert>
                 )}
