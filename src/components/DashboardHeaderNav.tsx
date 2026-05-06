@@ -84,28 +84,6 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
           <span className="truncate text-lg">Referi</span>
         </Link>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="secondary"
-              className="hidden h-9 gap-1.5 rounded-lg px-3 font-medium sm:inline-flex"
-            >
-              Вакансии
-              <span className="text-muted-foreground" aria-hidden>
-                ▾
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuItem asChild>
-              <Link href="/">Каталог вакансий</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/vacancy">Разместить вакансию</Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <div className="hidden items-center gap-1 md:flex">
           <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href={primaryNav.href}>

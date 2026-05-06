@@ -6,7 +6,14 @@ import { signIn, useSession } from "next-auth/react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -83,6 +90,7 @@ const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
 
 const REFERRER_BONUS_MAX_RUBLES = 100_000;
 const REFERRER_BONUS_STEP_RUBLES = 10_000;
+const VACANCY_DESCRIPTION_MAX_LEN = 3000;
 
 function snapReferrerBonusRublesFromKopecks(raw: string): number {
   const kopecks = BigInt(raw || "0");
@@ -206,7 +214,7 @@ function isVacancyFormDirty(current: VacancyFormState, baseline: VacancyFormStat
 }
 
 type CreateVacancyFormProps =
-  | { mode?: "create" }
+  | { mode?: "create"; onDirtyChange?: (dirty: boolean) => void }
   | {
       mode: "edit";
       vacancy: EditVacancyFormVacancy;
@@ -222,7 +230,7 @@ function isEditVacancyFormProps(
 export function CreateVacancyForm(props: CreateVacancyFormProps) {
   const mode = isEditVacancyFormProps(props) ? "edit" : "create";
   const vacancy = isEditVacancyFormProps(props) ? props.vacancy : undefined;
-  const onDirtyChange = isEditVacancyFormProps(props) ? props.onDirtyChange : undefined;
+  const onDirtyChange = props.onDirtyChange;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -243,10 +251,17 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- пересчёт только при смене вакансии (id)
   }, [mode, vacancy?.id]);
 
+  const createBaseline = useMemo(() => initialFormState("create"), []);
+
   useEffect(() => {
-    if (!editBaseline || !onDirtyChange) return;
-    onDirtyChange(isVacancyFormDirty(form, editBaseline));
-  }, [form, editBaseline, onDirtyChange]);
+    if (!onDirtyChange) return;
+    if (mode === "edit") {
+      if (!editBaseline) return;
+      onDirtyChange(isVacancyFormDirty(form, editBaseline));
+      return;
+    }
+    onDirtyChange(isVacancyFormDirty(form, createBaseline));
+  }, [form, mode, editBaseline, createBaseline, onDirtyChange]);
 
   useEffect(() => {
     if (mode !== "create" || draftRestoredRef.current) return;
@@ -351,8 +366,10 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       setDescriptionError("Описание должно содержать минимум 10 символов.");
       return;
     }
-    if (descTrim.length > 3000) {
-      setDescriptionError("Не более 3000 символов.");
+    if (descTrim.length > VACANCY_DESCRIPTION_MAX_LEN) {
+      setDescriptionError(
+        `Не более ${VACANCY_DESCRIPTION_MAX_LEN.toLocaleString("ru-RU")} символов.`,
+      );
       return;
     }
 
@@ -410,19 +427,18 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               maxLength={200}
               value={form.title}
               aria-invalid={titleError ? true : undefined}
-              aria-describedby="vac-title-desc"
+              aria-describedby={titleError ? "vac-title-desc" : undefined}
               onChange={(e) => {
                 setTitleError(null);
                 setForm((f) => ({ ...f, title: e.target.value }));
               }}
               placeholder="Senior Backend Engineer"
             />
-            <FieldDescription
-              id="vac-title-desc"
-              className={titleError ? "text-destructive" : undefined}
-            >
-              {titleError ?? "Не менее 3 символов, не более 200."}
-            </FieldDescription>
+            {titleError ? (
+              <FieldDescription id="vac-title-desc" className="text-destructive">
+                {titleError}
+              </FieldDescription>
+            ) : null}
           </Field>
           <Field data-invalid={companyError ? "true" : undefined}>
             <FieldLabel htmlFor="vac-company">Компания *</FieldLabel>
@@ -431,19 +447,18 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               maxLength={200}
               value={form.companyName}
               aria-invalid={companyError ? true : undefined}
-              aria-describedby="vac-company-desc"
+              aria-describedby={companyError ? "vac-company-desc" : undefined}
               onChange={(e) => {
                 setCompanyError(null);
                 setForm((f) => ({ ...f, companyName: e.target.value }));
               }}
               placeholder="ООО Пример"
             />
-            <FieldDescription
-              id="vac-company-desc"
-              className={companyError ? "text-destructive" : undefined}
-            >
-              {companyError ?? "Не менее 2 символов, не более 200."}
-            </FieldDescription>
+            {companyError ? (
+              <FieldDescription id="vac-company-desc" className="text-destructive">
+                {companyError}
+              </FieldDescription>
+            ) : null}
           </Field>
         </div>
 
@@ -526,21 +541,22 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           </Field>
         </div>
 
-        <div
+        <FieldSet
           className="flex min-w-0 flex-col gap-2"
           data-invalid={salaryError ? "true" : undefined}
         >
+          <FieldLegend>Зарплата</FieldLegend>
           <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
             <Field className="min-w-0 flex-1">
-              <FieldLabel htmlFor="vac-sal-from">Зарплата от</FieldLabel>
               <Input
                 id="vac-sal-from"
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
+                aria-label="Зарплата от"
                 value={formatRuMoneyIntegerDisplay(form.salaryFrom)}
                 aria-invalid={salaryError ? true : undefined}
-                aria-describedby="vac-salary-desc"
+                aria-describedby={salaryError ? "vac-salary-desc" : undefined}
                 onChange={(e) => {
                   setSalaryError(null);
                   setForm((f) => ({
@@ -553,15 +569,15 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               />
             </Field>
             <Field className="min-w-0 flex-1">
-              <FieldLabel htmlFor="vac-sal-to">Зарплата до</FieldLabel>
               <Input
                 id="vac-sal-to"
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
+                aria-label="Зарплата до"
                 value={formatRuMoneyIntegerDisplay(form.salaryTo)}
                 aria-invalid={salaryError ? true : undefined}
-                aria-describedby="vac-salary-desc"
+                aria-describedby={salaryError ? "vac-salary-desc" : undefined}
                 onChange={(e) => {
                   setSalaryError(null);
                   setForm((f) => ({
@@ -574,14 +590,19 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               />
             </Field>
             <Field className="w-full min-w-0 shrink-0 sm:w-fit">
-              <FieldLabel>Валюта зарплаты</FieldLabel>
               <Select
                 value={form.salaryCurrency}
                 onValueChange={(v) =>
                   setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
                 }
               >
-                <SelectTrigger className="h-8 max-w-full min-w-0 gap-1.5 font-medium tabular-nums">
+                <SelectTrigger
+                  id="vac-sal-currency"
+                  aria-label="Валюта зарплаты"
+                  aria-invalid={salaryError ? true : undefined}
+                  aria-describedby={salaryError ? "vac-salary-desc" : undefined}
+                  className="h-8 max-w-full min-w-0 gap-1.5 font-medium tabular-nums"
+                >
                   <SalaryCurrencyIcon code={form.salaryCurrency} />
                   <SelectValue className="min-w-0">{form.salaryCurrency}</SelectValue>
                 </SelectTrigger>
@@ -600,14 +621,12 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               </Select>
             </Field>
           </div>
-          <FieldDescription
-            id="vac-salary-desc"
-            className={salaryError ? "text-destructive" : undefined}
-          >
-            {salaryError ??
-              "Целые рубли без копеек. Если указаны оба значения, «от» должно быть меньше «до»."}
-          </FieldDescription>
-        </div>
+          {salaryError ? (
+            <FieldDescription id="vac-salary-desc" className="text-destructive">
+              {salaryError}
+            </FieldDescription>
+          ) : null}
+        </FieldSet>
 
         <Field>
           <FieldLabel htmlFor="vac-reward">
@@ -656,26 +675,39 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
         <Field data-invalid={descriptionError ? "true" : undefined}>
           <FieldLabel htmlFor="vac-desc">Описание *</FieldLabel>
-          <Textarea
-            id="vac-desc"
-            maxLength={3000}
-            rows={18}
-            className="min-h-48"
-            value={form.description}
-            aria-invalid={descriptionError ? true : undefined}
-            aria-describedby="vac-desc-desc"
-            onChange={(e) => {
-              setDescriptionError(null);
-              setForm((f) => ({ ...f, description: e.target.value }));
-            }}
-            placeholder="Расскажите о вакансии, требованиях и условиях работы"
-          />
-          <FieldDescription
-            id="vac-desc-desc"
-            className={descriptionError ? "text-destructive" : undefined}
-          >
-            {descriptionError ?? "Не менее 10 символов, не более 3000."}
-          </FieldDescription>
+          <div className="relative">
+            <Textarea
+              id="vac-desc"
+              maxLength={VACANCY_DESCRIPTION_MAX_LEN}
+              rows={18}
+              className="min-h-48 pb-9"
+              value={form.description}
+              aria-invalid={descriptionError ? true : undefined}
+              aria-describedby={
+                [descriptionError ? "vac-desc-desc" : null, "vac-desc-counter"]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
+              onChange={(e) => {
+                setDescriptionError(null);
+                setForm((f) => ({ ...f, description: e.target.value }));
+              }}
+              placeholder="Расскажите о вакансии, требованиях и условиях работы"
+            />
+            <span
+              id="vac-desc-counter"
+              className="text-muted-foreground pointer-events-none absolute right-3 bottom-2 text-xs tabular-nums"
+              aria-live="polite"
+            >
+              Осталось{" "}
+              {(VACANCY_DESCRIPTION_MAX_LEN - form.description.length).toLocaleString("ru-RU")}
+            </span>
+          </div>
+          {descriptionError ? (
+            <FieldDescription id="vac-desc-desc" className="text-destructive">
+              {descriptionError}
+            </FieldDescription>
+          ) : null}
         </Field>
 
         {submitError ? (
