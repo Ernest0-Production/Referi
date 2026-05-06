@@ -44,6 +44,15 @@ test.describe("Vacancy creation flow (requires auth)", () => {
   });
 });
 
+test.describe("Public vacancy compose page", () => {
+  test("guest can open compose form without redirect to login", async ({ page }) => {
+    await page.goto("/vacancies/new");
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.getByRole("heading", { name: "Разместить вакансию" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Опубликовать вакансию" })).toBeVisible();
+  });
+});
+
 test.describe("Vacancy detail page", () => {
   test("non-existent vacancy shows 404 or redirects", async ({ page }) => {
     const response = await page.goto("/vacancies/00000000-0000-0000-0000-000000000000");

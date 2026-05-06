@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import {
   IconBrandAndroid,
   IconBrandApple,
@@ -39,7 +40,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
+  isVacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
+import {
+  clearVacancyCreateDraft,
+  loadVacancyCreateDraft,
+  saveVacancyCreateDraft,
+} from "@/lib/vacancyCreateDraftStorage";
 import { cn } from "@/lib/utils";
 
 const SPECIALTIES = [
@@ -92,6 +99,11 @@ const REFERRER_BONUS_STEP_RUBLES = 10_000;
 function snapReferrerBonusRublesFromKopecks(raw: string): number {
   const kopecks = BigInt(raw || "0");
   const rubles = Number(kopecks / 100n);
+  const clamped = Math.min(REFERRER_BONUS_MAX_RUBLES, Math.max(0, rubles));
+  return Math.round(clamped / REFERRER_BONUS_STEP_RUBLES) * REFERRER_BONUS_STEP_RUBLES;
+}
+
+function snapReferrerBonusRubles(rubles: number): number {
   const clamped = Math.min(REFERRER_BONUS_MAX_RUBLES, Math.max(0, rubles));
   return Math.round(clamped / REFERRER_BONUS_STEP_RUBLES) * REFERRER_BONUS_STEP_RUBLES;
 }
@@ -298,8 +310,12 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
   const onDirtyChange = isEditVacancyFormProps(props) ? props.onDirtyChange : undefined;
 
   const router = useRouter();
+  const pathname = usePathname();
+  const { data: session, status: sessionStatus } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(() => initialFormState(mode, vacancy));
+  const [authRedirectPending, setAuthRedirectPending] = useState(false);
+  const draftRestoredRef = useRef(false);
 
   const editBaseline = useMemo((): VacancyFormState | null => {
     if (!vacancy || mode !== "edit") return null;
@@ -313,9 +329,47 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     onDirtyChange(isVacancyFormDirty(form, editBaseline));
   }, [form, editBaseline, onDirtyChange]);
 
+  useEffect(() => {
+    if (mode !== "create" || draftRestoredRef.current) return;
+    const draft = loadVacancyCreateDraft();
+    if (!draft) return;
+    draftRestoredRef.current = true;
+    const base = initialFormState("create");
+    const specialty = (SPECIALTIES as readonly string[]).includes(draft.specialty)
+      ? (draft.specialty as (typeof SPECIALTIES)[number])
+      : base.specialty;
+    const grade = (GRADES as readonly string[]).includes(draft.grade)
+      ? (draft.grade as (typeof GRADES)[number])
+      : base.grade;
+    const workFormat = (FORMATS as readonly string[]).includes(draft.workFormat)
+      ? (draft.workFormat as (typeof FORMATS)[number])
+      : base.workFormat;
+    const salaryCurrency = isVacancySalaryCurrency(draft.salaryCurrency)
+      ? draft.salaryCurrency
+      : base.salaryCurrency;
+    setForm({
+      ...base,
+      title: draft.title,
+      companyName: draft.companyName,
+      specialty,
+      grade,
+      workFormat,
+      salaryCurrency,
+      salaryFrom: draft.salaryFrom,
+      salaryTo: draft.salaryTo,
+      description: draft.description,
+      referrerBonusRubles: snapReferrerBonusRubles(draft.referrerBonusRubles),
+    });
+  }, [mode]);
+
   const create = trpcReact.vacancies.create.useMutation({
     onSuccess() {
-      router.refresh();
+      clearVacancyCreateDraft();
+      if (pathname === "/vacancies/new") {
+        router.replace("/dashboard/vacancy");
+      } else {
+        router.refresh();
+      }
     },
     onError(err) {
       setError(err.message);
@@ -333,6 +387,10 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
   });
 
   const pending = mode === "edit" ? update.isPending : create.isPending;
+  const submitBlocked =
+    pending ||
+    authRedirectPending ||
+    (mode === "create" && sessionStatus === "loading");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -342,6 +400,27 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     if (salaryErr) {
       setError(salaryErr);
       return;
+    }
+
+    if (mode === "create") {
+      if (sessionStatus === "loading") return;
+      if (!session?.user) {
+        saveVacancyCreateDraft({
+          title: form.title,
+          companyName: form.companyName,
+          specialty: form.specialty,
+          grade: form.grade,
+          workFormat: form.workFormat,
+          salaryCurrency: form.salaryCurrency,
+          salaryFrom: form.salaryFrom,
+          salaryTo: form.salaryTo,
+          description: form.description,
+          referrerBonusRubles: form.referrerBonusRubles,
+        });
+        setAuthRedirectPending(true);
+        void signIn("github", { callbackUrl: "/dashboard/vacancy" });
+        return;
+      }
     }
 
     const fromTrim = form.salaryFrom.trim();
@@ -593,16 +672,18 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
         <Button
           type="submit"
           size="lg"
-          disabled={pending}
+          disabled={submitBlocked}
           className="h-11 w-full text-base font-semibold"
         >
-          {pending
-            ? mode === "edit"
-              ? "Сохранение…"
-              : "Публикация…"
-            : mode === "edit"
-              ? "Сохранить"
-              : "Опубликовать вакансию"}
+          {authRedirectPending
+            ? "Переход к входу…"
+            : pending
+              ? mode === "edit"
+                ? "Сохранение…"
+                : "Публикация…"
+              : mode === "edit"
+                ? "Сохранить"
+                : "Опубликовать вакансию"}
         </Button>
       </FieldGroup>
     </form>
