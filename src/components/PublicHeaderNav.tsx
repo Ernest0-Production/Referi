@@ -1,17 +1,21 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
+import { IconSettings } from "@tabler/icons-react";
 import { LayoutDashboard, Briefcase, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
+import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -127,20 +131,39 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <ThemeToggle />
         {session?.user ? (
-          <Button variant="ghost" size="icon" className="size-9 rounded-full" asChild>
-            <Link
-              href="/dashboard"
-              title={sessionDisplayLabel(session.user)}
-              aria-label="Перейти в дашборд"
-            >
-              <Avatar className="size-8">
-                {avatarUrl ? <AvatarImage src={avatarUrl} alt={profileLabel} /> : null}
-                <AvatarFallback className="text-xs font-medium">
-                  {initialsFromLabel(profileLabel)}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 rounded-full"
+                title={sessionDisplayLabel(session.user)}
+                aria-label="Меню профиля"
+              >
+                <Avatar className="size-8">
+                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={profileLabel} /> : null}
+                  <AvatarFallback className="text-xs font-medium">
+                    {initialsFromLabel(profileLabel)}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard">Обзор</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings" className="flex items-center gap-2">
+                    <IconSettings className="size-4 shrink-0" aria-hidden />
+                    Настройки
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <SignOutMenuItem />
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <Button asChild variant="default" size="sm" className="h-9">
             <Link href="/login">Войти</Link>
