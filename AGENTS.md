@@ -27,3 +27,36 @@
 - shadcn `**Select`**: на `**SelectContent`** — `**position="popper"**` (не дефолт `**item-aligned**` без явной причины), чтобы списки не обрезались в сайдбарах, диалогах и скроллящихся контейнерах.
 - Шапки публичного кабинета и админки (`[PublicHeaderNav](src/components/PublicHeaderNav.tsx)`, `[DashboardHeaderNav](src/components/DashboardHeaderNav.tsx)`, `[AdminHeaderNav](src/components/AdminHeaderNav.tsx)`): аватар — `**AvatarImage**` с URL из `**userAvatarImageUrl**` (`[src/lib/userAvatarUrl.ts](src/lib/userAvatarUrl.ts)`): приоритет `**session.user.image**` (в JWT сохраняется как `**token.picture**` из OAuth в колбэках `[src/lib/auth.ts](src/lib/auth.ts)`), иначе `**https://github.com/{githubLogin}.png**`; `**AvatarFallback**` — инициалы.
 - Окружение для прикладного кода валидируется в `src/env.ts` (Zod): обязательные переменные задаются явно, без «тихих» подстановок в модулях; при несоответствии контракту процесс падает при старте (fail-fast). Полный перечень и комментарии — в `.env.example` и README. Для деплоя на **Vercel**: переменные из `.env.example` нужно задать в панели проекта; **middleware** и **`src/proxy.ts`** попадают в **Edge** — не тянуть туда полный NextAuth-конфиг с Prisma/`pg` (отдельный лёгкий конфиг для Edge/proxy, полный — в route handlers); API-роуты с Prisma, шифрованием и Node-only зависимостями — `export const runtime = "nodejs"` в соответствующих `route.ts`. Классическое **GitHub OAuth App** задаёт **один** Authorization callback URL; для localhost и облака обычно **два приложения** с разными `GITHUB_ID` / `GITHUB_SECRET`. Если `node_modules/.bin/next` или `tsc` оказались обычными файлами вместо симлинков, обычно помогает `rm -rf node_modules && npm ci`.
+
+## Cursor Cloud specific instructions
+
+### Infrastructure services
+
+PostgreSQL and Redis run via Docker Compose (see `docker-compose.yml`). Start them before the app:
+
+```
+docker compose up -d db redis
+```
+
+Ports: Postgres **5433**, Redis **6380** (non-standard to avoid conflicts).
+
+### Running the application
+
+Standard dev commands from `README.md` apply:
+
+```
+npm run dev          # Next.js dev server on :3000
+npm run lint         # ESLint
+npm run typecheck    # tsc --noEmit
+npm test             # Vitest (unit/integration)
+```
+
+### Gotchas
+
+- The vacancy catalog is served at the root path `/` (not `/vacancies`). The route `/vacancies/[id]` is the vacancy detail page.
+- `npm ci` runs `prisma generate` via `postinstall` — no separate generate step needed.
+- After schema changes use `npx prisma migrate deploy` (or `npx prisma migrate dev` for new migrations). In agent mode, prefer reset: `npx prisma migrate reset --force`.
+- The `.env` file must exist (copy from `.env.example`). All vars from `.env.example` are validated at startup; missing ones crash the process.
+- GitHub OAuth (`GITHUB_ID`/`GITHUB_SECRET`) is required for login flows. Without valid credentials, the app still runs but login won't complete.
+- `ENABLE_BULLMQ_WORKERS=false` (default) — workers don't start; Redis URL must still be set and Redis reachable.
+- Docker daemon in Cloud Agent VMs requires `fuse-overlayfs` storage driver and `iptables-legacy`.
