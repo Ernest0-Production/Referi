@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconFilter } from "@tabler/icons-react";
+import { IconFilter, IconStack2 } from "@tabler/icons-react";
 import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import {
   flatParamsForPresetSave,
@@ -22,6 +22,7 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
+import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/moneyIntegerInput";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,10 +51,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import {
+  GradeIcon,
+  SalaryCurrencyIcon,
+  SpecialtyIcon,
+  WorkFormatIcon,
+} from "@/components/vacancy/VacancyFieldIcons";
 import { cn } from "@/lib/utils";
 
 const SPECIALTY_SELECT_ANY = "__any__";
@@ -102,52 +109,61 @@ function VacancyFilterSalaryBlock({
       ? committedSalaryCurrency
       : "RUB";
 
-  const [salaryFrom, setSalaryFrom] = useState(committedSalary ?? "");
+  const [salaryFrom, setSalaryFrom] = useState(() =>
+    committedSalary != null && committedSalary !== ""
+      ? sanitizeMoneyIntegerDigits(committedSalary)
+      : "",
+  );
   const [salaryCurrencySelect, setSalaryCurrencySelect] =
     useState<VacancySalaryCurrency>(selectValueFromCommitted);
 
   function commit(nextSalary: string | undefined, currency: VacancySalaryCurrency) {
-    const trimmed = nextSalary?.trim();
-    const hasSalary = Boolean(trimmed);
+    const digits = nextSalary != null ? sanitizeMoneyIntegerDigits(nextSalary) : "";
+    const hasSalary = Boolean(digits);
     if (!hasSalary) {
       apply({ salaryFrom: undefined, salaryCurrency: undefined });
       return;
     }
-    apply({ salaryFrom: trimmed, salaryCurrency: currency });
+    apply({ salaryFrom: digits, salaryCurrency: currency });
   }
 
   return (
     <FieldGroup>
       <FieldLabel htmlFor="salary-from">Зарплата не ниже</FieldLabel>
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+      <div className="flex min-w-0 flex-row flex-wrap items-end gap-2">
         <div className="min-w-0 flex-1">
           <Input
             id="salary-from"
-            type="number"
-            min={0}
-            value={salaryFrom}
-            onChange={(e) => setSalaryFrom(e.target.value)}
-            onBlur={() => commit(salaryFrom.trim() || undefined, salaryCurrencySelect)}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={formatRuMoneyIntegerDisplay(salaryFrom)}
+            onChange={(e) => setSalaryFrom(sanitizeMoneyIntegerDigits(e.target.value))}
+            onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
             placeholder="Минимум"
-            className="h-9 w-full min-w-0 rounded-lg"
+            className="h-9 w-full min-w-0 rounded-lg tabular-nums"
           />
         </div>
-        <div className="flex shrink-0 justify-end sm:justify-start">
+        <div className="shrink-0">
           <Select
             value={salaryCurrencySelect}
             onValueChange={(v) => {
               const c = v as VacancySalaryCurrency;
               setSalaryCurrencySelect(c);
-              commit(salaryFrom.trim() || undefined, c);
+              commit(salaryFrom || undefined, c);
             }}
           >
-            <SelectTrigger className="h-9 w-[4.75rem] shrink-0 gap-1 px-2 font-medium tabular-nums">
-              <SelectValue placeholder="…" />
+            <SelectTrigger className="h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 px-2 font-medium tabular-nums">
+              <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
+              <SelectValue placeholder="…">{salaryCurrencySelect}</SelectValue>
             </SelectTrigger>
             <SelectContent position="popper">
               {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
+                <SelectItem key={c} value={c} textValue={c}>
+                  <span className="flex items-center gap-2">
+                    <SalaryCurrencyIcon code={c} className="size-3.5" />
+                    {c}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -393,7 +409,18 @@ export function VacancyFilters({
               apply({ specialty: next });
             }}
           >
-            <SelectTrigger className="bg-card h-9 w-full rounded-lg">
+            <SelectTrigger className="bg-card h-9 w-full gap-1.5 rounded-lg">
+              {specialtySelectValue === SPECIALTY_SELECT_ANY ? (
+                <IconFilter
+                  className="text-muted-foreground size-4 shrink-0"
+                  aria-hidden
+                  stroke={1.75}
+                />
+              ) : specialtySelectValue === SPECIALTY_SELECT_MULTI ? (
+                <IconStack2 className="text-muted-foreground size-4 shrink-0" aria-hidden />
+              ) : (
+                <SpecialtyIcon specialty={specialtySelectValue} />
+              )}
               <SelectValue placeholder="Специализация" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -402,8 +429,11 @@ export function VacancyFilters({
                 <SelectItem value={SPECIALTY_SELECT_MULTI}>Несколько выбрано</SelectItem>
               ) : null}
               {SPECIALTIES.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
+                <SelectItem key={s.value} value={s.value} textValue={s.label}>
+                  <span className="flex items-center gap-2">
+                    <SpecialtyIcon specialty={s.value} />
+                    {s.label}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -411,7 +441,10 @@ export function VacancyFilters({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-sm font-medium">Грейд</Label>
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <GradeIcon className="size-4" />
+            Грейд
+          </Label>
           <ToggleGroup
             type="multiple"
             spacing={2}
@@ -441,7 +474,14 @@ export function VacancyFilters({
             className="flex flex-wrap justify-start"
           >
             {FORMATS.map((f) => (
-              <ToggleGroupItem key={f.value} value={f.value} variant="outline" size="sm">
+              <ToggleGroupItem
+                key={f.value}
+                value={f.value}
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+              >
+                <WorkFormatIcon format={f.value} className="size-3.5 opacity-90" />
                 {f.label}
               </ToggleGroupItem>
             ))}
@@ -639,9 +679,7 @@ export function VacancyFilters({
                 className="h-9"
                 aria-invalid={presetNameInvalid}
               />
-              {presetNameInvalid ? (
-                <FieldDescription className="text-destructive">Введите название</FieldDescription>
-              ) : null}
+              {presetNameInvalid ? <FieldError>Введите название</FieldError> : null}
             </Field>
           </FieldGroup>
           <DialogFooter className="flex flex-row gap-2 sm:justify-end">

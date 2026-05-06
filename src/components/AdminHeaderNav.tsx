@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
+import { IconSettings } from "@tabler/icons-react";
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,7 +100,10 @@ export function AdminHeaderNav({ session }: { session: Session }) {
                 <Link href="/dashboard">Дашборд</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Настройки</Link>
+                <Link href="/dashboard/settings" className="flex items-center gap-2">
+                  <IconSettings className="size-4 shrink-0" aria-hidden />
+                  Настройки
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

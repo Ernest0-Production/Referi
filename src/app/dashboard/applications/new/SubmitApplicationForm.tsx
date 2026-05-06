@@ -6,7 +6,7 @@ import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -70,8 +70,13 @@ export function SubmitApplicationForm({
     },
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const formEl = e.currentTarget;
+    if (!formEl.checkValidity()) {
+      formEl.reportValidity();
+      return;
+    }
     setError(null);
     setContactError(null);
     setBioError(null);
@@ -111,12 +116,14 @@ export function SubmitApplicationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit}>
       <FieldGroup>
         <Field data-invalid={contactError ? "true" : undefined}>
           <FieldLabel htmlFor="app-contact">Контактная информация *</FieldLabel>
           <Input
             id="app-contact"
+            required
+            minLength={1}
             maxLength={500}
             value={form.contactInfo}
             aria-invalid={contactError ? true : undefined}
@@ -126,13 +133,7 @@ export function SubmitApplicationForm({
             }}
             placeholder="мессенджер, email или ссылка"
           />
-          {contactError ? (
-            <FieldDescription className="text-destructive">{contactError}</FieldDescription>
-          ) : (
-            <FieldDescription>
-              Видно реферальщику только в активных статусах заявки
-            </FieldDescription>
-          )}
+          {contactError ? <FieldError>{contactError}</FieldError> : null}
         </Field>
 
         <Field data-invalid={bioError ? "true" : undefined}>
@@ -140,6 +141,8 @@ export function SubmitApplicationForm({
           <Textarea
             id="app-bio"
             rows={5}
+            required
+            minLength={10}
             maxLength={1000}
             value={form.bio}
             aria-invalid={bioError ? true : undefined}
@@ -149,11 +152,7 @@ export function SubmitApplicationForm({
             }}
             placeholder="Опыт, стек, достижения"
           />
-          {bioError ? (
-            <FieldDescription className="text-destructive">{bioError}</FieldDescription>
-          ) : (
-            <FieldDescription>Минимум 10 символов, максимум 1000.</FieldDescription>
-          )}
+          {bioError ? <FieldError>{bioError}</FieldError> : null}
         </Field>
 
         <Field>

@@ -78,7 +78,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             maxLength={1000}
-            rows={4}
+            rows={8}
             placeholder="Кратко о вашем опыте"
           />
         </Field>
