@@ -1,12 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  IconBrandAndroid,
+  IconBrandApple,
+  IconBrain,
+  IconBug,
+  IconBuildingSkyscraper,
+  IconCloudComputing,
+  IconCurrencyDollar,
+  IconCurrencyEuro,
+  IconCurrencyRubel,
+  IconDatabase,
+  IconDots,
+  IconHomeShare,
+  IconLayout,
+  IconServer,
+  IconShield,
+  IconStack2,
+  IconWorld,
+} from "@tabler/icons-react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -17,10 +37,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  VACANCY_SALARY_CURRENCY_LABELS,
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
+import { cn } from "@/lib/utils";
 
 const SPECIALTIES = [
   "FRONTEND",
@@ -52,21 +72,246 @@ const SPECIALTY_LABELS: Record<(typeof SPECIALTIES)[number], string> = {
 const GRADES = ["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"] as const;
 const FORMATS = ["OFFICE", "HYBRID", "REMOTE"] as const;
 
-export function CreateVacancyForm() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({
+const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
+  JUNIOR: "Junior",
+  MIDDLE: "Middle",
+  SENIOR: "Senior",
+  LEAD: "Lead",
+  PRINCIPAL: "Principal",
+};
+
+const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
+  OFFICE: "Офис",
+  HYBRID: "Гибрид",
+  REMOTE: "Удалённо",
+};
+
+const REFERRER_BONUS_MAX_RUBLES = 100_000;
+const REFERRER_BONUS_STEP_RUBLES = 10_000;
+
+function snapReferrerBonusRublesFromKopecks(raw: string): number {
+  const kopecks = BigInt(raw || "0");
+  const rubles = Number(kopecks / 100n);
+  const clamped = Math.min(REFERRER_BONUS_MAX_RUBLES, Math.max(0, rubles));
+  return Math.round(clamped / REFERRER_BONUS_STEP_RUBLES) * REFERRER_BONUS_STEP_RUBLES;
+}
+
+const SELECT_TRIGGER_ICON = "text-muted-foreground size-4 shrink-0 pointer-events-none";
+
+function SpecialtyIcon({
+  specialty,
+  className,
+}: {
+  specialty: (typeof SPECIALTIES)[number];
+  className?: string;
+}) {
+  const c = cn(SELECT_TRIGGER_ICON, className);
+  switch (specialty) {
+    case "FRONTEND":
+      return <IconLayout className={c} aria-hidden />;
+    case "BACKEND":
+      return <IconServer className={c} aria-hidden />;
+    case "FULLSTACK":
+      return <IconStack2 className={c} aria-hidden />;
+    case "IOS_MOBILE":
+      return <IconBrandApple className={c} aria-hidden />;
+    case "ANDROID_MOBILE":
+      return <IconBrandAndroid className={c} aria-hidden />;
+    case "DEVOPS":
+      return <IconCloudComputing className={c} aria-hidden />;
+    case "QA":
+      return <IconBug className={c} aria-hidden />;
+    case "DATA":
+      return <IconDatabase className={c} aria-hidden />;
+    case "ML_AI":
+      return <IconBrain className={c} aria-hidden />;
+    case "SECURITY":
+      return <IconShield className={c} aria-hidden />;
+    default:
+      return <IconDots className={c} aria-hidden />;
+  }
+}
+
+function WorkFormatIcon({
+  format,
+  className,
+}: {
+  format: (typeof FORMATS)[number];
+  className?: string;
+}) {
+  const c = cn(SELECT_TRIGGER_ICON, className);
+  switch (format) {
+    case "OFFICE":
+      return <IconBuildingSkyscraper className={c} aria-hidden />;
+    case "HYBRID":
+      return <IconHomeShare className={c} aria-hidden />;
+    case "REMOTE":
+      return <IconWorld className={c} aria-hidden />;
+  }
+}
+
+function SalaryCurrencyIcon({
+  code,
+  className,
+}: {
+  code: VacancySalaryCurrency;
+  className?: string;
+}) {
+  const c = cn(SELECT_TRIGGER_ICON, className);
+  if (code === "RUB") return <IconCurrencyRubel className={c} aria-hidden />;
+  if (code === "USD") return <IconCurrencyDollar className={c} aria-hidden />;
+  return <IconCurrencyEuro className={c} aria-hidden />;
+}
+
+export type EditVacancyFormVacancy = {
+  id: string;
+  title: string;
+  companyName: string;
+  specialty: string;
+  grade: string;
+  workFormat: string;
+  salaryCurrency: VacancySalaryCurrency;
+  salaryFromKopecks: string | null;
+  salaryToKopecks: string | null;
+  description: string;
+  rewardKopecks: string;
+};
+
+function initialFormState(
+  mode: "create" | "edit",
+  vacancy?: EditVacancyFormVacancy,
+): {
+  title: string;
+  companyName: string;
+  specialty: (typeof SPECIALTIES)[number];
+  grade: (typeof GRADES)[number];
+  workFormat: (typeof FORMATS)[number];
+  salaryCurrency: VacancySalaryCurrency;
+  salaryFrom: string;
+  salaryTo: string;
+  description: string;
+  referrerBonusRubles: number;
+} {
+  if (mode === "edit" && vacancy) {
+    const fromRub =
+      vacancy.salaryFromKopecks != null && vacancy.salaryFromKopecks !== ""
+        ? String(Number(vacancy.salaryFromKopecks) / 100)
+        : "";
+    const toRub =
+      vacancy.salaryToKopecks != null && vacancy.salaryToKopecks !== ""
+        ? String(Number(vacancy.salaryToKopecks) / 100)
+        : "";
+    return {
+      title: vacancy.title,
+      companyName: vacancy.companyName,
+      specialty: vacancy.specialty as (typeof SPECIALTIES)[number],
+      grade: vacancy.grade as (typeof GRADES)[number],
+      workFormat: vacancy.workFormat as (typeof FORMATS)[number],
+      salaryCurrency: vacancy.salaryCurrency,
+      salaryFrom: fromRub,
+      salaryTo: toRub,
+      description: vacancy.description,
+      referrerBonusRubles: snapReferrerBonusRublesFromKopecks(vacancy.rewardKopecks),
+    };
+  }
+  return {
     title: "",
     companyName: "",
-    specialty: "BACKEND" as (typeof SPECIALTIES)[number],
-    grade: "MIDDLE" as (typeof GRADES)[number],
-    workFormat: "REMOTE" as (typeof FORMATS)[number],
-    salaryCurrency: "RUB" as VacancySalaryCurrency,
+    specialty: "BACKEND",
+    grade: "MIDDLE",
+    workFormat: "REMOTE",
+    salaryCurrency: "RUB",
     salaryFrom: "",
     salaryTo: "",
     description: "",
-    rewardKopecks: "0",
-  });
+    referrerBonusRubles: 0,
+  };
+}
+
+type VacancyFormState = ReturnType<typeof initialFormState>;
+
+function parseSalaryInput(raw: string): number | null {
+  const t = raw.trim();
+  if (t === "") return null;
+  const n = Number(t);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
+  return n;
+}
+
+/** Сообщение об ошибке или null, если всё ок. */
+function validateSalaryRange(fromRaw: string, toRaw: string): string | null {
+  const from = parseSalaryInput(fromRaw);
+  const to = parseSalaryInput(toRaw);
+  const fromTouched = fromRaw.trim() !== "";
+  const toTouched = toRaw.trim() !== "";
+
+  if (fromTouched && from === null) {
+    return "В поле «Зарплата от» укажите целое неотрицательное число.";
+  }
+  if (toTouched && to === null) {
+    return "В поле «Зарплата до» укажите целое неотрицательное число.";
+  }
+  if (from !== null && from < 0) {
+    return "Зарплата «от» не может быть отрицательной.";
+  }
+  if (to !== null && to < 0) {
+    return "Зарплата «до» не может быть отрицательной.";
+  }
+  if (from !== null && to !== null && from >= to) {
+    return "«Зарплата от» должна быть меньше «Зарплаты до».";
+  }
+  return null;
+}
+
+function isVacancyFormDirty(current: VacancyFormState, baseline: VacancyFormState): boolean {
+  return (
+    current.title !== baseline.title ||
+    current.companyName !== baseline.companyName ||
+    current.specialty !== baseline.specialty ||
+    current.grade !== baseline.grade ||
+    current.workFormat !== baseline.workFormat ||
+    current.salaryCurrency !== baseline.salaryCurrency ||
+    current.salaryFrom !== baseline.salaryFrom ||
+    current.salaryTo !== baseline.salaryTo ||
+    current.description !== baseline.description ||
+    current.referrerBonusRubles !== baseline.referrerBonusRubles
+  );
+}
+
+type CreateVacancyFormProps =
+  | { mode?: "create" }
+  | {
+      mode: "edit";
+      vacancy: EditVacancyFormVacancy;
+      onDirtyChange?: (dirty: boolean) => void;
+    };
+
+function isEditVacancyFormProps(
+  props: CreateVacancyFormProps,
+): props is { mode: "edit"; vacancy: EditVacancyFormVacancy } {
+  return props.mode === "edit";
+}
+
+export function CreateVacancyForm(props: CreateVacancyFormProps) {
+  const mode = isEditVacancyFormProps(props) ? "edit" : "create";
+  const vacancy = isEditVacancyFormProps(props) ? props.vacancy : undefined;
+  const onDirtyChange = isEditVacancyFormProps(props) ? props.onDirtyChange : undefined;
+
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState(() => initialFormState(mode, vacancy));
+
+  const editBaseline = useMemo((): VacancyFormState | null => {
+    if (!vacancy || mode !== "edit") return null;
+    return initialFormState("edit", vacancy);
+    // Baseline — снимок при открытии; не привязываем к ссылке на объект vacancy от родителя.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- пересчёт только при смене вакансии (id)
+  }, [mode, vacancy?.id]);
+
+  useEffect(() => {
+    if (!editBaseline || !onDirtyChange) return;
+    onDirtyChange(isVacancyFormDirty(form, editBaseline));
+  }, [form, editBaseline, onDirtyChange]);
 
   const create = trpcReact.vacancies.create.useMutation({
     onSuccess() {
@@ -77,21 +322,48 @@ export function CreateVacancyForm() {
     },
   });
 
+  const update = trpcReact.vacancies.update.useMutation({
+    onSuccess() {
+      router.replace("/dashboard/vacancy");
+      router.refresh();
+    },
+    onError(err) {
+      setError(err.message);
+    },
+  });
+
+  const pending = mode === "edit" ? update.isPending : create.isPending;
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    create.mutate({
+
+    const salaryErr = validateSalaryRange(form.salaryFrom, form.salaryTo);
+    if (salaryErr) {
+      setError(salaryErr);
+      return;
+    }
+
+    const fromTrim = form.salaryFrom.trim();
+    const toTrim = form.salaryTo.trim();
+
+    const payload = {
       title: form.title,
       companyName: form.companyName,
       specialty: form.specialty,
       grade: form.grade,
       workFormat: form.workFormat,
       salaryCurrency: form.salaryCurrency,
-      salaryFrom: form.salaryFrom ? Number(form.salaryFrom) : undefined,
-      salaryTo: form.salaryTo ? Number(form.salaryTo) : undefined,
+      salaryFrom: fromTrim === "" ? undefined : Number(fromTrim),
+      salaryTo: toTrim === "" ? undefined : Number(toTrim),
       description: form.description,
-      rewardKopecks: Number(form.rewardKopecks) || 0,
-    });
+      rewardKopecks: form.referrerBonusRubles * 100,
+    };
+    if (mode === "edit" && vacancy) {
+      update.mutate({ id: vacancy.id, ...payload });
+    } else {
+      create.mutate(payload);
+    }
   }
 
   return (
@@ -134,13 +406,17 @@ export function CreateVacancyForm() {
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SpecialtyIcon specialty={form.specialty} />
+                <SelectValue className="min-w-0">{SPECIALTY_LABELS[form.specialty]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {SPECIALTIES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {SPECIALTY_LABELS[s]}
+                    <SelectItem key={s} value={s} textValue={SPECIALTY_LABELS[s]}>
+                      <span className="flex items-center gap-2">
+                        <SpecialtyIcon specialty={s} />
+                        {SPECIALTY_LABELS[s]}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -153,14 +429,14 @@ export function CreateVacancyForm() {
               value={form.grade}
               onValueChange={(v) => setForm((f) => ({ ...f, grade: v as (typeof GRADES)[number] }))}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue />
+              <SelectTrigger className="w-full *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:justify-center">
+                <SelectValue className="min-w-0">{GRADE_LABELS[form.grade]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {GRADES.map((g) => (
-                    <SelectItem key={g} value={g}>
-                      {g}
+                    <SelectItem key={g} value={g} textValue={GRADE_LABELS[g]}>
+                      {GRADE_LABELS[g]}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -176,13 +452,17 @@ export function CreateVacancyForm() {
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <WorkFormatIcon format={form.workFormat} />
+                <SelectValue className="min-w-0">{FORMAT_LABELS[form.workFormat]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {FORMATS.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
+                    <SelectItem key={f} value={f} textValue={FORMAT_LABELS[f]}>
+                      <span className="flex items-center gap-2">
+                        <WorkFormatIcon format={f} />
+                        {FORMAT_LABELS[f]}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -191,30 +471,32 @@ export function CreateVacancyForm() {
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <Field className="min-w-0 flex-1">
             <FieldLabel htmlFor="vac-sal-from">Зарплата от</FieldLabel>
             <Input
               id="vac-sal-from"
               type="number"
               min={0}
+              step={1}
               value={form.salaryFrom}
               onChange={(e) => setForm((f) => ({ ...f, salaryFrom: e.target.value }))}
               placeholder="100000"
             />
           </Field>
-          <Field>
+          <Field className="min-w-0 flex-1">
             <FieldLabel htmlFor="vac-sal-to">Зарплата до</FieldLabel>
             <Input
               id="vac-sal-to"
               type="number"
               min={0}
+              step={1}
               value={form.salaryTo}
               onChange={(e) => setForm((f) => ({ ...f, salaryTo: e.target.value }))}
               placeholder="200000"
             />
           </Field>
-          <Field>
+          <Field className="w-full sm:w-fit sm:shrink-0">
             <FieldLabel>Валюта зарплаты</FieldLabel>
             <Select
               value={form.salaryCurrency}
@@ -222,14 +504,18 @@ export function CreateVacancyForm() {
                 setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
               }
             >
-              <SelectTrigger className="w-full">
-                <SelectValue />
+              <SelectTrigger className="!w-fit max-w-full font-medium tabular-nums">
+                <SalaryCurrencyIcon code={form.salaryCurrency} />
+                <SelectValue className="min-w-0">{form.salaryCurrency}</SelectValue>
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectGroup>
                   {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {VACANCY_SALARY_CURRENCY_LABELS[c]}
+                    <SelectItem key={c} value={c} textValue={c}>
+                      <span className="flex items-center gap-2">
+                        <SalaryCurrencyIcon code={c} />
+                        {c}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -239,15 +525,48 @@ export function CreateVacancyForm() {
         </div>
 
         <Field>
-          <FieldLabel htmlFor="vac-reward">Бонус реферальщику (₽)</FieldLabel>
-          <Input
-            id="vac-reward"
-            type="number"
-            min={0}
-            value={form.rewardKopecks}
-            onChange={(e) => setForm((f) => ({ ...f, rewardKopecks: e.target.value }))}
-            placeholder="0"
-          />
+          <FieldLabel htmlFor="vac-reward">
+            <span className="text-emerald-600 dark:text-emerald-400">Бонус</span> реферальщику (₽)
+          </FieldLabel>
+          <div className="flex flex-col gap-3 pt-0.5">
+            <div
+              id="vac-reward-summary"
+              className="text-foreground flex items-baseline justify-between gap-4 text-sm font-medium tabular-nums"
+              aria-live="polite"
+            >
+              <span>
+                {form.referrerBonusRubles === 0 ? (
+                  "Бесплатно"
+                ) : (
+                  <>
+                    {form.referrerBonusRubles.toLocaleString("ru-RU")}{" "}
+                    <span className="text-muted-foreground">₽</span>
+                  </>
+                )}
+              </span>
+              <span className="text-muted-foreground shrink-0 font-normal tabular-nums">
+                {REFERRER_BONUS_MAX_RUBLES.toLocaleString("ru-RU")} руб.
+              </span>
+            </div>
+            <Slider
+              id="vac-reward"
+              min={0}
+              max={REFERRER_BONUS_MAX_RUBLES}
+              step={REFERRER_BONUS_STEP_RUBLES}
+              value={[form.referrerBonusRubles]}
+              onValueChange={(v) => {
+                const next = v[0];
+                if (next === undefined) return;
+                setForm((f) => ({ ...f, referrerBonusRubles: next }));
+              }}
+              aria-describedby="vac-reward-summary"
+              aria-valuetext={
+                form.referrerBonusRubles === 0
+                  ? "Бесплатно"
+                  : `${form.referrerBonusRubles.toLocaleString("ru-RU")} рублей`
+              }
+            />
+          </div>
         </Field>
 
         <Field>
@@ -257,7 +576,8 @@ export function CreateVacancyForm() {
             required
             minLength={10}
             maxLength={3000}
-            rows={6}
+            rows={18}
+            className="min-h-48"
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             placeholder="Расскажите о вакансии, требованиях и условиях работы"
@@ -270,8 +590,19 @@ export function CreateVacancyForm() {
           </Alert>
         ) : null}
 
-        <Button type="submit" disabled={create.isPending}>
-          {create.isPending ? "Публикация…" : "Опубликовать вакансию"}
+        <Button
+          type="submit"
+          size="lg"
+          disabled={pending}
+          className="h-11 w-full text-base font-semibold"
+        >
+          {pending
+            ? mode === "edit"
+              ? "Сохранение…"
+              : "Публикация…"
+            : mode === "edit"
+              ? "Сохранить"
+              : "Опубликовать вакансию"}
         </Button>
       </FieldGroup>
     </form>

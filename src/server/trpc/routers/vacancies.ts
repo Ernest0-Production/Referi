@@ -24,18 +24,35 @@ const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"]);
 const workFormatEnum = z.enum(["OFFICE", "HYBRID", "REMOTE"]);
 const salaryCurrencyEnum = z.enum(VACANCY_SALARY_CURRENCY_VALUES);
 
-const createVacancySchema = z.object({
-  title: z.string().min(3).max(200),
-  companyName: z.string().min(2).max(200),
-  specialty: specialtyEnum,
-  grade: gradeEnum,
-  workFormat: workFormatEnum,
-  salaryCurrency: salaryCurrencyEnum.default("RUB"),
-  salaryFrom: z.number().int().positive().optional(),
-  salaryTo: z.number().int().positive().optional(),
-  description: z.string().min(10).max(3000),
-  rewardKopecks: z.number().int().min(0).default(0),
-});
+/** Максимум бонуса реферальщику: 100 000 ₽; шаг 10 000 ₽ → копейки кратны 1 000 000. */
+const REFERRER_BONUS_MAX_KOPECKS = 10_000_000;
+const REFERRER_BONUS_STEP_KOPECKS = 1_000_000;
+
+const vacancyWriteSchema = z
+  .object({
+    title: z.string().min(3).max(200),
+    companyName: z.string().min(2).max(200),
+    specialty: specialtyEnum,
+    grade: gradeEnum,
+    workFormat: workFormatEnum,
+    salaryCurrency: salaryCurrencyEnum.default("RUB"),
+    salaryFrom: z.number().int().min(0).optional(),
+    salaryTo: z.number().int().min(0).optional(),
+    description: z.string().min(10).max(3000),
+    rewardKopecks: z.number().int().min(0).max(REFERRER_BONUS_MAX_KOPECKS).default(0),
+  })
+  .refine((d) => d.salaryFrom == null || d.salaryTo == null || d.salaryFrom < d.salaryTo, {
+    message: "Зарплата «от» должна быть меньше «до».",
+    path: ["salaryTo"],
+  })
+  .refine((d) => d.rewardKopecks % REFERRER_BONUS_STEP_KOPECKS === 0, {
+    message: "Бонус реферальщику должен быть от 0 до 100 000 ₽ с шагом 10 000 ₽.",
+    path: ["rewardKopecks"],
+  });
+
+const createVacancySchema = vacancyWriteSchema;
+
+const updateVacancySchema = z.object({ id: z.string().uuid() }).merge(vacancyWriteSchema);
 
 const vacancyListSchema = z.object({
   specialty: z.array(specialtyEnum).optional(),
@@ -248,6 +265,36 @@ export const vacanciesRouter = router({
     return serializeVacancy(vacancy);
   }),
 
+  update: protectedProcedure.input(updateVacancySchema).mutation(async ({ ctx, input }) => {
+    const { userId } = ctx;
+    const { id, ...fields } = input;
+
+    const existing = await ctx.db.vacancy.findUnique({ where: { id } });
+    if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+    if (existing.referrerId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    if (!["ACTIVE", "FROZEN"].includes(existing.status)) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "VACANCY_NOT_EDITABLE" });
+    }
+
+    const vacancy = await ctx.db.vacancy.update({
+      where: { id },
+      data: {
+        title: fields.title,
+        companyName: fields.companyName,
+        specialty: fields.specialty,
+        grade: fields.grade,
+        workFormat: fields.workFormat,
+        salaryCurrency: fields.salaryCurrency,
+        salaryFromKopecks: fields.salaryFrom ? BigInt(fields.salaryFrom * 100) : null,
+        salaryToKopecks: fields.salaryTo ? BigInt(fields.salaryTo * 100) : null,
+        description: fields.description,
+        rewardKopecks: BigInt(fields.rewardKopecks),
+      },
+    });
+
+    return serializeVacancy(vacancy);
+  }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -366,6 +413,7 @@ export const vacanciesRouter = router({
         salaryFromKopecks: true,
         salaryToKopecks: true,
         rewardKopecks: true,
+        description: true,
         createdAt: true,
         updatedAt: true,
         status: true,

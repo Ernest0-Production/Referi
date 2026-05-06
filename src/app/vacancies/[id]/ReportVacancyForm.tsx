@@ -46,11 +46,11 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
       <div className="flex w-full flex-col gap-3 border-t pt-4">
         <Button
           type="button"
-          variant="link"
-          className="h-auto self-start p-0"
+          variant="outline"
+          className="text-destructive border-destructive/40 hover:bg-destructive/10 self-start"
           onClick={() => setOpen(true)}
         >
-          Пожаловаться на вакансию
+          Пожаловаться
         </Button>
         {msg === "registered" ? (
           <Alert>

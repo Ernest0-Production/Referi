@@ -12,7 +12,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
-import { cn } from "@/lib/utils";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -40,33 +39,20 @@ function initialsFromLabel(label: string): string {
 export async function PublicHeaderNav({ session }: { session: Session | null }) {
   const userId = session?.user?.id;
   let referrerVacancy: { id: string } | null = null;
-  let subscription: { status: string } | null = null;
 
   if (userId) {
-    const [vac, sub] = await Promise.all([
-      prisma.vacancy.findFirst({
-        where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
-        select: { id: true },
-      }),
-      prisma.seekerSubscription.findUnique({
-        where: { userId },
-        select: { status: true },
-      }),
-    ]);
-    referrerVacancy = vac;
-    subscription = sub;
+    referrerVacancy = await prisma.vacancy.findFirst({
+      where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
+      select: { id: true },
+    });
   }
-
-  const hasActivePro = subscription?.status === "ACTIVE";
-  const showProCta = !hasActivePro;
-  const proHref = userId ? "/dashboard/settings" : "/login";
 
   const overviewHref = "/dashboard";
   const overviewLabel = "Обзор";
   const vacancyHref = "/dashboard/vacancy";
   const vacancyLabel = "Моя вакансия";
   const applicationsSeekerHref = "/dashboard/applications";
-  const applicationsReferrerHref = "/dashboard/vacancy/applicants";
+  const applicationsReferrerHref = "/dashboard/vacancy#candidates";
   const applicationsLabel = "Отклики";
 
   const primaryNav = referrerVacancy
@@ -140,17 +126,6 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <ThemeToggle />
-        {showProCta ? (
-          <Button
-            asChild
-            className={cn(
-              "hidden h-9 rounded-lg px-4 font-semibold sm:inline-flex",
-              "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
-            )}
-          >
-            <Link href={proHref}>Подключить PRO</Link>
-          </Button>
-        ) : null}
         {session?.user ? (
           <Button variant="ghost" size="icon" className="size-9 rounded-full" asChild>
             <Link

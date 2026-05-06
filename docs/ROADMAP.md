@@ -104,7 +104,7 @@ flowchart LR
 | `vacancies.myActive` query      | `[CORE]` | Текущая вакансия реферальщика                                                                             |
 | Страница `/` — лента вакансий   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
 | Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница вакансии + кнопка «Откликнуться»                                                       |
-| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей вакансией                                                                   |
+| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей вакансией, редактирование (`?edit=1`), блок кандидатов (`#candidates`)                                                                   |
 | Форма создания вакансии         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
 | `ReferrerAttemptLedger` базовый | `[CORE]` | `getAvailableAttempts()` возвращает корректное значение                                                   |
 | Full-text поиск                 | `[CORE]` | `pg_trgm` или `tsvector` для title/description                                                            |
@@ -142,9 +142,10 @@ flowchart LR
 | `applications.denyRejection`              | `[CORE]` | Реферальщик опровергает → DISPUTED                   |
 | `AuditLog` запись при каждом переходе     | `[CORE]` | Все поля: from, to, actor, actorId, metadata         |
 | `applications.myList` query               | `[CORE]` | Список заявок соискателя с текущими статусами        |
-| `vacancies.applicants` query              | `[CORE]` | Список откликнувшихся для реферальщика               |
+| `vacancies.update` mutation               | `[CORE]` | Реферальщик: обновление полей своей вакансии (ACTIVE / FROZEN)               |
+| `vacancies.applicants` query              | `[CORE]` | Список откликнувшихся для реферальщика (UI: секция на `/dashboard/vacancy#candidates`)               |
 | Страница `/dashboard/applications`        | `[CORE]` | Соискатель: мои заявки + действия                    |
-| Страница `/dashboard/vacancy/applicants`  | `[CORE]` | Реферальщик: список кандидатов                       |
+| Редирект `/dashboard/vacancy/applicants`  | `[CORE]` | На `/dashboard/vacancy#candidates` (старые закладки)                       |
 | Правила видимости контактов               | `[CORE]` | contactInfo только в активных статусах               |
 | Property-based тесты state machine        | `[CORE]` | fast-check, инварианты INV-001..007                  |
 

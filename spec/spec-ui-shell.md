@@ -14,7 +14,7 @@
 
 ## Поверхность страницы и токены
 
-Фон «страницы приложения» (в т.ч. каталог и кабинет) задаётся CSS-переменной **`--app-page-surface`** в [`src/app/globals.css`](../src/app/globals.css). Акценты поиска и CTA PRO в шапке: **`--app-search-accent-*`**, **`--app-nav-cta-*`**.
+Фон «страницы приложения» (в т.ч. каталог и кабинет) задаётся CSS-переменной **`--app-page-surface`** в [`src/app/globals.css`](../src/app/globals.css). Акцент поиска в шапке: **`--app-search-accent-*`**. Токены **`--app-nav-cta-*`** используются в панели фильтров каталога (в т.ч. сегментированные кнопки пресетов), не в шапке.
 
 Тема: `next-themes` в корневом [`src/app/layout.tsx`](../src/app/layout.tsx); семантические классы Tailwind (`bg-background`, `text-muted-foreground`, `border-border`, компоненты shadcn) предпочтительнее сырых `gray-*`.
 

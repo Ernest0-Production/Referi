@@ -14,7 +14,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
-import { cn } from "@/lib/utils";
 import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
@@ -42,26 +41,17 @@ function initialsFromLabel(label: string): string {
 
 export async function DashboardHeaderNav({ session }: { session: Session }) {
   const userId = session.user!.id;
-  const [referrerVacancy, subscription] = await Promise.all([
-    prisma.vacancy.findFirst({
-      where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
-      select: { id: true },
-    }),
-    prisma.seekerSubscription.findUnique({
-      where: { userId },
-      select: { status: true },
-    }),
-  ]);
-
-  const hasActivePro = subscription?.status === "ACTIVE";
-  const showProCta = !hasActivePro;
+  const referrerVacancy = await prisma.vacancy.findFirst({
+    where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
+    select: { id: true },
+  });
 
   const overviewHref = "/dashboard";
   const overviewLabel = "Обзор";
   const vacancyHref = "/dashboard/vacancy";
   const vacancyLabel = "Моя вакансия";
   const applicationsSeekerHref = "/dashboard/applications";
-  const applicationsReferrerHref = "/dashboard/vacancy/applicants";
+  const applicationsReferrerHref = "/dashboard/vacancy#candidates";
   const applicationsLabel = "Отклики";
 
   const primaryNav = referrerVacancy
@@ -139,17 +129,6 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <ThemeToggle />
-        {showProCta ? (
-          <Button
-            asChild
-            className={cn(
-              "hidden h-9 rounded-lg px-4 font-semibold sm:inline-flex",
-              "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
-            )}
-          >
-            <Link href="/dashboard/settings">Подключить PRO</Link>
-          </Button>
-        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

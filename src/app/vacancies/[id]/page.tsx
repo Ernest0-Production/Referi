@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
+import { VacancyOwnerActions } from "@/app/dashboard/vacancy/VacancyOwnerActions";
 import { ReportVacancyForm } from "./ReportVacancyForm";
 import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
 import { Badge } from "@/components/ui/badge";
@@ -123,9 +124,11 @@ export default async function VacancyDetailPage({ params }: PageProps) {
           <CardFooter className="flex flex-col items-stretch gap-4 border-t pt-6">
             {session?.user ? (
               isAuthor ? (
-                <Button asChild variant="default" className="w-full sm:w-auto">
-                  <Link href="/dashboard/vacancy">Редактировать</Link>
-                </Button>
+                <VacancyOwnerActions
+                  vacancyId={vacancy.id}
+                  editHref="/dashboard/vacancy?edit=1"
+                  redirectAfterDelete="/"
+                />
               ) : (
                 <Button asChild className="w-full sm:w-auto">
                   <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
