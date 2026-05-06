@@ -23,16 +23,9 @@ import {
 import { type VacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
 import { cn } from "@/lib/utils";
 
-export const SELECT_TRIGGER_ICON =
-  "text-muted-foreground size-4 shrink-0 pointer-events-none";
+export const SELECT_TRIGGER_ICON = "text-muted-foreground size-4 shrink-0 pointer-events-none";
 
-export function SpecialtyIcon({
-  specialty,
-  className,
-}: {
-  specialty: string;
-  className?: string;
-}) {
+export function SpecialtyIcon({ specialty, className }: { specialty: string; className?: string }) {
   const c = cn(SELECT_TRIGGER_ICON, className);
   switch (specialty) {
     case "FRONTEND":
@@ -60,13 +53,7 @@ export function SpecialtyIcon({
   }
 }
 
-export function WorkFormatIcon({
-  format,
-  className,
-}: {
-  format: string;
-  className?: string;
-}) {
+export function WorkFormatIcon({ format, className }: { format: string; className?: string }) {
   const c = cn(SELECT_TRIGGER_ICON, className);
   switch (format) {
     case "OFFICE":
@@ -94,7 +81,5 @@ export function SalaryCurrencyIcon({
 }
 
 export function GradeIcon({ className }: { className?: string }) {
-  return (
-    <IconTopologyStar3 className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />
-  );
+  return <IconTopologyStar3 className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />;
 }

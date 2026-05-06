@@ -60,7 +60,9 @@ import {
   SpecialtyIcon,
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
-import { cn } from "@/lib/utils"; = "__any__";
+import { cn } from "@/lib/utils";
+
+const SPECIALTY_SELECT_ANY = "__any__";
 const SPECIALTY_SELECT_MULTI = "__multi__";
 const PRESET_SELECT_CLEAR = "__preset_clear__";
 
