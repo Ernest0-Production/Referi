@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CreateVacancyForm, type EditVacancyFormVacancy } from "./CreateVacancyForm";
@@ -33,21 +34,35 @@ export function EditVacancyCard({ vacancy }: { vacancy: EditVacancyFormVacancy }
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 space-y-0">
-        <CardTitle>Редактирование вакансии</CardTitle>
-        <Button type="button" variant="destructive" size="sm" onClick={handleCancelClick}>
-          Отмена
+    <>
+      {dirty ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-fit"
+          onClick={handleCancelClick}
+        >
+          ← Просмотр
         </Button>
-      </CardHeader>
-      <CardContent>
-        <CreateVacancyForm
-          key={vacancy.id}
-          mode="edit"
-          vacancy={vacancy}
-          onDirtyChange={setDirty}
-        />
-      </CardContent>
+      ) : (
+        <Button variant="ghost" size="sm" className="w-fit" asChild>
+          <Link href="/dashboard/vacancy">← Просмотр</Link>
+        </Button>
+      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Редактирование вакансии</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CreateVacancyForm
+            key={vacancy.id}
+            mode="edit"
+            vacancy={vacancy}
+            onDirtyChange={setDirty}
+          />
+        </CardContent>
+      </Card>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent showCloseButton>
@@ -55,16 +70,16 @@ export function EditVacancyCard({ vacancy }: { vacancy: EditVacancyFormVacancy }
             <DialogTitle>Отменить изменения?</DialogTitle>
             <DialogDescription>Есть несохранённые правки. Выйти без сохранения?</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-              Продолжить редактирование
+              Остаться
             </Button>
             <Button type="button" variant="destructive" onClick={confirmLeave}>
-              Выйти без сохранения
+              Выйти
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </>
   );
 }

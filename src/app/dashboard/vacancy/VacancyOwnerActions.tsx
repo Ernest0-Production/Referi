@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { IconDotsVertical, IconTrash } from "@tabler/icons-react";
+import { IconTrash } from "@tabler/icons-react";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,7 +61,12 @@ export function VacancyOwnerActions({
         data-slot="button-group"
         className={`flex w-full min-w-0 overflow-hidden rounded-md ${className ?? ""}`}
       >
-        <Button variant="default" className="min-w-0 flex-1 rounded-none rounded-l-md" asChild>
+        <Button
+          variant="default"
+          size="lg"
+          className="min-w-0 flex-1 rounded-none rounded-l-md"
+          asChild
+        >
           <Link href={editHref}>Редактировать</Link>
         </Button>
         <DropdownMenu>
@@ -69,11 +74,11 @@ export function VacancyOwnerActions({
             <Button
               type="button"
               variant="default"
+              size="icon-lg"
               aria-label="Дополнительные действия"
-              className="border-primary-foreground/20 flex h-9 w-11 shrink-0 items-center justify-center gap-0.5 rounded-none rounded-r-md border-l px-0"
+              className="border-primary-foreground/20 rounded-none rounded-r-md border-l"
             >
-              <IconDotsVertical className="size-4 shrink-0" aria-hidden />
-              <ChevronDown className="size-3.5 shrink-0 opacity-80" aria-hidden />
+              <ChevronDown className="size-4" aria-hidden />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-48">
