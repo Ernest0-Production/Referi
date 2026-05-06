@@ -27,6 +27,7 @@ import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/m
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SheetFooter, SheetTitle } from "@/components/ui/sheet";
 import {
   InputGroup,
   InputGroupAddon,
@@ -133,8 +134,10 @@ function VacancyFilterSalaryBlock({
   }
 
   return (
-    <FieldGroup>
-      <FieldLabel htmlFor="salary-from">Зарплата не ниже</FieldLabel>
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="salary-from" className="text-sm font-medium">
+        Зарплата не ниже
+      </Label>
       <InputGroup className="border-border bg-card h-9 w-full min-w-0 rounded-lg shadow-sm">
         <InputGroupInput
           id="salary-from"
@@ -181,7 +184,7 @@ function VacancyFilterSalaryBlock({
           </DropdownMenu>
         </InputGroupAddon>
       </InputGroup>
-    </FieldGroup>
+    </div>
   );
 }
 
@@ -208,7 +211,7 @@ interface Props {
   vacancyPresetSidebarCleared?: boolean;
   /** Увеличивается при сбросе каталога — перемонтирование вкладок пресетов, чтобы Radix сбросил активную вкладку. */
   savedPresetSelectLayoutKey?: number;
-  /** Нижний `CardFooter` закреплён, скроллится только тело (например в мобильном Sheet). */
+  /** В мобильном `sheet`: нижняя панель — `SheetFooter`; скроллится только `CardContent`. */
   variant?: "default" | "sheet";
   /** После авторизации с каталога: один раз открыть диалог сохранения фильтров. */
   resumeVacancyPresetSave?: boolean;
@@ -340,22 +343,138 @@ export function VacancyFilters({
 
   const presetTabsValue = resolvedPresetId ?? PRESET_SELECT_CLEAR;
 
+  const filterFooter = (
+    <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-10 shrink-0 rounded-full"
+        onClick={() => onReset()}
+        aria-label="Сбросить фильтры"
+      >
+        <RotateCcw />
+      </Button>
+      <div className="flex min-w-0 flex-1 items-stretch">
+        {footerCtaMode === "save" ? (
+          <Button
+            type="button"
+            variant="default"
+            className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
+            onClick={() => {
+              if (!isLoggedIn) {
+                const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
+                router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
+                return;
+              }
+              setSaveOpen(true);
+            }}
+          >
+            <Save />
+            Сохранить
+          </Button>
+        ) : footerCtaMode === "update" ? (
+          <div data-slot="button-group" className="flex min-w-0 flex-1 overflow-hidden rounded-xl">
+            <Button
+              type="button"
+              variant="default"
+              className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
+              disabled={updatePreset.isPending}
+              onClick={() => {
+                const id = resolvedPresetId;
+                if (!id) return;
+                updatePreset.mutate({
+                  id,
+                  params: flatParamsForPresetSave(currentParams),
+                });
+              }}
+            >
+              <RefreshCw className="size-4 shrink-0" />
+              Обновить
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  aria-label="Дополнительные действия с фильтром"
+                  className={cn(
+                    ctaButtonClass,
+                    "size-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
+                  )}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setSaveOpen(true);
+                  }}
+                >
+                  Создать новый фильтр
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => {
+                    if (!resolvedPresetId) return;
+                    setPresetIdPendingDelete(resolvedPresetId);
+                    setDeleteConfirmOpen(true);
+                  }}
+                >
+                  Удалить фильтр
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="destructive"
+            className="h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold"
+            disabled={deletePreset.isPending}
+            onClick={() => {
+              if (!resolvedPresetId) return;
+              setPresetIdPendingDelete(resolvedPresetId);
+              setDeleteConfirmOpen(true);
+            }}
+          >
+            <Trash2 className="size-4 shrink-0" />
+            Удалить
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <Card
       className={cn(
         "border-border shadow-sm",
-        isSheet && "h-full min-h-0 gap-0 overflow-hidden py-0",
+        isSheet &&
+          "h-full min-h-0 flex-1 gap-0 overflow-hidden rounded-t-2xl rounded-b-none border-0 py-0 shadow-none ring-0",
       )}
     >
-      <CardHeader className={cn("pb-3", isSheet && "shrink-0 pt-4")}>
-        <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
-          Фильтры
-        </CardTitle>
-      </CardHeader>
+      {isSheet ? (
+        <div className="flex shrink-0 flex-col gap-1 px-5 pt-10 pb-3">
+          <SheetTitle className="flex items-center gap-2 text-base font-semibold">
+            <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
+            Фильтры
+          </SheetTitle>
+        </div>
+      ) : (
+        <CardHeader className="px-5 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
+            Фильтры
+          </CardTitle>
+        </CardHeader>
+      )}
       <CardContent
         className={cn(
-          "flex flex-col gap-5 pb-4",
+          "flex flex-col gap-5 px-5 pb-4",
           isSheet && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
         )}
       >
@@ -506,119 +625,15 @@ export function VacancyFilters({
           apply={apply}
         />
       </CardContent>
-      <CardFooter
-        className={cn(
-          "border-border bg-card flex flex-col gap-3 border-t px-4 py-4",
-          isSheet && "shrink-0 rounded-b-xl pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]",
-        )}
-      >
-        <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-10 shrink-0 rounded-full"
-            onClick={() => onReset()}
-            aria-label="Сбросить фильтры"
-          >
-            <RotateCcw />
-          </Button>
-          <div className="flex min-w-0 flex-1 items-stretch">
-            {footerCtaMode === "save" ? (
-              <Button
-                type="button"
-                variant="default"
-                className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
-                    router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
-                    return;
-                  }
-                  setSaveOpen(true);
-                }}
-              >
-                <Save />
-                Сохранить
-              </Button>
-            ) : footerCtaMode === "update" ? (
-              <div
-                data-slot="button-group"
-                className="flex min-w-0 flex-1 overflow-hidden rounded-xl"
-              >
-                <Button
-                  type="button"
-                  variant="default"
-                  className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
-                  disabled={updatePreset.isPending}
-                  onClick={() => {
-                    const id = resolvedPresetId;
-                    if (!id) return;
-                    updatePreset.mutate({
-                      id,
-                      params: flatParamsForPresetSave(currentParams),
-                    });
-                  }}
-                >
-                  <RefreshCw className="size-4 shrink-0" />
-                  Обновить
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="default"
-                      size="icon"
-                      aria-label="Дополнительные действия с фильтром"
-                      className={cn(
-                        ctaButtonClass,
-                        "size-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
-                      )}
-                    >
-                      <ChevronDown className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-48">
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setSaveOpen(true);
-                      }}
-                    >
-                      Создать новый фильтр
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => {
-                        if (!resolvedPresetId) return;
-                        setPresetIdPendingDelete(resolvedPresetId);
-                        setDeleteConfirmOpen(true);
-                      }}
-                    >
-                      Удалить фильтр
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="destructive"
-                className="h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold"
-                disabled={deletePreset.isPending}
-                onClick={() => {
-                  if (!resolvedPresetId) return;
-                  setPresetIdPendingDelete(resolvedPresetId);
-                  setDeleteConfirmOpen(true);
-                }}
-              >
-                <Trash2 className="size-4 shrink-0" />
-                Удалить
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardFooter>
+      {isSheet ? (
+        <SheetFooter className="bg-card border-border mt-auto flex w-full shrink-0 flex-col gap-3 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:flex-col sm:justify-start">
+          {filterFooter}
+        </SheetFooter>
+      ) : (
+        <CardFooter className="border-border bg-card flex flex-col gap-3 border-t px-5 py-4">
+          {filterFooter}
+        </CardFooter>
+      )}
 
       <Dialog
         open={deleteConfirmOpen}

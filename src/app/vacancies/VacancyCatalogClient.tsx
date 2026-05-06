@@ -16,7 +16,7 @@ import {
 import { trpcReact } from "@/trpc/client";
 import { VacancyCard } from "@/components/VacancyCard";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useMdUp } from "@/hooks/useMdUp";
 import { cn } from "@/lib/utils";
 import { EmployerHomeVacancySection } from "./EmployerHomeVacancySection";
@@ -41,10 +41,7 @@ function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
     <>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="flex max-h-[min(90dvh,90vh)] flex-col gap-0 p-0">
-          <SheetTitle className="sr-only">Фильтры</SheetTitle>
-          <div className="flex min-h-0 flex-1 flex-col px-3 pt-10">
-            <VacancyFilters {...props} variant="sheet" />
-          </div>
+          <VacancyFilters {...props} variant="sheet" />
         </SheetContent>
       </Sheet>
       <Button
