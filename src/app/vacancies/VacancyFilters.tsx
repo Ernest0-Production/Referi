@@ -22,6 +22,7 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
+import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/moneyIntegerInput";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,52 +109,57 @@ function VacancyFilterSalaryBlock({
       ? committedSalaryCurrency
       : "RUB";
 
-  const [salaryFrom, setSalaryFrom] = useState(committedSalary ?? "");
+  const [salaryFrom, setSalaryFrom] = useState(() =>
+    committedSalary != null && committedSalary !== ""
+      ? sanitizeMoneyIntegerDigits(committedSalary)
+      : "",
+  );
   const [salaryCurrencySelect, setSalaryCurrencySelect] =
     useState<VacancySalaryCurrency>(selectValueFromCommitted);
 
   function commit(nextSalary: string | undefined, currency: VacancySalaryCurrency) {
-    const trimmed = nextSalary?.trim();
-    const hasSalary = Boolean(trimmed);
+    const digits = nextSalary != null ? sanitizeMoneyIntegerDigits(nextSalary) : "";
+    const hasSalary = Boolean(digits);
     if (!hasSalary) {
       apply({ salaryFrom: undefined, salaryCurrency: undefined });
       return;
     }
-    apply({ salaryFrom: trimmed, salaryCurrency: currency });
+    apply({ salaryFrom: digits, salaryCurrency: currency });
   }
 
   return (
     <FieldGroup>
       <FieldLabel htmlFor="salary-from">Зарплата не ниже</FieldLabel>
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+      <div className="flex min-w-0 flex-row flex-wrap items-end gap-2">
         <div className="min-w-0 flex-1">
           <Input
             id="salary-from"
-            type="number"
-            min={0}
-            value={salaryFrom}
-            onChange={(e) => setSalaryFrom(e.target.value)}
-            onBlur={() => commit(salaryFrom.trim() || undefined, salaryCurrencySelect)}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={formatRuMoneyIntegerDisplay(salaryFrom)}
+            onChange={(e) => setSalaryFrom(sanitizeMoneyIntegerDigits(e.target.value))}
+            onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
             placeholder="Минимум"
-            className="h-9 w-full min-w-0 rounded-lg"
+            className="h-9 w-full min-w-0 rounded-lg tabular-nums"
           />
         </div>
-        <div className="flex shrink-0 justify-end sm:justify-start">
+        <div className="shrink-0">
           <Select
             value={salaryCurrencySelect}
             onValueChange={(v) => {
               const c = v as VacancySalaryCurrency;
               setSalaryCurrencySelect(c);
-              commit(salaryFrom.trim() || undefined, c);
+              commit(salaryFrom || undefined, c);
             }}
           >
-            <SelectTrigger className="h-9 w-[4.75rem] shrink-0 gap-1 px-2 font-medium tabular-nums">
+            <SelectTrigger className="h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 px-2 font-medium tabular-nums">
               <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
-              <SelectValue placeholder="…" />
+              <SelectValue placeholder="…">{salaryCurrencySelect}</SelectValue>
             </SelectTrigger>
             <SelectContent position="popper">
               {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
-                <SelectItem key={c} value={c}>
+                <SelectItem key={c} value={c} textValue={c}>
                   <span className="flex items-center gap-2">
                     <SalaryCurrencyIcon code={c} className="size-3.5" />
                     {c}

@@ -27,6 +27,11 @@ import {
   SpecialtyIcon,
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
+import {
+  formatRuMoneyIntegerDisplay,
+  parseMoneyIntegerDigitsToNumber,
+  sanitizeMoneyIntegerDigits,
+} from "@/lib/moneyIntegerInput";
 
 const SPECIALTIES = [
   "FRONTEND",
@@ -114,11 +119,11 @@ function initialFormState(
   if (mode === "edit" && vacancy) {
     const fromRub =
       vacancy.salaryFromKopecks != null && vacancy.salaryFromKopecks !== ""
-        ? String(Number(vacancy.salaryFromKopecks) / 100)
+        ? String(Math.round(Number(vacancy.salaryFromKopecks) / 100))
         : "";
     const toRub =
       vacancy.salaryToKopecks != null && vacancy.salaryToKopecks !== ""
-        ? String(Number(vacancy.salaryToKopecks) / 100)
+        ? String(Math.round(Number(vacancy.salaryToKopecks) / 100))
         : "";
     return {
       title: vacancy.title,
@@ -149,20 +154,14 @@ function initialFormState(
 
 type VacancyFormState = ReturnType<typeof initialFormState>;
 
-function parseSalaryInput(raw: string): number | null {
-  const t = raw.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
-  return n;
-}
-
 /** Сообщение об ошибке или null, если всё ок. */
 function validateSalaryRange(fromRaw: string, toRaw: string): string | null {
-  const from = parseSalaryInput(fromRaw);
-  const to = parseSalaryInput(toRaw);
-  const fromTouched = fromRaw.trim() !== "";
-  const toTouched = toRaw.trim() !== "";
+  const fromDigits = sanitizeMoneyIntegerDigits(fromRaw);
+  const toDigits = sanitizeMoneyIntegerDigits(toRaw);
+  const from = parseMoneyIntegerDigitsToNumber(fromDigits);
+  const to = parseMoneyIntegerDigitsToNumber(toDigits);
+  const fromTouched = fromDigits !== "";
+  const toTouched = toDigits !== "";
 
   if (fromTouched && from === null) {
     return "В поле «Зарплата от» укажите целое неотрицательное число.";
@@ -263,8 +262,8 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       return;
     }
 
-    const fromTrim = form.salaryFrom.trim();
-    const toTrim = form.salaryTo.trim();
+    const fromDigits = sanitizeMoneyIntegerDigits(form.salaryFrom);
+    const toDigits = sanitizeMoneyIntegerDigits(form.salaryTo);
 
     const payload = {
       title: form.title,
@@ -273,8 +272,8 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       grade: form.grade,
       workFormat: form.workFormat,
       salaryCurrency: form.salaryCurrency,
-      salaryFrom: fromTrim === "" ? undefined : Number(fromTrim),
-      salaryTo: toTrim === "" ? undefined : Number(toTrim),
+      salaryFrom: fromDigits === "" ? undefined : Number(BigInt(fromDigits)),
+      salaryTo: toDigits === "" ? undefined : Number(BigInt(toDigits)),
       description: form.description,
       rewardKopecks: form.referrerBonusRubles * 100,
     };
@@ -394,32 +393,44 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           </Field>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
           <Field className="min-w-0 flex-1">
             <FieldLabel htmlFor="vac-sal-from">Зарплата от</FieldLabel>
             <Input
               id="vac-sal-from"
-              type="number"
-              min={0}
-              step={1}
-              value={form.salaryFrom}
-              onChange={(e) => setForm((f) => ({ ...f, salaryFrom: e.target.value }))}
-              placeholder="100000"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={formatRuMoneyIntegerDisplay(form.salaryFrom)}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  salaryFrom: sanitizeMoneyIntegerDigits(e.target.value),
+                }))
+              }
+              placeholder="100 000"
+              className="tabular-nums"
             />
           </Field>
           <Field className="min-w-0 flex-1">
             <FieldLabel htmlFor="vac-sal-to">Зарплата до</FieldLabel>
             <Input
               id="vac-sal-to"
-              type="number"
-              min={0}
-              step={1}
-              value={form.salaryTo}
-              onChange={(e) => setForm((f) => ({ ...f, salaryTo: e.target.value }))}
-              placeholder="200000"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={formatRuMoneyIntegerDisplay(form.salaryTo)}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  salaryTo: sanitizeMoneyIntegerDigits(e.target.value),
+                }))
+              }
+              placeholder="200 000"
+              className="tabular-nums"
             />
           </Field>
-          <Field className="w-full sm:w-fit sm:shrink-0">
+          <Field className="w-full min-w-0 shrink-0 sm:w-fit">
             <FieldLabel>Валюта зарплаты</FieldLabel>
             <Select
               value={form.salaryCurrency}
@@ -427,7 +438,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
               }
             >
-              <SelectTrigger className="!w-fit max-w-full font-medium tabular-nums">
+              <SelectTrigger className="h-8 max-w-full min-w-0 gap-1.5 font-medium tabular-nums">
                 <SalaryCurrencyIcon code={form.salaryCurrency} />
                 <SelectValue className="min-w-0">{form.salaryCurrency}</SelectValue>
               </SelectTrigger>
