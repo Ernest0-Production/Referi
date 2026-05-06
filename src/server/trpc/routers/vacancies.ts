@@ -37,7 +37,7 @@ const vacancyWriteSchema = z
     salaryCurrency: salaryCurrencyEnum.default("RUB"),
     salaryFrom: z.number().int().min(0).optional(),
     salaryTo: z.number().int().min(0).optional(),
-    description: z.string().min(10).max(3000),
+    description: z.string().min(10).max(1000),
     rewardKopecks: z.number().int().min(0).max(REFERRER_BONUS_MAX_KOPECKS).default(0),
   })
   .refine((d) => d.salaryFrom == null || d.salaryTo == null || d.salaryFrom < d.salaryTo, {

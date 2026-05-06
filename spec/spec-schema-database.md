@@ -244,7 +244,7 @@ model Vacancy {
   salaryCurrency  SalaryCurrency @default(RUB)
   salaryFromKopecks BigInt?   // NULL = не указана; минорные единицы salaryCurrency (копейки / центы); >= 0
   salaryToKopecks   BigInt?   // NULL = не указана; минорные единицы salaryCurrency; >= salaryFrom if both set
-  description     String     @db.VarChar(3000)
+  description     String     @db.VarChar(1000)
   rewardKopecks   BigInt     @default(0)  // 0 = бесплатный реферал; write: `vacancies.create`/`update` — 0…10_000_000 коп. (до 100_000 ₽), кратно 1_000_000 (шаг 10_000 ₽)
 
   status          VacancyStatus @default(ACTIVE)

@@ -76,7 +76,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
         <CardTitle className="text-base">Жалоба на вакансию</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <FieldGroup className="gap-4">
+        <FieldGroup>
           <Field>
             <FieldLabel htmlFor="report-reason">Причина</FieldLabel>
             <Select

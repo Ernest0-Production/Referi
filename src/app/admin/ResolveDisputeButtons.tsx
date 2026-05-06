@@ -43,7 +43,7 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
   const errMsg = forReferrer.error?.message ?? forSeeker.error?.message;
 
   return (
-    <FieldGroup className="gap-4">
+    <FieldGroup>
       <Field>
         <FieldLabel htmlFor="mod-notes">Примечание модератора (необязательно)</FieldLabel>
         <Textarea

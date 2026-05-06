@@ -111,7 +111,7 @@ CREATE TABLE "vacancies" (
     "salaryCurrency" "SalaryCurrency" NOT NULL DEFAULT 'RUB',
     "salaryFromKopecks" BIGINT,
     "salaryToKopecks" BIGINT,
-    "description" VARCHAR(3000) NOT NULL,
+    "description" VARCHAR(1000) NOT NULL,
     "rewardKopecks" BIGINT NOT NULL DEFAULT 0,
     "status" "VacancyStatus" NOT NULL DEFAULT 'ACTIVE',
     "frozenUntil" TIMESTAMP(3),

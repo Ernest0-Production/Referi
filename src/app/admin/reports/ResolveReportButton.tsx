@@ -33,7 +33,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
   }
 
   return (
-    <FieldGroup className="gap-4">
+    <FieldGroup>
       <Field data-invalid={resolutionError ? "true" : undefined}>
         <FieldLabel htmlFor="report-resolution">Решение (обязательно)</FieldLabel>
         <Textarea

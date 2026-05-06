@@ -175,7 +175,7 @@ model Vacancy {
   salaryCurrency    SalaryCurrency @default(RUB)
   salaryFromKopecks BigInt?
   salaryToKopecks   BigInt?
-  description       String     @db.VarChar(3000)
+  description       String     @db.VarChar(1000)
   rewardKopecks     BigInt     @default(0)
 
   status       VacancyStatus @default(ACTIVE)

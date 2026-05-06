@@ -90,7 +90,7 @@ const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
 
 const REFERRER_BONUS_MAX_RUBLES = 100_000;
 const REFERRER_BONUS_STEP_RUBLES = 10_000;
-const VACANCY_DESCRIPTION_MAX_LEN = 3000;
+const VACANCY_DESCRIPTION_MAX_LEN = 1000;
 
 function snapReferrerBonusRublesFromKopecks(raw: string): number {
   const kopecks = BigInt(raw || "0");
