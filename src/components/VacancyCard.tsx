@@ -23,7 +23,6 @@ const SPECIALTY_LABELS: Record<string, string> = {
   DATA: "Data",
   ML_AI: "ML/AI",
   SECURITY: "Security",
-  OTHER: "Другое",
 };
 
 const GRADE_LABELS: Record<string, string> = {
@@ -31,7 +30,6 @@ const GRADE_LABELS: Record<string, string> = {
   MIDDLE: "Middle",
   SENIOR: "Senior",
   LEAD: "Lead",
-  PRINCIPAL: "Principal",
 };
 
 const FORMAT_LABELS: Record<string, string> = {

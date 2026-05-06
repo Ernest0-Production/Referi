@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeAppPath } from "@/lib/safeAppPath";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { LoginButton } from "./LoginButton";
 import {
@@ -12,13 +13,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const sp = await searchParams;
+  const rawCallback = Array.isArray(sp.callbackUrl) ? sp.callbackUrl[0] : sp.callbackUrl;
+  const callbackAfterAuth = safeAppPath(rawCallback, "/dashboard");
+
   const session = await auth();
   const userId = session?.user?.id;
   if (userId) {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (user) {
-      redirect("/dashboard");
+      redirect(callbackAfterAuth);
     }
   }
 
@@ -35,7 +44,7 @@ export default async function LoginPage() {
             <p className="text-muted-foreground text-center text-sm">
               Войдите через GitHub, чтобы продолжить
             </p>
-            <LoginButton />
+            <LoginButton callbackUrl={callbackAfterAuth} />
           </CardContent>
           <CardFooter>
             <p className="text-muted-foreground w-full text-center text-xs">

@@ -57,7 +57,7 @@ export function AdminHeaderNav({ session }: { session: Session }) {
           >
             <span className="text-lg leading-none">R</span>
           </span>
-          <span className="hidden truncate text-lg sm:inline">Referi</span>
+          <span className="truncate text-lg">Referi</span>
         </Link>
         <Badge variant="destructive" className="shrink-0 text-xs uppercase">
           Admin

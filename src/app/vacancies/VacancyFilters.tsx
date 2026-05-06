@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter, IconStack2 } from "@tabler/icons-react";
 import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import {
+  buildVacancyCatalogLoginReturnHref,
   flatParamsForPresetSave,
   parseCsvEnumParam,
   parseVacancyListSpecialtyCsvParam,
@@ -26,6 +27,7 @@ import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/m
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -52,9 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
 import {
   GradeIcon,
   SalaryCurrencyIcon,
@@ -78,7 +78,6 @@ const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; labe
   { value: "DATA", label: "Data" },
   { value: "ML_AI", label: "ML / AI" },
   { value: "SECURITY", label: "Security" },
-  { value: "OTHER", label: "Другое" },
 ];
 
 const GRADES: { value: (typeof VACANCY_LIST_GRADE_VALUES)[number]; label: string }[] = [
@@ -86,7 +85,6 @@ const GRADES: { value: (typeof VACANCY_LIST_GRADE_VALUES)[number]; label: string
   { value: "MIDDLE", label: "Middle" },
   { value: "SENIOR", label: "Senior" },
   { value: "LEAD", label: "Lead" },
-  { value: "PRINCIPAL", label: "Principal" },
 ];
 
 const FORMATS: { value: (typeof VACANCY_LIST_WORK_FORMAT_VALUES)[number]; label: string }[] = [
@@ -130,21 +128,19 @@ function VacancyFilterSalaryBlock({
   return (
     <FieldGroup>
       <FieldLabel htmlFor="salary-from">Зарплата не ниже</FieldLabel>
-      <div className="flex min-w-0 flex-row flex-wrap items-end gap-2">
-        <div className="min-w-0 flex-1">
-          <Input
-            id="salary-from"
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            value={formatRuMoneyIntegerDisplay(salaryFrom)}
-            onChange={(e) => setSalaryFrom(sanitizeMoneyIntegerDigits(e.target.value))}
-            onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
-            placeholder="Минимум"
-            className="h-9 w-full min-w-0 rounded-lg tabular-nums"
-          />
-        </div>
-        <div className="shrink-0">
+      <InputGroup className="border-border bg-card h-9 w-full min-w-0 rounded-lg shadow-sm">
+        <InputGroupInput
+          id="salary-from"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={formatRuMoneyIntegerDisplay(salaryFrom)}
+          onChange={(e) => setSalaryFrom(sanitizeMoneyIntegerDigits(e.target.value))}
+          onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
+          placeholder="Минимум"
+          className="h-9 min-h-9 min-w-0 text-base tabular-nums md:text-sm"
+        />
+        <InputGroupAddon align="inline-end" className="shrink-0 pr-1">
           <Select
             value={salaryCurrencySelect}
             onValueChange={(v) => {
@@ -153,7 +149,7 @@ function VacancyFilterSalaryBlock({
               commit(salaryFrom || undefined, c);
             }}
           >
-            <SelectTrigger className="h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 px-2 font-medium tabular-nums">
+            <SelectTrigger className="h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 rounded-lg border-0 bg-transparent px-2 font-medium tabular-nums shadow-none focus-visible:ring-0">
               <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
               <SelectValue placeholder="…">{salaryCurrencySelect}</SelectValue>
             </SelectTrigger>
@@ -168,8 +164,8 @@ function VacancyFilterSalaryBlock({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </InputGroupAddon>
+      </InputGroup>
     </FieldGroup>
   );
 }
@@ -199,6 +195,8 @@ interface Props {
   savedPresetSelectLayoutKey?: number;
   /** Нижний `CardFooter` закреплён, скроллится только тело (например в мобильном Sheet). */
   variant?: "default" | "sheet";
+  /** После авторизации с каталога: один раз открыть диалог сохранения фильтров. */
+  resumeVacancyPresetSave?: boolean;
 }
 
 export function VacancyFilters({
@@ -214,6 +212,7 @@ export function VacancyFilters({
   vacancyPresetSidebarCleared = false,
   savedPresetSelectLayoutKey = 0,
   variant = "default",
+  resumeVacancyPresetSave = false,
 }: Props) {
   const router = useRouter();
   const [saveOpen, setSaveOpen] = useState(false);
@@ -222,6 +221,13 @@ export function VacancyFilters({
   const [presetName, setPresetName] = useState("");
   const [presetNameInvalid, setPresetNameInvalid] = useState(false);
   const utils = trpcReact.useUtils();
+  const autoOpenedSaveAfterAuth = useRef(false);
+
+  useEffect(() => {
+    if (!resumeVacancyPresetSave || !isLoggedIn || autoOpenedSaveAfterAuth.current) return;
+    autoOpenedSaveAfterAuth.current = true;
+    setSaveOpen(true);
+  }, [resumeVacancyPresetSave, isLoggedIn]);
 
   const createPreset = trpcReact.vacancySearchPresets.create.useMutation({
     onSuccess: async () => {
@@ -338,63 +344,53 @@ export function VacancyFilters({
           isSheet && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
         )}
       >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <Label className="text-foreground text-sm font-medium">Ваши фильтры</Label>
-            {presets.length > 0 ? (
-              <span className="text-muted-foreground text-xs">{presets.length} сохранённых</span>
-            ) : null}
-          </div>
-          {!isLoggedIn ? (
-            <Alert>
-              <AlertDescription className="text-sm">
-                <Link
-                  href="/login"
-                  className="text-primary font-medium underline underline-offset-4"
-                >
-                  Войдите
-                </Link>
-                , чтобы сохранять наборы фильтров.
-              </AlertDescription>
-            </Alert>
-          ) : presets.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Пока нет сохранённых наборов.</p>
-          ) : (
-            <Tabs
-              key={`saved-preset-tabs-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
-              value={presetTabsValue}
-              onValueChange={handlePresetSelectChange}
-              className="flex w-full min-w-0 shrink-0 flex-col gap-0"
-            >
-              <TabsList className="h-fit max-h-fit w-full max-w-full min-w-0 shrink-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain">
-                <TabsTrigger
-                  value={PRESET_SELECT_CLEAR}
-                  className="h-8 max-h-8 flex-none shrink-0 px-3 py-0 text-sm shadow-none"
-                >
-                  Не выбран
-                </TabsTrigger>
-                {presets.map((pr) => (
+        {isLoggedIn ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-foreground text-sm font-medium">Ваши фильтры</Label>
+              {presets.length > 0 ? (
+                <span className="text-muted-foreground text-xs">{presets.length} сохранённых</span>
+              ) : null}
+            </div>
+            {presets.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Пока нет сохранённых наборов.</p>
+            ) : (
+              <Tabs
+                key={`saved-preset-tabs-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
+                value={presetTabsValue}
+                onValueChange={handlePresetSelectChange}
+                className="flex w-full min-w-0 shrink-0 flex-col gap-0"
+              >
+                <TabsList className="h-fit max-h-fit w-full max-w-full min-w-0 shrink-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain">
                   <TabsTrigger
-                    key={pr.id}
-                    value={pr.id}
-                    title={pr.name}
-                    className="h-8 max-h-8 max-w-[min(12rem,45vw)] flex-none shrink-0 truncate px-3 py-0 text-sm shadow-none"
+                    value={PRESET_SELECT_CLEAR}
+                    className="h-8 max-h-8 flex-none shrink-0 px-3 py-0 text-sm shadow-none"
                   >
-                    {pr.name}
+                    Не выбран
                   </TabsTrigger>
-                ))}
-              </TabsList>
-              <TabsContent value={PRESET_SELECT_CLEAR} className="mt-0 flex-none">
-                <span className="sr-only">Сохранённый набор не выбран</span>
-              </TabsContent>
-              {presets.map((pr) => (
-                <TabsContent key={pr.id} value={pr.id} className="mt-0 flex-none">
-                  <span className="sr-only">Выбран набор «{pr.name}»</span>
+                  {presets.map((pr) => (
+                    <TabsTrigger
+                      key={pr.id}
+                      value={pr.id}
+                      title={pr.name}
+                      className="h-8 max-h-8 max-w-[min(12rem,45vw)] flex-none shrink-0 truncate px-3 py-0 text-sm shadow-none"
+                    >
+                      {pr.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                <TabsContent value={PRESET_SELECT_CLEAR} className="mt-0 flex-none">
+                  <span className="sr-only">Сохранённый набор не выбран</span>
                 </TabsContent>
-              ))}
-            </Tabs>
-          )}
-        </div>
+                {presets.map((pr) => (
+                  <TabsContent key={pr.id} value={pr.id} className="mt-0 flex-none">
+                    <span className="sr-only">Выбран набор «{pr.name}»</span>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            )}
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-2">
           <Label className="text-sm font-medium">Специализация</Label>
@@ -518,9 +514,12 @@ export function VacancyFilters({
                 type="button"
                 variant="default"
                 className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
-                disabled={!isLoggedIn}
                 onClick={() => {
-                  if (!isLoggedIn) return;
+                  if (!isLoggedIn) {
+                    const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
+                    router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
+                    return;
+                  }
                   setSaveOpen(true);
                 }}
               >

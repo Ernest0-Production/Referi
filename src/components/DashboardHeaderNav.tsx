@@ -81,7 +81,7 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
           >
             <span className="text-lg leading-none">R</span>
           </span>
-          <span className="hidden truncate text-lg sm:inline">Referi</span>
+          <span className="truncate text-lg">Referi</span>
         </Link>
 
         <DropdownMenu>

@@ -18,9 +18,8 @@ const specialtyEnum = z.enum([
   "DATA",
   "ML_AI",
   "SECURITY",
-  "OTHER",
 ]);
-const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD", "PRINCIPAL"]);
+const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD"]);
 const workFormatEnum = z.enum(["OFFICE", "HYBRID", "REMOTE"]);
 const salaryCurrencyEnum = z.enum(VACANCY_SALARY_CURRENCY_VALUES);
 
@@ -217,7 +216,8 @@ export const vacanciesRouter = router({
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
 
       const isMine = ctx.session?.user?.id === vacancy.referrerId;
-      const { referrerId: _referrerId, ...vacancyPublic } = vacancy;
+      const { referrerId, ...vacancyPublic } = vacancy;
+      void referrerId;
 
       return { ...vacancyWithApplicationCount(vacancyPublic), isMine };
     }),
