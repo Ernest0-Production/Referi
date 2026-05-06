@@ -9,6 +9,19 @@ import { Button } from "@/components/ui/button";
 
 type MyActiveOut = inferRouterOutputs<AppRouter>["vacancies"]["myActive"];
 
+function CreateVacancyHomeCta({ href }: { href: string }) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-muted-foreground max-w-xl text-sm">
+        Ищете сотрудника? Разместите вакансию и получайте отклики через рефералов.
+      </p>
+      <Button asChild className="shrink-0">
+        <Link href={href}>Создать вакансию</Link>
+      </Button>
+    </div>
+  );
+}
+
 export function EmployerHomeVacancySection({
   employerVacancyPreview,
   isLoggedIn,
@@ -21,7 +34,9 @@ export function EmployerHomeVacancySection({
     initialData: employerVacancyPreview ?? undefined,
   });
 
-  if (!isLoggedIn) return null;
+  if (!isLoggedIn) {
+    return <CreateVacancyHomeCta href="/vacancies/new" />;
+  }
 
   const vacancy = myActiveQuery.data;
 
@@ -44,14 +59,5 @@ export function EmployerHomeVacancySection({
     );
   }
 
-  return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-muted-foreground max-w-xl text-sm">
-        Ищете сотрудника? Разместите вакансию и получайте отклики через рефералов.
-      </p>
-      <Button asChild className="shrink-0">
-        <Link href="/dashboard/vacancy">Создать вакансию</Link>
-      </Button>
-    </div>
-  );
+  return <CreateVacancyHomeCta href="/dashboard/vacancy" />;
 }
