@@ -6,7 +6,7 @@ import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -32,6 +32,7 @@ export function SubmitApplicationForm({
   const [error, setError] = useState<string | null>(null);
   const [contactError, setContactError] = useState<string | null>(null);
   const [bioError, setBioError] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
   const [tokenId, setTokenId] = useState<string | undefined>(paidTokenId);
 
   const submit = trpcReact.applications.submit.useMutation({
@@ -72,14 +73,10 @@ export function SubmitApplicationForm({
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formEl = e.currentTarget;
-    if (!formEl.checkValidity()) {
-      formEl.reportValidity();
-      return;
-    }
     setError(null);
     setContactError(null);
     setBioError(null);
+    setCoverError(null);
 
     const contact = form.contactInfo.trim();
     if (contact.length < 1) {
@@ -102,7 +99,7 @@ export function SubmitApplicationForm({
     }
 
     if (form.coverLetter.length > 300) {
-      setError("Сопроводительное письмо: не больше 300 символов.");
+      setCoverError("Не больше 300 символов.");
       return;
     }
 
@@ -116,24 +113,28 @@ export function SubmitApplicationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form noValidate onSubmit={handleSubmit}>
       <FieldGroup>
         <Field data-invalid={contactError ? "true" : undefined}>
           <FieldLabel htmlFor="app-contact">Контактная информация *</FieldLabel>
           <Input
             id="app-contact"
-            required
-            minLength={1}
             maxLength={500}
             value={form.contactInfo}
             aria-invalid={contactError ? true : undefined}
+            aria-describedby="app-contact-desc"
             onChange={(e) => {
               setContactError(null);
               setForm((f) => ({ ...f, contactInfo: e.target.value }));
             }}
             placeholder="мессенджер, email или ссылка"
           />
-          {contactError ? <FieldError>{contactError}</FieldError> : null}
+          <FieldDescription
+            id="app-contact-desc"
+            className={contactError ? "text-destructive" : undefined}
+          >
+            {contactError ?? "Обязательное поле. До 500 символов."}
+          </FieldDescription>
         </Field>
 
         <Field data-invalid={bioError ? "true" : undefined}>
@@ -141,30 +142,42 @@ export function SubmitApplicationForm({
           <Textarea
             id="app-bio"
             rows={5}
-            required
-            minLength={10}
             maxLength={1000}
             value={form.bio}
             aria-invalid={bioError ? true : undefined}
+            aria-describedby="app-bio-desc"
             onChange={(e) => {
               setBioError(null);
               setForm((f) => ({ ...f, bio: e.target.value }));
             }}
             placeholder="Опыт, стек, достижения"
           />
-          {bioError ? <FieldError>{bioError}</FieldError> : null}
+          <FieldDescription id="app-bio-desc" className={bioError ? "text-destructive" : undefined}>
+            {bioError ?? "Минимум 10 символов, не более 1000."}
+          </FieldDescription>
         </Field>
 
-        <Field>
+        <Field data-invalid={coverError ? "true" : undefined}>
           <FieldLabel htmlFor="app-cover">Сопроводительное письмо (необязательно)</FieldLabel>
           <Textarea
             id="app-cover"
             maxLength={300}
             rows={3}
             value={form.coverLetter}
-            onChange={(e) => setForm((f) => ({ ...f, coverLetter: e.target.value }))}
+            aria-invalid={coverError ? true : undefined}
+            aria-describedby="app-cover-desc"
+            onChange={(e) => {
+              setCoverError(null);
+              setForm((f) => ({ ...f, coverLetter: e.target.value }));
+            }}
             placeholder="Почему именно эта вакансия?"
           />
+          <FieldDescription
+            id="app-cover-desc"
+            className={coverError ? "text-destructive" : undefined}
+          >
+            {coverError ?? "Необязательно, не более 300 символов."}
+          </FieldDescription>
         </Field>
 
         <Card>
