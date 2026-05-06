@@ -27,9 +27,11 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
       <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Моя вакансия</h1>
-          <p className="text-muted-foreground text-sm">
-            Доступных попыток: {me.availableAttempts} из 3
-          </p>
+          {vacancy ? (
+            <p className="text-muted-foreground text-sm">
+              Доступных попыток: {me.availableAttempts} из 3
+            </p>
+          ) : null}
         </div>
 
         {vacancy ? (

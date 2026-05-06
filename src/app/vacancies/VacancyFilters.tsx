@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconFilter } from "@tabler/icons-react";
+import { IconFilter, IconStack2 } from "@tabler/icons-react";
 import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import {
   flatParamsForPresetSave,
@@ -50,13 +50,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-
-const SPECIALTY_SELECT_ANY = "__any__";
+import {
+  GradeIcon,
+  SalaryCurrencyIcon,
+  SpecialtyIcon,
+  WorkFormatIcon,
+} from "@/components/vacancy/VacancyFieldIcons";
+import { cn } from "@/lib/utils"; = "__any__";
 const SPECIALTY_SELECT_MULTI = "__multi__";
 const PRESET_SELECT_CLEAR = "__preset_clear__";
 
@@ -142,12 +146,16 @@ function VacancyFilterSalaryBlock({
             }}
           >
             <SelectTrigger className="h-9 w-[4.75rem] shrink-0 gap-1 px-2 font-medium tabular-nums">
+              <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
               <SelectValue placeholder="…" />
             </SelectTrigger>
             <SelectContent position="popper">
               {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {c}
+                  <span className="flex items-center gap-2">
+                    <SalaryCurrencyIcon code={c} className="size-3.5" />
+                    {c}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -393,7 +401,18 @@ export function VacancyFilters({
               apply({ specialty: next });
             }}
           >
-            <SelectTrigger className="bg-card h-9 w-full rounded-lg">
+            <SelectTrigger className="bg-card h-9 w-full gap-1.5 rounded-lg">
+              {specialtySelectValue === SPECIALTY_SELECT_ANY ? (
+                <IconFilter
+                  className="text-muted-foreground size-4 shrink-0"
+                  aria-hidden
+                  stroke={1.75}
+                />
+              ) : specialtySelectValue === SPECIALTY_SELECT_MULTI ? (
+                <IconStack2 className="text-muted-foreground size-4 shrink-0" aria-hidden />
+              ) : (
+                <SpecialtyIcon specialty={specialtySelectValue} />
+              )}
               <SelectValue placeholder="Специализация" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -402,8 +421,11 @@ export function VacancyFilters({
                 <SelectItem value={SPECIALTY_SELECT_MULTI}>Несколько выбрано</SelectItem>
               ) : null}
               {SPECIALTIES.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
+                <SelectItem key={s.value} value={s.value} textValue={s.label}>
+                  <span className="flex items-center gap-2">
+                    <SpecialtyIcon specialty={s.value} />
+                    {s.label}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -411,7 +433,10 @@ export function VacancyFilters({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-sm font-medium">Грейд</Label>
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <GradeIcon className="size-4" />
+            Грейд
+          </Label>
           <ToggleGroup
             type="multiple"
             spacing={2}
@@ -441,7 +466,14 @@ export function VacancyFilters({
             className="flex flex-wrap justify-start"
           >
             {FORMATS.map((f) => (
-              <ToggleGroupItem key={f.value} value={f.value} variant="outline" size="sm">
+              <ToggleGroupItem
+                key={f.value}
+                value={f.value}
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+              >
+                <WorkFormatIcon format={f.value} className="size-3.5 opacity-90" />
                 {f.label}
               </ToggleGroupItem>
             ))}
@@ -639,9 +671,7 @@ export function VacancyFilters({
                 className="h-9"
                 aria-invalid={presetNameInvalid}
               />
-              {presetNameInvalid ? (
-                <FieldDescription className="text-destructive">Введите название</FieldDescription>
-              ) : null}
+              {presetNameInvalid ? <FieldError>Введите название</FieldError> : null}
             </Field>
           </FieldGroup>
           <DialogFooter className="flex flex-row gap-2 sm:justify-end">

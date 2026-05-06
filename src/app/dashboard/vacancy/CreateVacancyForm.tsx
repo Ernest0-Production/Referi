@@ -2,25 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  IconBrandAndroid,
-  IconBrandApple,
-  IconBrain,
-  IconBug,
-  IconBuildingSkyscraper,
-  IconCloudComputing,
-  IconCurrencyDollar,
-  IconCurrencyEuro,
-  IconCurrencyRubel,
-  IconDatabase,
-  IconDots,
-  IconHomeShare,
-  IconLayout,
-  IconServer,
-  IconShield,
-  IconStack2,
-  IconWorld,
-} from "@tabler/icons-react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -40,7 +21,12 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
-import { cn } from "@/lib/utils";
+import {
+  GradeIcon,
+  SalaryCurrencyIcon,
+  SpecialtyIcon,
+  WorkFormatIcon,
+} from "@/components/vacancy/VacancyFieldIcons";
 
 const SPECIALTIES = [
   "FRONTEND",
@@ -94,73 +80,6 @@ function snapReferrerBonusRublesFromKopecks(raw: string): number {
   const rubles = Number(kopecks / 100n);
   const clamped = Math.min(REFERRER_BONUS_MAX_RUBLES, Math.max(0, rubles));
   return Math.round(clamped / REFERRER_BONUS_STEP_RUBLES) * REFERRER_BONUS_STEP_RUBLES;
-}
-
-const SELECT_TRIGGER_ICON = "text-muted-foreground size-4 shrink-0 pointer-events-none";
-
-function SpecialtyIcon({
-  specialty,
-  className,
-}: {
-  specialty: (typeof SPECIALTIES)[number];
-  className?: string;
-}) {
-  const c = cn(SELECT_TRIGGER_ICON, className);
-  switch (specialty) {
-    case "FRONTEND":
-      return <IconLayout className={c} aria-hidden />;
-    case "BACKEND":
-      return <IconServer className={c} aria-hidden />;
-    case "FULLSTACK":
-      return <IconStack2 className={c} aria-hidden />;
-    case "IOS_MOBILE":
-      return <IconBrandApple className={c} aria-hidden />;
-    case "ANDROID_MOBILE":
-      return <IconBrandAndroid className={c} aria-hidden />;
-    case "DEVOPS":
-      return <IconCloudComputing className={c} aria-hidden />;
-    case "QA":
-      return <IconBug className={c} aria-hidden />;
-    case "DATA":
-      return <IconDatabase className={c} aria-hidden />;
-    case "ML_AI":
-      return <IconBrain className={c} aria-hidden />;
-    case "SECURITY":
-      return <IconShield className={c} aria-hidden />;
-    default:
-      return <IconDots className={c} aria-hidden />;
-  }
-}
-
-function WorkFormatIcon({
-  format,
-  className,
-}: {
-  format: (typeof FORMATS)[number];
-  className?: string;
-}) {
-  const c = cn(SELECT_TRIGGER_ICON, className);
-  switch (format) {
-    case "OFFICE":
-      return <IconBuildingSkyscraper className={c} aria-hidden />;
-    case "HYBRID":
-      return <IconHomeShare className={c} aria-hidden />;
-    case "REMOTE":
-      return <IconWorld className={c} aria-hidden />;
-  }
-}
-
-function SalaryCurrencyIcon({
-  code,
-  className,
-}: {
-  code: VacancySalaryCurrency;
-  className?: string;
-}) {
-  const c = cn(SELECT_TRIGGER_ICON, className);
-  if (code === "RUB") return <IconCurrencyRubel className={c} aria-hidden />;
-  if (code === "USD") return <IconCurrencyDollar className={c} aria-hidden />;
-  return <IconCurrencyEuro className={c} aria-hidden />;
 }
 
 export type EditVacancyFormVacancy = {
@@ -430,13 +349,17 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               onValueChange={(v) => setForm((f) => ({ ...f, grade: v as (typeof GRADES)[number] }))}
             >
               <SelectTrigger className="w-full *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:justify-center">
+                <GradeIcon />
                 <SelectValue className="min-w-0">{GRADE_LABELS[form.grade]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {GRADES.map((g) => (
                     <SelectItem key={g} value={g} textValue={GRADE_LABELS[g]}>
-                      {GRADE_LABELS[g]}
+                      <span className="flex items-center gap-2">
+                        <GradeIcon className="size-4" />
+                        {GRADE_LABELS[g]}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
