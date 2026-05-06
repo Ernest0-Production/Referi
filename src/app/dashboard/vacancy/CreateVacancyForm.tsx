@@ -15,8 +15,23 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
+import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { Slider } from "@/components/ui/slider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -576,87 +591,86 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           data-invalid={salaryError ? "true" : undefined}
         >
           <FieldLegend>Зарплата</FieldLegend>
-          <div className="flex min-w-0 flex-row items-center gap-2 sm:gap-3">
-            <Field className="min-w-0 flex-1">
-              <Input
-                id="vac-sal-from"
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                aria-label="Зарплата от"
-                value={formatRuMoneyIntegerDisplay(form.salaryFrom)}
-                aria-invalid={salaryError ? true : undefined}
-                aria-describedby={salaryError ? "vac-salary-desc" : undefined}
-                onChange={(e) => {
-                  setSalaryError(null);
-                  setForm((f) => ({
-                    ...f,
-                    salaryFrom: sanitizeMoneyIntegerDigits(e.target.value),
-                  }));
-                }}
-                placeholder="100 000"
-                className="tabular-nums"
-              />
-            </Field>
-            <span
-              className="text-muted-foreground flex h-8 shrink-0 items-center justify-center px-1 text-base font-medium tabular-nums select-none"
+          <InputGroup className="border-border bg-card w-full min-w-0 rounded-lg shadow-sm">
+            <InputGroupInput
+              id="vac-sal-from"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              aria-label="Зарплата от"
+              value={formatRuMoneyIntegerDisplay(form.salaryFrom)}
+              aria-invalid={salaryError ? true : undefined}
+              aria-describedby={salaryError ? "vac-salary-desc" : undefined}
+              onChange={(e) => {
+                setSalaryError(null);
+                setForm((f) => ({
+                  ...f,
+                  salaryFrom: sanitizeMoneyIntegerDigits(e.target.value),
+                }));
+              }}
+              placeholder="100 000"
+              className="min-w-0 flex-1 tabular-nums"
+            />
+            <InputGroupText
+              className="text-muted-foreground shrink-0 px-1 text-base font-medium tabular-nums select-none"
               aria-hidden="true"
             >
               –
-            </span>
-            <Field className="min-w-0 flex-1">
-              <Input
-                id="vac-sal-to"
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                aria-label="Зарплата до"
-                value={formatRuMoneyIntegerDisplay(form.salaryTo)}
-                aria-invalid={salaryError ? true : undefined}
-                aria-describedby={salaryError ? "vac-salary-desc" : undefined}
-                onChange={(e) => {
-                  setSalaryError(null);
-                  setForm((f) => ({
-                    ...f,
-                    salaryTo: sanitizeMoneyIntegerDigits(e.target.value),
-                  }));
-                }}
-                placeholder="200 000"
-                className="tabular-nums"
-              />
-            </Field>
-            <Field className="w-fit min-w-0 shrink-0">
-              <Select
-                value={form.salaryCurrency}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
-                }
-              >
-                <SelectTrigger
-                  id="vac-sal-currency"
-                  aria-label="Валюта зарплаты"
-                  aria-invalid={salaryError ? true : undefined}
-                  aria-describedby={salaryError ? "vac-salary-desc" : undefined}
-                  className="h-8 max-w-full min-w-0 gap-1.5 font-medium tabular-nums"
-                >
-                  <SalaryCurrencyIcon code={form.salaryCurrency} />
-                  <SelectValue className="min-w-0">{form.salaryCurrency}</SelectValue>
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectGroup>
+            </InputGroupText>
+            <InputGroupInput
+              id="vac-sal-to"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              aria-label="Зарплата до"
+              value={formatRuMoneyIntegerDisplay(form.salaryTo)}
+              aria-invalid={salaryError ? true : undefined}
+              aria-describedby={salaryError ? "vac-salary-desc" : undefined}
+              onChange={(e) => {
+                setSalaryError(null);
+                setForm((f) => ({
+                  ...f,
+                  salaryTo: sanitizeMoneyIntegerDigits(e.target.value),
+                }));
+              }}
+              placeholder="200 000"
+              className="min-w-0 flex-1 tabular-nums"
+            />
+            <InputGroupAddon align="inline-end" className="shrink-0 pr-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <InputGroupButton
+                    variant="ghost"
+                    type="button"
+                    id="vac-sal-currency"
+                    aria-label="Валюта зарплаты"
+                    aria-invalid={salaryError ? true : undefined}
+                    aria-describedby={salaryError ? "vac-salary-desc" : undefined}
+                    className="h-8 max-w-full min-w-0 gap-1.5 rounded-lg px-2 font-medium tabular-nums"
+                  >
+                    <SalaryCurrencyIcon code={form.salaryCurrency} />
+                    <span className="min-w-0">{form.salaryCurrency}</span>
+                    <ChevronDown className="text-muted-foreground size-3.5 shrink-0 opacity-80" />
+                  </InputGroupButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuRadioGroup
+                    value={form.salaryCurrency}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, salaryCurrency: v as VacancySalaryCurrency }))
+                    }
+                  >
                     {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
-                      <SelectItem key={c} value={c} textValue={c}>
-                        <span className="flex items-center gap-2">
-                          <SalaryCurrencyIcon code={c} />
-                          {c}
-                        </span>
-                      </SelectItem>
+                      <DropdownMenuRadioItem key={c} value={c} className="gap-2">
+                        <SalaryCurrencyIcon code={c} />
+                        {c}
+                      </DropdownMenuRadioItem>
                     ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </InputGroupAddon>
+          </InputGroup>
           {salaryError ? (
             <FieldDescription id="vac-salary-desc" className="text-destructive">
               {salaryError}

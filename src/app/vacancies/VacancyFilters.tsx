@@ -27,7 +27,12 @@ import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/m
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -50,6 +55,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -141,29 +148,37 @@ function VacancyFilterSalaryBlock({
           className="h-9 min-h-9 min-w-0 text-base tabular-nums md:text-sm"
         />
         <InputGroupAddon align="inline-end" className="shrink-0 pr-1">
-          <Select
-            value={salaryCurrencySelect}
-            onValueChange={(v) => {
-              const c = v as VacancySalaryCurrency;
-              setSalaryCurrencySelect(c);
-              commit(salaryFrom || undefined, c);
-            }}
-          >
-            <SelectTrigger className="h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 rounded-lg border-0 bg-transparent px-2 font-medium tabular-nums shadow-none focus-visible:ring-0">
-              <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
-              <SelectValue placeholder="…">{salaryCurrencySelect}</SelectValue>
-            </SelectTrigger>
-            <SelectContent position="popper">
-              {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
-                <SelectItem key={c} value={c} textValue={c}>
-                  <span className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <InputGroupButton
+                variant="ghost"
+                type="button"
+                aria-label="Валюта зарплаты"
+                className="h-9 min-h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 rounded-lg px-2 font-medium tabular-nums"
+              >
+                <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
+                <span className="min-w-0">{salaryCurrencySelect}</span>
+                <ChevronDown className="text-muted-foreground size-3.5 shrink-0 opacity-80" />
+              </InputGroupButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup
+                value={salaryCurrencySelect}
+                onValueChange={(v) => {
+                  const c = v as VacancySalaryCurrency;
+                  setSalaryCurrencySelect(c);
+                  commit(salaryFrom || undefined, c);
+                }}
+              >
+                {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
+                  <DropdownMenuRadioItem key={c} value={c} className="gap-2">
                     <SalaryCurrencyIcon code={c} className="size-3.5" />
                     {c}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </InputGroupAddon>
       </InputGroup>
     </FieldGroup>
