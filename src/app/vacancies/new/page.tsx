@@ -69,9 +69,6 @@ export default async function NewVacancyPage() {
           <Card>
             <CardHeader>
               <CardTitle>Новая вакансия</CardTitle>
-              <CardDescription>
-                Данные сохраняются в браузере перед переходом к авторизации.
-              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <CreateVacancyForm />

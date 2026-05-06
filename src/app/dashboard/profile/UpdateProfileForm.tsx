@@ -4,7 +4,7 @@ import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -20,6 +20,9 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
   const [bio, setBio] = useState(currentBio ?? "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [bioError, setBioError] = useState<string | null>(null);
 
   const update = trpcReact.auth.updateProfile.useMutation({
     onSuccess() {
@@ -33,31 +36,66 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
 
   return (
     <form
+      noValidate
       onSubmit={(e) => {
         e.preventDefault();
         setError(null);
+        setNameError(null);
+        setContactError(null);
+        setBioError(null);
+
+        const trimmedName = name.trim();
+        if (trimmedName.length < 2) {
+          setNameError("Имя — минимум 2 символа.");
+          return;
+        }
+        if (trimmedName.length > 100) {
+          setNameError("Не более 100 символов.");
+          return;
+        }
+
+        if (contactInfo.length > 500) {
+          setContactError("Не более 500 символов.");
+          return;
+        }
+
+        if (bio.length > 1000) {
+          setBioError("Не более 1000 символов.");
+          return;
+        }
+
         update.mutate({
-          displayName: name,
+          displayName: trimmedName,
           contactInfo: contactInfo || undefined,
           bio: bio || undefined,
         });
       }}
     >
       <FieldGroup>
-        <Field>
+        <Field data-invalid={nameError ? "true" : undefined}>
           <FieldLabel htmlFor="profile-name">Имя / псевдоним</FieldLabel>
           <Input
             id="profile-name"
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            minLength={2}
             maxLength={100}
+            aria-invalid={nameError ? true : undefined}
+            aria-describedby="profile-name-desc"
+            onChange={(e) => {
+              setNameError(null);
+              setName(e.target.value);
+            }}
             placeholder="Отображаемое имя"
           />
+          <FieldDescription
+            id="profile-name-desc"
+            className={nameError ? "text-destructive" : undefined}
+          >
+            {nameError ?? "Минимум 2 символа, не более 100."}
+          </FieldDescription>
         </Field>
 
-        <Field>
+        <Field data-invalid={contactError ? "true" : undefined}>
           <FieldLabel htmlFor="profile-contact">
             Контактная информация (мессенджер, email, ссылка)
           </FieldLabel>
@@ -65,26 +103,48 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
             id="profile-contact"
             type="text"
             value={contactInfo}
-            onChange={(e) => setContactInfo(e.target.value)}
             maxLength={500}
+            aria-invalid={contactError ? true : undefined}
+            aria-describedby="profile-contact-desc"
+            onChange={(e) => {
+              setContactError(null);
+              setContactInfo(e.target.value);
+            }}
             placeholder="@username / email / ссылка"
           />
+          <FieldDescription
+            id="profile-contact-desc"
+            className={contactError ? "text-destructive" : undefined}
+          >
+            {contactError ?? "Необязательно, не более 500 символов."}
+          </FieldDescription>
         </Field>
 
-        <Field>
+        <Field data-invalid={bioError ? "true" : undefined}>
           <FieldLabel htmlFor="profile-bio">Краткая биография</FieldLabel>
           <Textarea
             id="profile-bio"
             value={bio}
-            onChange={(e) => setBio(e.target.value)}
             maxLength={1000}
             rows={8}
+            aria-invalid={bioError ? true : undefined}
+            aria-describedby="profile-bio-desc"
+            onChange={(e) => {
+              setBioError(null);
+              setBio(e.target.value);
+            }}
             placeholder="Кратко о вашем опыте"
           />
+          <FieldDescription
+            id="profile-bio-desc"
+            className={bioError ? "text-destructive" : undefined}
+          >
+            {bioError ?? "Необязательно, не более 1000 символов."}
+          </FieldDescription>
         </Field>
 
         <div className="flex flex-col gap-2">
-          <Button type="submit" disabled={update.isPending || name.trim().length < 2}>
+          <Button type="submit" disabled={update.isPending}>
             {update.isPending ? "Сохранение…" : "Сохранить"}
           </Button>
           {saved ? <p className="text-muted-foreground text-xs">Сохранено</p> : null}

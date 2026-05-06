@@ -7,7 +7,7 @@ import { ModerationContactLink } from "@/components/ModerationContactLink";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
 export function ApplicationDetailActions({ applicationId, status }: Props) {
   const router = useRouter();
   const [abuseReason, setAbuseReason] = useState("");
+  const [abuseDetailError, setAbuseDetailError] = useState<string | null>(null);
   const [showAbuse, setShowAbuse] = useState(false);
   const [abuseError, setAbuseError] = useState<string | null>(null);
   const [abuseSuccess, setAbuseSuccess] = useState(false);
@@ -99,6 +100,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
             onClick={() => {
               setShowAbuse((v) => !v);
               setAbuseSuccess(false);
+              setAbuseDetailError(null);
             }}
           >
             Пожаловаться
@@ -123,15 +125,26 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <FieldGroup>
-              <Field>
+              <Field data-invalid={abuseDetailError ? "true" : undefined}>
                 <FieldLabel htmlFor="abuse-detail">Опишите ситуацию</FieldLabel>
                 <Textarea
                   id="abuse-detail"
                   rows={3}
                   value={abuseReason}
-                  onChange={(e) => setAbuseReason(e.target.value)}
+                  aria-invalid={abuseDetailError ? true : undefined}
+                  aria-describedby="abuse-detail-desc"
+                  onChange={(e) => {
+                    setAbuseDetailError(null);
+                    setAbuseReason(e.target.value);
+                  }}
                   placeholder="Опишите, что произошло"
                 />
+                <FieldDescription
+                  id="abuse-detail-desc"
+                  className={abuseDetailError ? "text-destructive" : undefined}
+                >
+                  {abuseDetailError ?? "Минимум 5 символов."}
+                </FieldDescription>
               </Field>
             </FieldGroup>
             {abuseError ? (
@@ -142,13 +155,18 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
-                disabled={abuseReportMutation.isPending || abuseReason.trim().length < 5}
-                onClick={() =>
+                disabled={abuseReportMutation.isPending}
+                onClick={() => {
+                  setAbuseDetailError(null);
+                  if (abuseReason.trim().length < 5) {
+                    setAbuseDetailError("Опишите ситуацию (минимум 5 символов).");
+                    return;
+                  }
                   abuseReportMutation.mutate({
                     reason: "OTHER",
                     comment: abuseReason,
-                  })
-                }
+                  });
+                }}
               >
                 {abuseReportMutation.isPending ? "…" : "Отправить"}
               </Button>

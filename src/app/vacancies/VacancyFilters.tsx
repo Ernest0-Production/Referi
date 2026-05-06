@@ -53,7 +53,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   GradeIcon,
@@ -677,8 +677,14 @@ export function VacancyFilters({
                 placeholder="Например: Удалённый бэкенд"
                 className="h-9"
                 aria-invalid={presetNameInvalid}
+                aria-describedby="preset-name-desc"
               />
-              {presetNameInvalid ? <FieldError>Введите название</FieldError> : null}
+              <FieldDescription
+                id="preset-name-desc"
+                className={presetNameInvalid ? "text-destructive" : undefined}
+              >
+                {presetNameInvalid ? "Введите название" : "До 80 символов."}
+              </FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter className="flex flex-row gap-2 sm:justify-end">

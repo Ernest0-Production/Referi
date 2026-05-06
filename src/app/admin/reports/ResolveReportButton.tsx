@@ -5,7 +5,7 @@ import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
@@ -16,6 +16,7 @@ interface Props {
 
 export function ResolveReportButton({ reportId, vacancyId }: Props) {
   const [resolution, setResolution] = useState("");
+  const [resolutionError, setResolutionError] = useState<string | null>(null);
   const [blockVacancy, setBlockVacancy] = useState(false);
   const [resolved, setResolved] = useState(false);
   const utils = trpcReact.useUtils();
@@ -33,16 +34,27 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
 
   return (
     <FieldGroup className="gap-4">
-      <Field>
+      <Field data-invalid={resolutionError ? "true" : undefined}>
         <FieldLabel htmlFor="report-resolution">Решение (обязательно)</FieldLabel>
         <Textarea
           id="report-resolution"
           rows={2}
           placeholder="Решение (обязательно)"
           value={resolution}
-          onChange={(e) => setResolution(e.target.value)}
+          aria-invalid={resolutionError ? true : undefined}
+          aria-describedby="report-resolution-desc"
+          onChange={(e) => {
+            setResolutionError(null);
+            setResolution(e.target.value);
+          }}
           disabled={resolve.isPending}
         />
+        <FieldDescription
+          id="report-resolution-desc"
+          className={resolutionError ? "text-destructive" : undefined}
+        >
+          {resolutionError ?? "Обязательное поле."}
+        </FieldDescription>
       </Field>
       {vacancyId ? (
         <div className="flex items-center gap-2">
@@ -59,14 +71,19 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
       ) : null}
       <Button
         type="button"
-        disabled={resolve.isPending || !resolution.trim()}
-        onClick={() =>
+        disabled={resolve.isPending}
+        onClick={() => {
+          if (!resolution.trim()) {
+            setResolutionError("Укажите текст решения.");
+            return;
+          }
+          setResolutionError(null);
           resolve.mutate({
             reportId,
             resolution,
             blockVacancy: vacancyId ? blockVacancy : undefined,
-          })
-        }
+          });
+        }}
       >
         Закрыть жалобу
       </Button>
