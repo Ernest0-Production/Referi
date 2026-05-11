@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationDetailTrail } from "@/lib/navBreadcrumbTrail";
+import { PAGE_COLUMN_MAX_W3_CLASS } from "@/lib/pageContentShell";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { ApplicationDetailActions } from "./ApplicationDetailActions";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
 
   return (
     <main className="flex-1">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
+      <div className={PAGE_COLUMN_MAX_W3_CLASS}>
         <AppNavBreadcrumb segments={dashboardApplicationDetailTrail()} />
 
         <Card>

@@ -49,12 +49,7 @@ export function dashboardVacancyTrail(
   const rp = pathnameFromPathAndSearch(refererPath);
   const selfPn = pathnameFromPathAndSearch(DASHBOARD_VACANCY_BASE);
   const dashboardRootPn = pathnameFromPathAndSearch(DASHBOARD_ROOT);
-  if (
-    refererPath &&
-    rp !== selfPn &&
-    !rp.startsWith(`${selfPn}/`) &&
-    rp !== dashboardRootPn
-  ) {
+  if (refererPath && rp !== selfPn && !rp.startsWith(`${selfPn}/`) && rp !== dashboardRootPn) {
     items.push({
       label: vacancyDashboardBackLabelFromPathname(refererPath),
       href: refererPath,
@@ -64,33 +59,61 @@ export function dashboardVacancyTrail(
   return items;
 }
 
-/** Режим правки рефералки в кабинете. */
-export function dashboardVacancyEditTrail(refererPath: string | null): NavBreadcrumbSegment[] {
-  const items: NavBreadcrumbSegment[] = [{ label: "Кабинет", href: DASHBOARD_ROOT }];
+/**
+ * Режим правки рефералки в кабинете.
+ * Цепочка **Рефералки → название → Редактирование**, если переход зафиксирован как с публичной
+ * карточки (`fromVacancy` в query совпадает с id) **или** `Referer` указывает на `/vacancies/:id`
+ * той же рефералки. Иначе — **Кабинет → Просмотр → Редактирование** (вход из кабинета).
+ */
+export function dashboardVacancyEditTrail(
+  refererPath: string | null,
+  vacancyId: string,
+  vacancyTitle: string,
+  openedFromPublicVacancyDetail: boolean,
+): NavBreadcrumbSegment[] {
   const rp = pathnameFromPathAndSearch(refererPath);
-  const vacancyPn = pathnameFromPathAndSearch(DASHBOARD_VACANCY_BASE);
-  if (!refererPath || rp === vacancyPn || rp.startsWith(`${vacancyPn}/`)) {
-    items.push({ label: "Просмотр", href: DASHBOARD_VACANCY_BASE });
-  } else {
-    items.push({
-      label: vacancyDashboardBackLabelFromPathname(refererPath),
-      href: refererPath,
-    });
+  const publicDetailPn = `/vacancies/${vacancyId}`;
+  const usePublicTrail = openedFromPublicVacancyDetail || rp === publicDetailPn;
+
+  if (usePublicTrail) {
+    return [
+      { label: "Рефералки", href: PUBLIC_CATALOG_ROOT },
+      { label: vacancyTitle, href: publicDetailPn },
+      { label: "Редактирование" },
+    ];
   }
-  items.push({ label: "Редактирование" });
-  return items;
+
+  return [
+    { label: "Кабинет", href: DASHBOARD_ROOT },
+    { label: "Просмотр", href: DASHBOARD_VACANCY_BASE },
+    { label: "Редактирование" },
+  ];
 }
 
 export function newPublicVacancyTrail(): NavBreadcrumbSegment[] {
   return [{ label: "Рефералки", href: PUBLIC_CATALOG_ROOT }, { label: "Разместить рефералку" }];
 }
 
-export function dashboardApplicationNewTrail(vacancyId: string): NavBreadcrumbSegment[] {
-  return [
-    { label: "Кабинет", href: DASHBOARD_ROOT },
-    { label: "Рефералка", href: `/vacancies/${vacancyId}` },
-    { label: "Попросить рефералку" },
-  ];
+export function dashboardApplicationNewTrail(
+  refererPath: string | null,
+  vacancyId: string,
+  vacancyTitle: string,
+  openedFromPublicVacancyDetail: boolean,
+): NavBreadcrumbSegment[] {
+  const rp = pathnameFromPathAndSearch(refererPath);
+  const publicDetailPn = `/vacancies/${vacancyId}`;
+  const usePublicTrail = openedFromPublicVacancyDetail || rp === publicDetailPn;
+  const middle = { label: vacancyTitle, href: publicDetailPn };
+
+  if (usePublicTrail) {
+    return [
+      { label: "Рефералки", href: PUBLIC_CATALOG_ROOT },
+      middle,
+      { label: "Попросить рефералку" },
+    ];
+  }
+
+  return [{ label: "Кабинет", href: DASHBOARD_ROOT }, middle, { label: "Попросить рефералку" }];
 }
 
 export function dashboardApplicationDetailTrail(): NavBreadcrumbSegment[] {

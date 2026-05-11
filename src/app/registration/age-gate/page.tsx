@@ -18,7 +18,7 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
       <PublicHeaderNav session={null} />
-      <main className="flex flex-1 flex-col items-center justify-center p-6">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8">
         <div className="flex w-full max-w-lg flex-col gap-4">
           <AppNavBreadcrumb segments={registrationAgeGateTrail()} />
           <Card className="shadow-sm">

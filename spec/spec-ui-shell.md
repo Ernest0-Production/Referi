@@ -18,6 +18,10 @@
 
 Тема: `next-themes` в корневом [`src/app/layout.tsx`](../src/app/layout.tsx); семантические классы Tailwind (`bg-background`, `text-muted-foreground`, `border-border`, компоненты shadcn) предпочтительнее сырых `gray-*`.
 
+## Основная колонка и хлебные крошки
+
+Горизонтальные отступы основной колонки с контентом и **`AppNavBreadcrumb`** унифицированы: константы **`PAGE_COLUMN_MAX_W3_CLASS`** и **`PAGE_COLUMN_MAX_W2_CLASS`** в [`src/lib/pageContentShell.ts`](../src/lib/pageContentShell.ts) (`px-4 py-6 md:px-6 md:py-8` + `max-w-3xl` / `max-w-2xl`), чтобы крошки на публичной карточке рефералки и в кабинете стояли на одной вертикали. Режим **правки** (`/dashboard/vacancy?edit=…`): крошки **Рефералки → название → Редактирование**, если в query задано **`fromVacancy`** (совпадает с id активной рефералки; так помечается переход с публичной карточки в [`VacancyOwnerActions`](../src/app/dashboard/vacancy/VacancyOwnerActions.tsx)) или если `Referer` — публичная карточка той же рефералки; иначе — **Кабинет → Просмотр → Редактирование**, см. [`dashboardVacancyEditTrail`](../src/lib/navBreadcrumbTrail.ts). Страница **новой заявки** (`/dashboard/applications/new`, [`dashboardApplicationNewTrail`](../src/lib/navBreadcrumbTrail.ts)): при **`fromVacancy`** (совпадает с `vacancyId`) или подходящем **Referer** — **Рефералки → название → Попросить рефералку**; иначе — **Кабинет → название → Попросить рефералку** (средний сегмент ведёт на публичную карточку этой рефералки).
+
 ## Формы
 
 Клиентские формы в кабинете и жалобах используют **`FieldGroup` / `Field` / `FieldLabel`** из [`src/components/ui/field.tsx`](../src/components/ui/field.tsx), **`Input`**, **`Textarea`**, **`Select`**, **`Button`**, **`Alert`** — без вертикальных отступов через `space-y-*` (вместо них `flex flex-col gap-*` или встроенные зазоры `FieldGroup`).

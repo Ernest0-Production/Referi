@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { formatVacancyReferralRequestFooterHint } from "@/lib/vacancyReferralRequestFooterHint";
+import { PAGE_COLUMN_MAX_W3_CLASS } from "@/lib/pageContentShell";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -61,7 +62,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
       <VacancyViewCookieWriter vacancyId={id} />
       <PublicHeaderNav session={session} />
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
+      <div className={PAGE_COLUMN_MAX_W3_CLASS}>
         <AppNavBreadcrumb segments={vacancyBreadcrumbSegments} />
 
         <div className="flex flex-col gap-3">
@@ -124,13 +125,15 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                 isAuthor ? (
                   <VacancyOwnerActions
                     vacancyId={vacancy.id}
-                    editHref="/dashboard/vacancy?edit=1"
+                    editHref={`/dashboard/vacancy?edit=1&fromVacancy=${vacancy.id}`}
                     redirectAfterDelete="/"
                   />
                 ) : (
                   <div className="flex flex-col gap-2">
                     <Button asChild size="lg" className="w-full sm:w-auto">
-                      <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
+                      <Link
+                        href={`/dashboard/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
+                      >
                         <ApplicationCountIcon data-icon="inline-start" className="text-current" />
                         Попросить рефералку
                       </Link>
