@@ -26,7 +26,12 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
-import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/moneyIntegerInput";
+import {
+  formatRuMoneyIntegerDisplay,
+  sanitizeMoneyIntegerDigits,
+  clampMoneyIntegerDigits,
+} from "@/lib/moneyIntegerInput";
+import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -177,7 +182,8 @@ function VacancyFilterSalaryBlock({
     useState<VacancySalaryCurrency>(selectValueFromCommitted);
 
   function commit(nextSalary: string | undefined, currency: VacancySalaryCurrency) {
-    const digits = nextSalary != null ? sanitizeMoneyIntegerDigits(nextSalary) : "";
+    const digitsRaw = nextSalary != null ? sanitizeMoneyIntegerDigits(nextSalary) : "";
+    const digits = clampMoneyIntegerDigits(digitsRaw, VACANCY_SALARY_AMOUNT_MAX);
     const hasSalary = Boolean(digits);
     if (!hasSalary) {
       apply({ salaryFrom: undefined, salaryCurrency: undefined });
@@ -198,7 +204,14 @@ function VacancyFilterSalaryBlock({
           inputMode="numeric"
           autoComplete="off"
           value={formatRuMoneyIntegerDisplay(salaryFrom)}
-          onChange={(e) => setSalaryFrom(sanitizeMoneyIntegerDigits(e.target.value))}
+          onChange={(e) =>
+            setSalaryFrom(
+              clampMoneyIntegerDigits(
+                sanitizeMoneyIntegerDigits(e.target.value),
+                VACANCY_SALARY_AMOUNT_MAX,
+              ),
+            )
+          }
           onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
           placeholder="Минимум"
           className="h-9 min-h-9 min-w-0 text-base tabular-nums md:text-sm"

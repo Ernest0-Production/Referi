@@ -54,57 +54,63 @@ export function VacancySavedPresetsCarousel({
           </Tooltip>
         ) : null}
       </div>
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        size="sm"
-        spacing={2}
-        value={toggleValue}
-        onValueChange={(next) => {
-          if (next) onValueChange(next);
-        }}
-        aria-labelledby="vacancy-saved-presets-heading"
-        className="flex w-full min-w-0 flex-wrap justify-start"
-      >
-        {presets.map((pr) => {
-          const selected = value === pr.id;
-          return (
-            <Tooltip key={pr.id}>
-              <TooltipTrigger asChild>
-                <span className="inline-flex max-w-[min(100%,14rem)] min-w-0 shrink">
-                  <ToggleGroupItem
-                    value={pr.id}
-                    title={pr.name}
-                    className="max-w-full min-w-0 shrink font-medium"
-                    onClick={() => {
-                      if (value === pr.id) {
-                        onValueChange(VACANCY_SAVED_PRESET_CLEAR_VALUE);
-                      }
-                    }}
-                  >
-                    {selected ? (
-                      <IconCircleDotFilled
-                        data-icon="inline-start"
-                        className="size-3.5 shrink-0 opacity-90"
-                        aria-hidden
-                      />
-                    ) : null}
-                    <span className="min-w-0 truncate">{pr.name}</span>
-                  </ToggleGroupItem>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                {selected ? "Выбранный фильтр" : "Нажми чтобы применить фильтр"}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </ToggleGroup>
-      <span className="sr-only" aria-live="polite">
-        {value === VACANCY_SAVED_PRESET_CLEAR_VALUE
-          ? "Сохранённый набор не выбран"
-          : `Выбран набор «${presets.find((p) => p.id === value)?.name ?? ""}»`}
-      </span>
+      {presets.length === 0 ? (
+        <p className="text-muted-foreground text-sm">Пока нет сохранённых наборов.</p>
+      ) : (
+        <>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            spacing={2}
+            value={toggleValue}
+            onValueChange={(next) => {
+              if (next) onValueChange(next);
+            }}
+            aria-labelledby="vacancy-saved-presets-heading"
+            className="flex w-full min-w-0 flex-wrap justify-start"
+          >
+            {presets.map((pr) => {
+              const selected = value === pr.id;
+              return (
+                <Tooltip key={pr.id}>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex max-w-[min(100%,14rem)] min-w-0 shrink">
+                      <ToggleGroupItem
+                        value={pr.id}
+                        title={pr.name}
+                        className="max-w-full min-w-0 shrink font-medium"
+                        onClick={() => {
+                          if (value === pr.id) {
+                            onValueChange(VACANCY_SAVED_PRESET_CLEAR_VALUE);
+                          }
+                        }}
+                      >
+                        {selected ? (
+                          <IconCircleDotFilled
+                            data-icon="inline-start"
+                            className="size-3.5 shrink-0 opacity-90"
+                            aria-hidden
+                          />
+                        ) : null}
+                        <span className="min-w-0 truncate">{pr.name}</span>
+                      </ToggleGroupItem>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={4}>
+                    {selected ? "Выбранный фильтр" : "Нажми чтобы применить фильтр"}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </ToggleGroup>
+          <span className="sr-only" aria-live="polite">
+            {value === VACANCY_SAVED_PRESET_CLEAR_VALUE
+              ? "Сохранённый набор не выбран"
+              : `Выбран набор «${presets.find((p) => p.id === value)?.name ?? ""}»`}
+          </span>
+        </>
+      )}
     </div>
   );
 }

@@ -4,6 +4,19 @@ export function sanitizeMoneyIntegerDigits(raw: string, maxDigits = 15): string 
   return d;
 }
 
+/** Ограничивает строку цифр сверху целым `maxInteger` (включительно). */
+export function clampMoneyIntegerDigits(digits: string, maxInteger: number): string {
+  if (!digits) return "";
+  try {
+    const v = BigInt(digits);
+    const m = BigInt(maxInteger);
+    if (v <= m) return digits;
+    return m.toString();
+  } catch {
+    return digits;
+  }
+}
+
 /** Группировка разрядов для ru-RU (узкий пробел между группами по локали). */
 export function formatRuMoneyIntegerDisplay(digits: string): string {
   if (!digits) return "";

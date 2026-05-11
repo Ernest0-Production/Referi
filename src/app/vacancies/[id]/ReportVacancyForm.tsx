@@ -2,9 +2,8 @@
 
 import { IconFlag } from "@tabler/icons-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpcReact } from "@/trpc/client";
-import { ModerationContactLink } from "@/components/ModerationContactLink";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -29,16 +28,17 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<(typeof REASONS)[number]["value"]>("FAKE_VACANCY");
   const [comment, setComment] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
 
   const submit = trpcReact.reports.submitAbuseReport.useMutation({
     onSuccess() {
-      setMsg("registered");
       setOpen(false);
       setComment("");
+      toast.success("Жалоба зарегистрирована", {
+        description: "Модераторы увидят её в системе.",
+      });
     },
     onError(err) {
-      setMsg(err.message);
+      toast.error(err.message || "Не удалось отправить жалобу");
     },
   });
 
@@ -51,18 +51,6 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
             Пожаловаться
           </Button>
         </div>
-        {msg === "registered" ? (
-          <Alert className="w-full">
-            <AlertTitle>Жалоба зарегистрирована</AlertTitle>
-            <AlertDescription className="flex flex-col gap-2">
-              <span>Модераторы увидят её в системе.</span>
-              <ModerationContactLink />
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        {msg && msg !== "registered" ? (
-          <p className="text-muted-foreground w-full text-left text-xs">{msg}</p>
-        ) : null}
       </div>
     );
   }
@@ -83,7 +71,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
               <SelectTrigger id="report-reason" className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 <SelectGroup>
                   {REASONS.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
@@ -119,13 +107,6 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
             </Button>
           </div>
         </FieldGroup>
-        {msg === "registered" ? (
-          <div className="text-muted-foreground flex flex-col gap-2 border-t pt-3 text-sm">
-            <span className="text-foreground">Жалоба зарегистрирована.</span>
-            <ModerationContactLink />
-          </div>
-        ) : null}
-        {msg && msg !== "registered" ? <p className="text-destructive text-xs">{msg}</p> : null}
       </CardContent>
     </Card>
   );
