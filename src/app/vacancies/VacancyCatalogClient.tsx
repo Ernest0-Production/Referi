@@ -238,7 +238,7 @@ export function VacancyCatalogClient({
         <Separator />
         {isLoggedIn ? (
           <VacancySavedPresetsCarousel
-            key={`saved-preset-carousel-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
+            key={`saved-preset-toggles-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
             presets={presets}
             value={savedPresetCarouselValue}
             onValueChange={handleSavedPresetCarouselChange}
