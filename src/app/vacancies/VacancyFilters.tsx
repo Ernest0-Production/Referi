@@ -8,6 +8,7 @@ import { ChevronDown, Copy, MoreVertical, RotateCcw, Save, Trash2, XIcon } from 
 import {
   buildVacancyCatalogLoginReturnHref,
   flatParamsForPresetSave,
+  isVacancyCatalogFlatBaseline,
   mergeVacancyListFlat,
   normalizedPresetParamsRecord,
   parseCsvEnumParam,
@@ -353,6 +354,11 @@ export function VacancyFilters({
     [currentParams],
   );
 
+  const vacancyFiltersResetDisabled = useMemo(
+    () => isVacancyCatalogFlatBaseline(currentParams) && !resolvedPresetId,
+    [currentParams, resolvedPresetId],
+  );
+
   const specialtyValues = parseVacancyListSpecialtyCsvParam(currentParams.specialty) ?? [];
   const specialtySelectValue =
     specialtyValues.length === 0
@@ -390,7 +396,11 @@ export function VacancyFilters({
         variant="outline"
         size="icon"
         className="size-10 shrink-0 rounded-full"
-        onClick={() => onReset()}
+        disabled={vacancyFiltersResetDisabled}
+        onClick={() => {
+          onReset();
+          toast.success("Фильтр сброшен");
+        }}
         aria-label="Сбросить фильтры"
       >
         <RotateCcw />
@@ -627,7 +637,7 @@ export function VacancyFilters({
         </SheetFooter>
       ) : (
         <CardFooter className="border-border bg-card flex flex-col gap-3 border-t px-5 py-4">
-            {combinedFooter}
+          {combinedFooter}
         </CardFooter>
       )}
 
@@ -730,11 +740,11 @@ export function VacancyFilters({
                 const params =
                   presetDialogSourceParams != null
                     ? flatParamsForPresetSave(
-                      mergeVacancyListFlat(
-                        { page: "1" },
-                        presetParamsFromJson(presetDialogSourceParams),
-                      ),
-                    )
+                        mergeVacancyListFlat(
+                          { page: "1" },
+                          presetParamsFromJson(presetDialogSourceParams),
+                        ),
+                      )
                     : flatParamsForPresetSave(currentParams);
                 createPreset.mutate({ name, params });
               }}

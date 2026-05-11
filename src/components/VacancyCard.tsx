@@ -80,7 +80,7 @@ export function VacancyCard({
 }: {
   vacancy: Vacancy;
   hasActiveSeekerApplication?: boolean;
-    isViewed?: boolean;
+  isViewed?: boolean;
   detailHref?: string;
 }) {
   const salary = formatVacancySalaryRange(
