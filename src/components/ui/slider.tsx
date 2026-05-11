@@ -11,6 +11,7 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  orientation = "horizontal",
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
   const _values = React.useMemo(
@@ -25,15 +26,24 @@ function Slider({
       value={value}
       min={min}
       max={max}
+      orientation={orientation}
       className={cn(
-        "relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col",
+        "relative flex touch-none select-none data-disabled:opacity-50",
+        orientation === "horizontal" && "-my-3 w-full items-center py-3",
+        orientation === "vertical" && "h-full min-h-40 w-auto flex-col",
         className,
       )}
       {...props}
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
-        className="bg-muted relative grow overflow-hidden rounded-full data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
+        className={cn(
+          "relative grow cursor-pointer overflow-hidden rounded-full",
+          orientation === "horizontal" &&
+            "bg-muted data-horizontal:h-1 data-horizontal:max-h-1 data-horizontal:min-h-0 data-horizontal:w-full",
+          orientation === "vertical" &&
+            "bg-muted data-vertical:h-full data-vertical:w-1 data-vertical:overflow-hidden",
+        )}
       >
         <SliderPrimitive.Range
           data-slot="slider-range"
@@ -44,7 +54,7 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="border-ring ring-ring/50 relative block size-3 shrink-0 rounded-full border bg-white transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
+          className="border-ring ring-ring/50 relative z-[1] block size-3 shrink-0 rounded-full border bg-white transition-[color,box-shadow] select-none after:absolute after:-inset-x-3 after:-inset-y-3 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

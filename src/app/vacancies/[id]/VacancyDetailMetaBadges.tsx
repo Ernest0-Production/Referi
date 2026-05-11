@@ -2,14 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  ApplicationCountIcon,
-  GradeIcon,
-  SpecialtyIcon,
-  WorkFormatIcon,
-} from "@/components/vacancy/VacancyFieldIcons";
-import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
-import { VACANCY_APPLICATION_COUNT_TOOLTIP } from "@/lib/vacancyTooltipMessages";
+import { GradeIcon, SpecialtyIcon, WorkFormatIcon } from "@/components/vacancy/VacancyFieldIcons";
 import {
   VACANCY_GRADE_LABELS,
   VACANCY_SPECIALTY_LABELS,
@@ -20,14 +13,12 @@ type VacancyDetailMetaBadgesProps = {
   specialty: string;
   grade: string;
   workFormat: string;
-  applicationCount: number;
 };
 
 export function VacancyDetailMetaBadges({
   specialty,
   grade,
   workFormat,
-  applicationCount,
 }: VacancyDetailMetaBadgesProps) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -62,17 +53,6 @@ export function VacancyDetailMetaBadges({
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
           Формат работы
-        </TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant="secondary" className="font-normal">
-            <ApplicationCountIcon className="text-current" />
-            {formatApplicationCountLabel(applicationCount)}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={4} className="max-w-xs text-left leading-snug">
-          {VACANCY_APPLICATION_COUNT_TOOLTIP}
         </TooltipContent>
       </Tooltip>
     </div>

@@ -43,7 +43,7 @@ function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="mx-auto flex max-h-[min(90dvh,90vh)] w-full max-w-md flex-col gap-0 p-0"
+          className="mx-auto flex max-h-[min(90dvh,90vh)] max-w-md flex-col gap-0 p-0"
         >
           <VacancyFilters {...props} variant="sheet" />
         </SheetContent>

@@ -23,7 +23,7 @@ const gradeEnum = z.enum(["JUNIOR", "MIDDLE", "SENIOR", "LEAD"]);
 const workFormatEnum = z.enum(["OFFICE", "HYBRID", "REMOTE"]);
 const salaryCurrencyEnum = z.enum(VACANCY_SALARY_CURRENCY_VALUES);
 
-/** Максимум бонуса реферальщику: 100 000 ₽; шаг 10 000 ₽ → копейки кратны 1 000 000. */
+/** Максимум компенсации реферальщику: 100 000 ₽; шаг 10 000 ₽ → копейки кратны 1 000 000. */
 const REFERRER_BONUS_MAX_KOPECKS = 10_000_000;
 const REFERRER_BONUS_STEP_KOPECKS = 1_000_000;
 
@@ -45,7 +45,7 @@ const vacancyWriteSchema = z
     path: ["salaryTo"],
   })
   .refine((d) => d.rewardKopecks % REFERRER_BONUS_STEP_KOPECKS === 0, {
-    message: "Бонус реферальщику должен быть от 0 до 100 000 ₽ с шагом 10 000 ₽.",
+    message: "Компенсация реферальщику должна быть от 0 до 100 000 ₽ с шагом 10 000 ₽.",
     path: ["rewardKopecks"],
   });
 

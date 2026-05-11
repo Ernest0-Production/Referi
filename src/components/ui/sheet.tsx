@@ -47,7 +47,7 @@ const sheetVariants = cva(
       side: {
         top: "inset-x-0 top-0 max-h-[85vh] w-full rounded-b-2xl border-b data-closed:-translate-y-full data-open:translate-y-0",
         bottom:
-          "inset-x-0 bottom-0 max-h-[min(90dvh,90vh)] w-full rounded-t-2xl border-t data-closed:translate-y-full data-open:translate-y-0",
+          "inset-x-2 bottom-0 max-h-[min(90dvh,90vh)] rounded-t-2xl border-t data-closed:translate-y-full data-open:translate-y-0",
         left: "inset-y-0 left-0 h-full w-full max-w-[min(100%,20rem)] rounded-r-2xl border-r data-closed:-translate-x-full data-open:translate-x-0",
         right:
           "inset-y-0 right-0 h-full w-full max-w-[min(100%,20rem)] rounded-l-2xl border-l data-closed:translate-x-full data-open:translate-x-0",

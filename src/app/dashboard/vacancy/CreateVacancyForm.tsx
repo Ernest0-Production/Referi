@@ -680,7 +680,8 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
         <Field>
           <FieldLabel htmlFor="vac-reward">
-            <span className="text-emerald-600 dark:text-emerald-400">Бонус</span> реферальщику (₽)
+            <span className="text-emerald-600 dark:text-emerald-400">Компенсация</span> реферальщику
+            (₽)
           </FieldLabel>
           <div className="flex flex-col gap-3 pt-0.5">
             <div
@@ -699,7 +700,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 )}
               </span>
               <span className="text-muted-foreground shrink-0 font-normal tabular-nums">
-                {REFERRER_BONUS_MAX_RUBLES.toLocaleString("ru-RU")} руб.
+                {REFERRER_BONUS_MAX_RUBLES.toLocaleString("ru-RU")} ₽
               </span>
             </div>
             <Slider
@@ -717,7 +718,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               aria-valuetext={
                 form.referrerBonusRubles === 0
                   ? "Бесплатно"
-                  : `${form.referrerBonusRubles.toLocaleString("ru-RU")} рублей`
+                  : `${form.referrerBonusRubles.toLocaleString("ru-RU")} ₽`
               }
             />
           </div>

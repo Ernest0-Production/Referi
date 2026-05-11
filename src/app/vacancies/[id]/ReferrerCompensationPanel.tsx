@@ -1,7 +1,6 @@
 "use client";
 
-import { IconCoins } from "@tabler/icons-react";
-import { Info } from "lucide-react";
+import { HandCoins, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +24,7 @@ export function ReferrerCompensationPanel({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="flex min-w-0 flex-1 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
-          <IconCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
+          <HandCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
           <span className="min-w-0 leading-snug break-words">Компенсация за рекомендацию</span>
         </p>
         <Tooltip>

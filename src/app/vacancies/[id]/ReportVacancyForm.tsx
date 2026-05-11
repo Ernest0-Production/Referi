@@ -45,17 +45,14 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
   if (!open) {
     return (
       <div className="flex w-full flex-col gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          className="text-destructive border-destructive/40 hover:bg-destructive/10 self-end"
-          onClick={() => setOpen(true)}
-        >
-          <IconFlag data-icon="inline-start" className="size-4 shrink-0" aria-hidden />
-          Пожаловаться
-        </Button>
+        <div className="flex w-full justify-end">
+          <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
+            <IconFlag data-icon="inline-start" className="size-4 shrink-0" aria-hidden />
+            Пожаловаться
+          </Button>
+        </div>
         {msg === "registered" ? (
-          <Alert>
+          <Alert className="w-full">
             <AlertTitle>Жалоба зарегистрирована</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
               <span>Модераторы увидят её в системе.</span>
@@ -64,7 +61,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
           </Alert>
         ) : null}
         {msg && msg !== "registered" ? (
-          <p className="text-muted-foreground text-xs">{msg}</p>
+          <p className="text-muted-foreground w-full text-left text-xs">{msg}</p>
         ) : null}
       </div>
     );
