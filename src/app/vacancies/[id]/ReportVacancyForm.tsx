@@ -4,7 +4,6 @@ import { IconFlag } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { trpcReact } from "@/trpc/client";
-import { ModerationContactLink } from "@/components/ModerationContactLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -35,12 +34,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
       setOpen(false);
       setComment("");
       toast.success("Жалоба зарегистрирована", {
-        description: (
-          <div className="flex flex-col gap-2">
-            <span>Модераторы увидят её в системе.</span>
-            <ModerationContactLink className="text-sm font-medium text-blue-600 hover:underline" />
-          </div>
-        ),
+        description: "Модераторы увидят её в системе.",
       });
     },
     onError(err) {
