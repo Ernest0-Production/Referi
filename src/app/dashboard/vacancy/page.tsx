@@ -1,12 +1,10 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
-import {
-  sameOriginRefererPathname,
-  vacancyDashboardBackLabelFromPathname,
-  vacancyDashboardEditBackLabelFromPathname,
-} from "@/lib/vacancyNavigationBackLabel";
+import { sameOriginRefererPathname } from "@/lib/vacancyNavigationBackLabel";
+import { dashboardVacancyEditTrail, dashboardVacancyTrail } from "@/lib/navBreadcrumbTrail";
 import { CreateVacancyForm } from "./CreateVacancyForm";
+import { DashboardVacancyNav } from "./DashboardVacancyNav";
 import { DashboardVacancyPageShell } from "./DashboardVacancyPageShell";
 import { EditVacancyCard } from "./EditVacancyCard";
 import { ManageVacancyPanel } from "./ManageVacancyPanel";
@@ -29,15 +27,16 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
   const vacancy = await trpc.vacancies.myActive();
 
   const refererPath = await sameOriginRefererPathname();
-  const vacancyBackLabel = vacancyDashboardBackLabelFromPathname(refererPath);
-  const editVacancyBackLabel = vacancyDashboardEditBackLabelFromPathname(refererPath);
+  const breadcrumbSegments =
+    vacancy && editMode
+      ? dashboardVacancyEditTrail(refererPath)
+      : dashboardVacancyTrail(refererPath, vacancy ? "Моя рефералка" : "Создание рефералки");
 
   return (
     <main className="flex-1">
-      <DashboardVacancyPageShell
-        backLabel={vacancyBackLabel}
-        hideBack={Boolean(vacancy && editMode)}
-      >
+      <DashboardVacancyPageShell>
+        <DashboardVacancyNav segments={breadcrumbSegments} />
+
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">
             {vacancy ? "Моя рефералка" : "Создание рефералки"}
@@ -52,7 +51,6 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
         {vacancy ? (
           editMode ? (
             <EditVacancyCard
-              backNavLabel={editVacancyBackLabel}
               vacancy={{
                 id: vacancy.id,
                 title: vacancy.title,

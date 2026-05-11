@@ -1,11 +1,11 @@
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import { TRPCError } from "@trpc/server";
 import { auth } from "@/lib/auth";
 import { firstQueryParam } from "@/lib/searchParams";
 import { trpc } from "@/trpc/server";
+import { dashboardApplicationNewTrail } from "@/lib/navBreadcrumbTrail";
+import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PageProps {
@@ -56,9 +56,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
   return (
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6 md:p-8">
-        <Button variant="ghost" size="sm" className="w-fit" asChild>
-          <Link href={`/vacancies/${vacancyId}`}>← Рефералка</Link>
-        </Button>
+        <AppNavBreadcrumb segments={dashboardApplicationNewTrail(vacancyId)} />
 
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>

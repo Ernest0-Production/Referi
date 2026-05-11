@@ -89,14 +89,14 @@ function vacancyBackLabelFromRefererPath(
 }
 
 /**
- * Подпись кнопки «назад» на `/dashboard/vacancy` (без «← »).
+ * Человекочитаемая подпись предыдущего шага навигации для `/dashboard/vacancy` (хлебные кроски и ссылки).
  */
 export function vacancyDashboardBackLabelFromPathname(pathnameWithSearch: string | null): string {
   return vacancyBackLabelFromRefererPath(pathnameWithSearch, "dashboardVacancy");
 }
 
 /**
- * Подпись кнопки «назад» на `/vacancies/[id]` (без «← »).
+ * Человекочитаемая подпись предыдущего шага навигации для `/vacancies/[id]` (хлебные кроски и ссылки).
  */
 export function vacancyCatalogDetailBackLabelFromPathname(
   pathnameWithSearch: string | null,
@@ -107,18 +107,4 @@ export function vacancyCatalogDetailBackLabelFromPathname(
     "vacancyCatalogDetail",
     `/vacancies/${vacancyId}`,
   );
-}
-
-/**
- * Подпись «назад» с экрана редактирования: с `/dashboard/vacancy` — «Просмотр», иначе как у верхней кнопки кабинета.
- */
-export function vacancyDashboardEditBackLabelFromPathname(
-  pathnameWithSearch: string | null,
-): string {
-  if (!pathnameWithSearch) return "Просмотр";
-  const pathname = pathnameOnly(pathnameWithSearch);
-  if (pathname === "/dashboard/vacancy" || pathname.startsWith("/dashboard/vacancy/")) {
-    return "Просмотр";
-  }
-  return vacancyDashboardBackLabelFromPathname(pathnameWithSearch);
 }

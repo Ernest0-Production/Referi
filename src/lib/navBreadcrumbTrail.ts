@@ -1,0 +1,106 @@
+import {
+  vacancyCatalogDetailBackLabelFromPathname,
+  vacancyDashboardBackLabelFromPathname,
+} from "@/lib/vacancyNavigationBackLabel";
+
+export type NavBreadcrumbSegment = {
+  label: string;
+  href?: string;
+};
+
+const DASHBOARD_ROOT = "/dashboard";
+const PUBLIC_CATALOG_ROOT = "/";
+const DASHBOARD_VACANCY_BASE = "/dashboard/vacancy";
+
+export function pathnameFromPathAndSearch(pathnameWithSearch: string | null): string {
+  if (!pathnameWithSearch) return "/";
+  const raw = pathnameWithSearch.split("?")[0] || "/";
+  if (raw.length > 1 && raw.endsWith("/")) {
+    return raw.slice(0, -1) || "/";
+  }
+  return raw;
+}
+
+/** Публичная карточка рефералки: каталог → (предыдущая страница) → заголовок. */
+export function publicVacancyDetailTrail(
+  refererPath: string | null,
+  vacancyId: string,
+  vacancyTitle: string,
+): NavBreadcrumbSegment[] {
+  const items: NavBreadcrumbSegment[] = [{ label: "Рефералки", href: PUBLIC_CATALOG_ROOT }];
+  const rp = pathnameFromPathAndSearch(refererPath);
+  const selfPn = `/vacancies/${vacancyId}`;
+  if (refererPath && rp !== pathnameFromPathAndSearch(PUBLIC_CATALOG_ROOT) && rp !== selfPn) {
+    items.push({
+      label: vacancyCatalogDetailBackLabelFromPathname(refererPath, vacancyId),
+      href: refererPath,
+    });
+  }
+  items.push({ label: vacancyTitle });
+  return items;
+}
+
+/** Кабинет: рефералка / создание (без режима правки). */
+export function dashboardVacancyTrail(
+  refererPath: string | null,
+  currentTitle: "Моя рефералка" | "Создание рефералки",
+): NavBreadcrumbSegment[] {
+  const items: NavBreadcrumbSegment[] = [{ label: "Кабинет", href: DASHBOARD_ROOT }];
+  const rp = pathnameFromPathAndSearch(refererPath);
+  const selfPn = pathnameFromPathAndSearch(DASHBOARD_VACANCY_BASE);
+  const dashboardRootPn = pathnameFromPathAndSearch(DASHBOARD_ROOT);
+  if (
+    refererPath &&
+    rp !== selfPn &&
+    !rp.startsWith(`${selfPn}/`) &&
+    rp !== dashboardRootPn
+  ) {
+    items.push({
+      label: vacancyDashboardBackLabelFromPathname(refererPath),
+      href: refererPath,
+    });
+  }
+  items.push({ label: currentTitle });
+  return items;
+}
+
+/** Режим правки рефералки в кабинете. */
+export function dashboardVacancyEditTrail(refererPath: string | null): NavBreadcrumbSegment[] {
+  const items: NavBreadcrumbSegment[] = [{ label: "Кабинет", href: DASHBOARD_ROOT }];
+  const rp = pathnameFromPathAndSearch(refererPath);
+  const vacancyPn = pathnameFromPathAndSearch(DASHBOARD_VACANCY_BASE);
+  if (!refererPath || rp === vacancyPn || rp.startsWith(`${vacancyPn}/`)) {
+    items.push({ label: "Просмотр", href: DASHBOARD_VACANCY_BASE });
+  } else {
+    items.push({
+      label: vacancyDashboardBackLabelFromPathname(refererPath),
+      href: refererPath,
+    });
+  }
+  items.push({ label: "Редактирование" });
+  return items;
+}
+
+export function newPublicVacancyTrail(): NavBreadcrumbSegment[] {
+  return [{ label: "Рефералки", href: PUBLIC_CATALOG_ROOT }, { label: "Разместить рефералку" }];
+}
+
+export function dashboardApplicationNewTrail(vacancyId: string): NavBreadcrumbSegment[] {
+  return [
+    { label: "Кабинет", href: DASHBOARD_ROOT },
+    { label: "Рефералка", href: `/vacancies/${vacancyId}` },
+    { label: "Попросить рефералку" },
+  ];
+}
+
+export function dashboardApplicationDetailTrail(): NavBreadcrumbSegment[] {
+  return [
+    { label: "Кабинет", href: DASHBOARD_ROOT },
+    { label: "Мои заявки", href: "/dashboard/applications" },
+    { label: "Заявка" },
+  ];
+}
+
+export function registrationAgeGateTrail(): NavBreadcrumbSegment[] {
+  return [{ label: "Вход", href: "/login" }, { label: "Платная регистрация" }];
+}

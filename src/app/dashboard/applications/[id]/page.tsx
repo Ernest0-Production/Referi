@@ -1,10 +1,10 @@
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
+import { dashboardApplicationDetailTrail } from "@/lib/navBreadcrumbTrail";
+import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { ApplicationDetailActions } from "./ApplicationDetailActions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PageProps {
@@ -55,9 +55,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   return (
     <main className="flex-1">
       <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
-        <Button variant="ghost" size="sm" className="w-fit" asChild>
-          <Link href="/dashboard/applications">← Мои заявки</Link>
-        </Button>
+        <AppNavBreadcrumb segments={dashboardApplicationDetailTrail()} />
 
         <Card>
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
