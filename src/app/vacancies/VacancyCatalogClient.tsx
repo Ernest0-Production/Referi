@@ -10,18 +10,24 @@ import type { AppRouter } from "@/server/trpc/root";
 import {
   findMatchingVacancySearchPresetId,
   mergeVacancyListFlat,
+  presetParamsFromJson,
   vacancyListFlatToSearchParams,
   type VacancyListFlatSearchParams,
 } from "@/lib/vacancyListQuery";
 import { trpcReact } from "@/trpc/client";
 import { VacancyCard } from "@/components/VacancyCard";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useMdUp } from "@/hooks/useMdUp";
 import { cn } from "@/lib/utils";
 import { EmployerHomeVacancySection } from "./EmployerHomeVacancySection";
 import { VacancyFilters } from "./VacancyFilters";
 import { VacancyListChrome } from "./VacancyListChrome";
+import {
+  VacancySavedPresetsCarousel,
+  VACANCY_SAVED_PRESET_CLEAR_VALUE,
+} from "./VacancySavedPresetsCarousel";
 import {
   vacancyFlatToTrpcListInput,
   vacancyListInputStableKey,
@@ -45,7 +51,7 @@ function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
           showCloseButton={false}
           className="mx-auto flex max-h-[min(90dvh,90vh)] max-w-md flex-col gap-0 p-0"
         >
-          <VacancyFilters {...props} variant="sheet" />
+          <VacancyFilters {...props} variant="sheet" onApplyFilters={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
       <Button
@@ -170,20 +176,42 @@ export function VacancyCatalogClient({
     setActiveVacancyPresetId(id);
   };
 
+  function handleVacancySearchPresetCreated(row: { id: string; params: unknown }) {
+    setVacancyPresetSidebarCleared(false);
+    setActiveVacancyPresetId(row.id);
+    lastMatchedVacancyPresetIdRef.current = row.id;
+    replaceFromPreset({ page: "1", ...presetParamsFromJson(row.params) });
+  }
+
   const vacancyFilterProps = {
     currentParams: params,
     onApplyPatch: applyPatch,
-    onReplaceFromPreset: replaceFromPreset,
     onReset: resetCatalog,
     presets,
     isLoggedIn,
     matchedPresetId: matchedVacancyPresetId,
     activePresetId: activeVacancyPresetId,
-    onPickSavedVacancyPreset: handlePickSavedVacancyPreset,
     vacancyPresetSidebarCleared,
-    savedPresetSelectLayoutKey,
     resumeVacancyPresetSave,
+    onVacancySearchPresetCreated: handleVacancySearchPresetCreated,
   };
+
+  const resolvedSavedPresetId = vacancyPresetSidebarCleared
+    ? undefined
+    : (activeVacancyPresetId ?? matchedVacancyPresetId);
+
+  const savedPresetCarouselValue = resolvedSavedPresetId ?? VACANCY_SAVED_PRESET_CLEAR_VALUE;
+
+  function handleSavedPresetCarouselChange(next: string) {
+    if (next === VACANCY_SAVED_PRESET_CLEAR_VALUE) {
+      resetCatalog();
+      return;
+    }
+    handlePickSavedVacancyPreset(next);
+    const row = presets.find((p) => p.id === next);
+    if (!row) return;
+    replaceFromPreset({ page: "1", ...presetParamsFromJson(row.params) });
+  }
 
   const data = listQuery.data;
   const total = data?.total ?? 0;
@@ -202,11 +230,20 @@ export function VacancyCatalogClient({
         <VacancyCatalogMobileFiltersPanel {...vacancyFilterProps} />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col gap-6">
+      <div className="flex min-w-0 flex-1 flex-col gap-6" data-vacancy-catalog-main>
         <EmployerHomeVacancySection
           employerVacancyPreview={employerVacancyPreview}
           isLoggedIn={isLoggedIn}
         />
+        <Separator />
+        {isLoggedIn ? (
+          <VacancySavedPresetsCarousel
+            key={`saved-preset-carousel-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
+            presets={presets}
+            value={savedPresetCarouselValue}
+            onValueChange={handleSavedPresetCarouselChange}
+          />
+        ) : null}
         <VacancyListChrome
           key={params.query?.trim() ? params.query.trim() : "__q_empty__"}
           currentParams={params}

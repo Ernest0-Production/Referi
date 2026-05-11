@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter, IconStack2 } from "@tabler/icons-react";
-import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2, XIcon } from "lucide-react";
+import { ChevronDown, Copy, RotateCcw, Save, Trash2, XIcon } from "lucide-react";
 import {
   buildVacancyCatalogLoginReturnHref,
   flatParamsForPresetSave,
+  mergeVacancyListFlat,
+  normalizedPresetParamsRecord,
   parseCsvEnumParam,
   parseVacancyListSpecialtyCsvParam,
   presetParamsFromJson,
@@ -58,11 +60,9 @@ import {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   GradeIcon,
   SalaryCurrencyIcon,
@@ -71,10 +71,17 @@ import {
 } from "@/components/vacancy/VacancyFieldIcons";
 import { cn } from "@/lib/utils";
 
+function duplicateVacancyPresetDisplayName(sourceName: string): string {
+  const base = sourceName.trim() || "Фильтр";
+  const suffix = " (копия)";
+  const max = 80;
+  if (base.length + suffix.length <= max) return `${base}${suffix}`;
+  const headLen = max - suffix.length;
+  return `${base.slice(0, Math.max(0, headLen))}${suffix}`;
+}
+
 const SPECIALTY_SELECT_ANY = "__any__";
 const SPECIALTY_SELECT_MULTI = "__multi__";
-const PRESET_SELECT_CLEAR = "__preset_clear__";
-
 const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; label: string }[] = [
   { value: "FRONTEND", label: "Frontend" },
   { value: "BACKEND", label: "Backend" },
@@ -197,7 +204,6 @@ interface PresetRow {
 interface Props {
   currentParams: VacancyListFlatSearchParams;
   onApplyPatch: (patch: Partial<VacancyListFlatSearchParams>) => void;
-  onReplaceFromPreset: (next: VacancyListFlatSearchParams) => void;
   onReset: () => void;
   presets: PresetRow[];
   isLoggedIn: boolean;
@@ -205,32 +211,31 @@ interface Props {
   matchedPresetId: string | undefined;
   /** Пресет, выбранный в UI или удерживаемый после правок до совпадения снова. */
   activePresetId: string | undefined;
-  /** Только выбор сохранённого пресета в панели (не сброс каталога). */
-  onPickSavedVacancyPreset: (id: string) => void;
   /** После сброса каталога: не показывать matched preset в списке пресетов, пока пользователь снова не выберет пункт. */
   vacancyPresetSidebarCleared?: boolean;
-  /** Увеличивается при сбросе каталога — перемонтирование вкладок пресетов, чтобы Radix сбросил активную вкладку. */
-  savedPresetSelectLayoutKey?: number;
   /** В мобильном `sheet`: нижняя панель — `SheetFooter`; скроллится только `CardContent`. */
   variant?: "default" | "sheet";
   /** После авторизации с каталога: один раз открыть диалог сохранения фильтров. */
   resumeVacancyPresetSave?: boolean;
+  /** Дополнительное действие по кнопке «Применить» (например закрытие мобильного `Sheet`). */
+  onApplyFilters?: () => void;
+  /** После успешного создания пресета в диалоге — выбрать его в каталоге. */
+  onVacancySearchPresetCreated?: (row: { id: string; params: unknown }) => void;
 }
 
 export function VacancyFilters({
   currentParams,
   onApplyPatch,
-  onReplaceFromPreset,
   onReset,
   presets,
   isLoggedIn,
   matchedPresetId,
   activePresetId,
-  onPickSavedVacancyPreset,
   vacancyPresetSidebarCleared = false,
-  savedPresetSelectLayoutKey = 0,
   variant = "default",
   resumeVacancyPresetSave = false,
+  onApplyFilters,
+  onVacancySearchPresetCreated,
 }: Props) {
   const router = useRouter();
   const [saveOpen, setSaveOpen] = useState(false);
@@ -238,30 +243,40 @@ export function VacancyFilters({
   const [presetIdPendingDelete, setPresetIdPendingDelete] = useState<string | null>(null);
   const [presetName, setPresetName] = useState("");
   const [presetNameInvalid, setPresetNameInvalid] = useState(false);
+  const [presetDialogSourceParams, setPresetDialogSourceParams] = useState<unknown>(null);
   const utils = trpcReact.useUtils();
   const autoOpenedSaveAfterAuth = useRef(false);
 
   useEffect(() => {
     if (!resumeVacancyPresetSave || !isLoggedIn || autoOpenedSaveAfterAuth.current) return;
     autoOpenedSaveAfterAuth.current = true;
+    setPresetDialogSourceParams(null);
     setSaveOpen(true);
   }, [resumeVacancyPresetSave, isLoggedIn]);
 
   const createPreset = trpcReact.vacancySearchPresets.create.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       toast.success("Фильтр сохранён");
       setSaveOpen(false);
       setPresetName("");
       setPresetNameInvalid(false);
+      setPresetDialogSourceParams(null);
       await utils.vacancySearchPresets.list.invalidate();
-      router.refresh();
+      await router.refresh();
+      onVacancySearchPresetCreated?.({ id: data.id, params: data.params });
     },
     onError: (e) => toast.error(e.message || "Не удалось сохранить"),
   });
 
   const updatePreset = trpcReact.vacancySearchPresets.update.useMutation({
-    onSuccess: async () => {
-      toast.success("Фильтр обновлён");
+    onSuccess: async (_data, variables) => {
+      if (variables.name !== undefined && variables.params === undefined) {
+        toast.success("Название сохранено");
+      } else if (variables.params !== undefined) {
+        toast.success("Параметры фильтра сохранены");
+      } else {
+        toast.success("Фильтр обновлён");
+      }
       await utils.vacancySearchPresets.list.invalidate();
       router.refresh();
     },
@@ -283,22 +298,6 @@ export function VacancyFilters({
     onApplyPatch(patch);
   }
 
-  function applyPresetSelection(presetId: string) {
-    const p = presets.find((x) => x.id === presetId);
-    if (!p) return;
-    const patch = presetParamsFromJson(p.params);
-    onReplaceFromPreset({ page: "1", ...patch });
-  }
-
-  function handlePresetSelectChange(value: string) {
-    if (value === PRESET_SELECT_CLEAR) {
-      onReset();
-      return;
-    }
-    onPickSavedVacancyPreset(value);
-    applyPresetSelection(value);
-  }
-
   const resolvedPresetId = vacancyPresetSidebarCleared
     ? undefined
     : (activePresetId ?? matchedPresetId);
@@ -308,15 +307,40 @@ export function VacancyFilters({
     [resolvedPresetId, presets],
   );
 
-  const presetUpdateHasChanges =
-    resolvedPresetRow != null &&
-    !isVacancyFlatMatchingPresetParams(currentParams, resolvedPresetRow.params);
+  const catalogPresetKey = useMemo(
+    () => JSON.stringify(flatParamsForPresetSave(currentParams)),
+    [currentParams],
+  );
 
-  const footerCtaMode = useMemo<"save" | "update" | "delete">(() => {
-    if (!isLoggedIn || !resolvedPresetId) return "save";
-    if (presetUpdateHasChanges) return "update";
-    return "delete";
-  }, [isLoggedIn, resolvedPresetId, presetUpdateHasChanges]);
+  const presetSnapshotKey = useMemo(
+    () =>
+      resolvedPresetRow
+        ? JSON.stringify(normalizedPresetParamsRecord(resolvedPresetRow.params))
+        : "",
+    [resolvedPresetRow],
+  );
+
+  useEffect(() => {
+    if (!resolvedPresetId || !resolvedPresetRow) return;
+    if (updatePreset.isPending || deletePreset.isPending) return;
+    if (isVacancyFlatMatchingPresetParams(currentParams, resolvedPresetRow.params)) return;
+
+    const id = resolvedPresetId;
+    const params = flatParamsForPresetSave(currentParams);
+    const t = window.setTimeout(() => {
+      updatePreset.mutate({ id, params });
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [
+    resolvedPresetId,
+    resolvedPresetRow,
+    catalogPresetKey,
+    presetSnapshotKey,
+    currentParams,
+    updatePreset.isPending,
+    deletePreset.isPending,
+    updatePreset,
+  ]);
 
   const pendingDeletePresetName = useMemo(() => {
     if (!presetIdPendingDelete) return "";
@@ -341,10 +365,73 @@ export function VacancyFilters({
 
   const isSheet = variant === "sheet";
 
-  const presetTabsValue = resolvedPresetId ?? PRESET_SELECT_CLEAR;
+  function handleSaveFiltersFooterAction() {
+    onApplyFilters?.();
+    if (!isSheet) {
+      document
+        .querySelector("[data-vacancy-catalog-main]")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (!isLoggedIn) {
+      const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
+      router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
+      return;
+    }
+    setPresetDialogSourceParams(null);
+    setPresetName("");
+    setSaveOpen(true);
+  }
 
-  const filterFooter = (
-    <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+  const presetSelectedTopActions = resolvedPresetId ? (
+    <div data-slot="button-group" className="flex min-w-0 flex-1 overflow-hidden rounded-xl">
+      <Button
+        type="button"
+        variant="destructive"
+        className="h-10 min-w-0 flex-1 gap-2 rounded-none rounded-l-xl font-semibold shadow-none"
+        disabled={deletePreset.isPending}
+        onClick={() => {
+          setPresetIdPendingDelete(resolvedPresetId);
+          setDeleteConfirmOpen(true);
+        }}
+      >
+        <Trash2 className="size-4 shrink-0" aria-hidden />
+        Удалить
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="default"
+            size="icon"
+            aria-label="Дополнительные действия с фильтром"
+            className={cn(
+              ctaButtonClass,
+              "h-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
+            )}
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-48">
+          <DropdownMenuItem
+            disabled={createPreset.isPending || !resolvedPresetRow}
+            onSelect={() => {
+              if (!resolvedPresetRow) return;
+              setPresetDialogSourceParams(resolvedPresetRow.params);
+              setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
+              setSaveOpen(true);
+            }}
+          >
+            <Copy className="size-4 shrink-0" aria-hidden />
+            Дублировать
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  ) : null;
+
+  const combinedFooter = (
+    <div className="flex w-full min-w-0 items-center gap-2">
       <Button
         type="button"
         variant="outline"
@@ -355,97 +442,19 @@ export function VacancyFilters({
       >
         <RotateCcw />
       </Button>
-      <div className="flex min-w-0 flex-1 items-stretch">
-        {footerCtaMode === "save" ? (
-          <Button
-            type="button"
+      {resolvedPresetId ? (
+        presetSelectedTopActions
+      ) : (
+        <Button
+          type="button"
             variant="default"
-            className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-xl")}
-            onClick={() => {
-              if (!isLoggedIn) {
-                const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
-                router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
-                return;
-              }
-              setSaveOpen(true);
-            }}
+            className={cn(ctaButtonClass, "h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold")}
+            onClick={handleSaveFiltersFooterAction}
           >
-            <Save />
-            Сохранить
-          </Button>
-        ) : footerCtaMode === "update" ? (
-          <div data-slot="button-group" className="flex min-w-0 flex-1 overflow-hidden rounded-xl">
-            <Button
-              type="button"
-              variant="default"
-              className={cn(ctaButtonClass, "min-w-0 flex-1 rounded-none rounded-l-xl")}
-              disabled={updatePreset.isPending}
-              onClick={() => {
-                const id = resolvedPresetId;
-                if (!id) return;
-                updatePreset.mutate({
-                  id,
-                  params: flatParamsForPresetSave(currentParams),
-                });
-              }}
-            >
-              <RefreshCw className="size-4 shrink-0" />
-              Обновить
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="default"
-                  size="icon"
-                  aria-label="Дополнительные действия с фильтром"
-                  className={cn(
-                    ctaButtonClass,
-                    "size-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
-                  )}
-                >
-                  <ChevronDown className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-48">
-                <DropdownMenuItem
-                  onSelect={() => {
-                    setSaveOpen(true);
-                  }}
-                >
-                  Создать новый фильтр
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onSelect={() => {
-                    if (!resolvedPresetId) return;
-                    setPresetIdPendingDelete(resolvedPresetId);
-                    setDeleteConfirmOpen(true);
-                  }}
-                >
-                  Удалить фильтр
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="destructive"
-            className="h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold"
-            disabled={deletePreset.isPending}
-            onClick={() => {
-              if (!resolvedPresetId) return;
-              setPresetIdPendingDelete(resolvedPresetId);
-              setDeleteConfirmOpen(true);
-            }}
-          >
-            <Trash2 className="size-4 shrink-0" />
-            Удалить
-          </Button>
-        )}
-      </div>
+          <Save className="size-4 shrink-0" aria-hidden />
+          Сохранить
+        </Button>
+      )}
     </div>
   );
 
@@ -490,51 +499,29 @@ export function VacancyFilters({
           isSheet && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
         )}
       >
-        {isLoggedIn ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label className="text-foreground text-sm font-medium">Ваши фильтры</Label>
-              {presets.length > 0 ? (
-                <span className="text-muted-foreground text-xs">{presets.length} сохранённых</span>
-              ) : null}
-            </div>
-            {presets.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Пока нет сохранённых наборов.</p>
-            ) : (
-              <Tabs
-                key={`saved-preset-tabs-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
-                value={presetTabsValue}
-                onValueChange={handlePresetSelectChange}
-                className="flex w-full min-w-0 shrink-0 flex-col gap-0"
-              >
-                <TabsList className="h-fit max-h-fit w-full max-w-full min-w-0 shrink-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain">
-                  <TabsTrigger
-                    value={PRESET_SELECT_CLEAR}
-                    className="h-8 max-h-8 flex-none shrink-0 px-3 py-0 text-sm shadow-none"
-                  >
-                    Не выбран
-                  </TabsTrigger>
-                  {presets.map((pr) => (
-                    <TabsTrigger
-                      key={pr.id}
-                      value={pr.id}
-                      title={pr.name}
-                      className="h-8 max-h-8 max-w-[min(12rem,45vw)] flex-none shrink-0 truncate px-3 py-0 text-sm shadow-none"
-                    >
-                      {pr.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                <TabsContent value={PRESET_SELECT_CLEAR} className="mt-0 flex-none">
-                  <span className="sr-only">Сохранённый набор не выбран</span>
-                </TabsContent>
-                {presets.map((pr) => (
-                  <TabsContent key={pr.id} value={pr.id} className="mt-0 flex-none">
-                    <span className="sr-only">Выбран набор «{pr.name}»</span>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            )}
+        {resolvedPresetRow && resolvedPresetId ? (
+          <div key={resolvedPresetId} className="flex flex-col gap-2">
+            <Label htmlFor="vacancy-preset-name-display" className="text-sm font-medium">
+              Название фильтра
+            </Label>
+            <Input
+              id="vacancy-preset-name-display"
+              maxLength={80}
+              defaultValue={resolvedPresetRow.name}
+              disabled={deletePreset.isPending}
+              onBlur={(e) => {
+                const raw = e.currentTarget.value;
+                const trimmed = raw.trim();
+                if (trimmed === "") {
+                  toast.error("Введите название фильтра");
+                  e.currentTarget.value = resolvedPresetRow.name;
+                  return;
+                }
+                if (trimmed === resolvedPresetRow.name) return;
+                updatePreset.mutate({ id: resolvedPresetId, name: trimmed });
+              }}
+              className="bg-card border-border h-9 shadow-sm"
+            />
           </div>
         ) : null}
 
@@ -639,11 +626,11 @@ export function VacancyFilters({
       </CardContent>
       {isSheet ? (
         <SheetFooter className="bg-card border-border mt-auto flex w-full shrink-0 flex-col gap-3 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:flex-col sm:justify-start">
-          {filterFooter}
+          {combinedFooter}
         </SheetFooter>
       ) : (
         <CardFooter className="border-border bg-card flex flex-col gap-3 border-t px-5 py-4">
-          {filterFooter}
+            {combinedFooter}
         </CardFooter>
       )}
 
@@ -688,6 +675,7 @@ export function VacancyFilters({
                 deletePreset.mutate({ id: presetIdPendingDelete });
               }}
             >
+              <Trash2 className="size-4 shrink-0" aria-hidden />
               Удалить
             </Button>
           </DialogFooter>
@@ -699,6 +687,7 @@ export function VacancyFilters({
         onOpenChange={(open) => {
           setSaveOpen(open);
           setPresetNameInvalid(false);
+          if (!open) setPresetDialogSourceParams(null);
         }}
       >
         <DialogContent>
@@ -741,10 +730,16 @@ export function VacancyFilters({
                   setPresetNameInvalid(true);
                   return;
                 }
-                createPreset.mutate({
-                  name,
-                  params: flatParamsForPresetSave(currentParams),
-                });
+                const params =
+                  presetDialogSourceParams != null
+                    ? flatParamsForPresetSave(
+                      mergeVacancyListFlat(
+                        { page: "1" },
+                        presetParamsFromJson(presetDialogSourceParams),
+                      ),
+                    )
+                    : flatParamsForPresetSave(currentParams);
+                createPreset.mutate({ name, params });
               }}
               disabled={createPreset.isPending}
             >
