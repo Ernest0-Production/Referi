@@ -49,56 +49,59 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
       <DashboardVacancyPageShell>
         <DashboardVacancyNav segments={breadcrumbSegments} />
 
-        <div className="flex flex-col gap-1">
-          <h1 className="text-foreground text-2xl font-bold">
-            {vacancy ? "Моя рефералка" : "Создание рефералки"}
-          </h1>
-          {vacancy && !editMode ? (
-            <p className="text-muted-foreground text-sm">
-              Доступных попыток: {me.availableAttempts} из 3
-            </p>
-          ) : null}
-        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-foreground text-2xl font-bold">
+              {vacancy ? "Моя рефералка" : "Создание рефералки"}
+            </h1>
+            {vacancy && !editMode ? (
+              <p className="text-muted-foreground text-sm">
+                Доступных попыток: {me.availableAttempts} из 3
+              </p>
+            ) : null}
+          </div>
 
-        {vacancy ? (
-          editMode ? (
-            <EditVacancyCard
-              vacancy={{
-                id: vacancy.id,
-                title: vacancy.title,
-                companyName: vacancy.companyName,
-                specialty: vacancy.specialty,
-                grade: vacancy.grade,
-                workFormat: vacancy.workFormat,
-                salaryCurrency: vacancy.salaryCurrency,
-                salaryFromKopecks: vacancy.salaryFromKopecks,
-                salaryToKopecks: vacancy.salaryToKopecks,
-                description: vacancy.description,
-                rewardKopecks: vacancy.rewardKopecks,
-              }}
-            />
+          {vacancy ? (
+            editMode ? (
+              <EditVacancyCard
+                vacancy={{
+                  id: vacancy.id,
+                  title: vacancy.title,
+                  companyName: vacancy.companyName,
+                  specialty: vacancy.specialty,
+                  grade: vacancy.grade,
+                  workFormat: vacancy.workFormat,
+                  salaryCurrency: vacancy.salaryCurrency,
+                  salaryFromKopecks: vacancy.salaryFromKopecks,
+                  salaryToKopecks: vacancy.salaryToKopecks,
+                  description: vacancy.description,
+                  rewardKopecks: vacancy.rewardKopecks,
+                }}
+              />
+            ) : (
+              <div className="flex flex-col gap-8">
+                <ManageVacancyPanel vacancy={vacancy} />
+                <VacancyApplicantsSection vacancyId={vacancy.id} vacancyTitle={vacancy.title} />
+              </div>
+            )
           ) : (
-            <>
-              <ManageVacancyPanel vacancy={vacancy} />
-              <VacancyApplicantsSection vacancyId={vacancy.id} vacancyTitle={vacancy.title} />
-            </>
-          )
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col gap-4">
-              {me.availableAttempts > 0 ? (
-                <CreateVacancyForm />
-              ) : (
-                <Alert>
-                  <AlertTitle>Нет попыток</AlertTitle>
-                  <AlertDescription>
-                    Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60 дней.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        )}
+            <Card>
+              <CardContent className="flex flex-col gap-4">
+                {me.availableAttempts > 0 ? (
+                  <CreateVacancyForm />
+                ) : (
+                  <Alert>
+                    <AlertTitle>Нет попыток</AlertTitle>
+                    <AlertDescription>
+                      Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60
+                      дней.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </DashboardVacancyPageShell>
     </main>
   );
