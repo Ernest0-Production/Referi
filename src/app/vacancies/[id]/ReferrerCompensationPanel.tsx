@@ -1,10 +1,14 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import { HandCoins, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 import { REFERRER_COMPENSATION_TOOLTIP } from "@/lib/vacancyTooltipMessages";
+
+const REFERRER_COMPENSATION_LABEL_FULL = "Компенсация за рекомендацию";
+const REFERRER_COMPENSATION_LABEL_SHORT = "Компенсация";
 
 type ReferrerCompensationPanelProps = {
   amountText: string;
@@ -15,6 +19,27 @@ export function ReferrerCompensationPanel({
   amountText,
   className,
 }: ReferrerCompensationPanelProps) {
+  const labelSlotRef = useRef<HTMLDivElement>(null);
+  const labelMeasureRef = useRef<HTMLSpanElement>(null);
+  const [useShortLabel, setUseShortLabel] = useState(false);
+
+  useLayoutEffect(() => {
+    const slot = labelSlotRef.current;
+    const measure = labelMeasureRef.current;
+    if (!slot || !measure) return;
+
+    const update = () => {
+      const available = slot.clientWidth;
+      const needed = measure.scrollWidth;
+      setUseShortLabel(needed > available);
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(slot);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <div
       className={cn(
@@ -25,7 +50,23 @@ export function ReferrerCompensationPanel({
       <div className="flex items-start justify-between gap-2">
         <p className="flex min-w-0 flex-1 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
           <HandCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
-          <span className="min-w-0 leading-snug break-words">Компенсация за рекомендацию</span>
+          <div ref={labelSlotRef} className="relative min-w-0 flex-1">
+            <span
+              ref={labelMeasureRef}
+              className="pointer-events-none absolute top-0 left-0 whitespace-nowrap opacity-0"
+              aria-hidden
+            >
+              {REFERRER_COMPENSATION_LABEL_FULL}
+            </span>
+            <span
+              className={cn(
+                "min-w-0 leading-snug",
+                useShortLabel ? "truncate whitespace-nowrap" : "whitespace-nowrap",
+              )}
+            >
+              {useShortLabel ? REFERRER_COMPENSATION_LABEL_SHORT : REFERRER_COMPENSATION_LABEL_FULL}
+            </span>
+          </div>
         </p>
         <Tooltip>
           <TooltipTrigger asChild>

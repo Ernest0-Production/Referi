@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { NewVacancyComposeWithBack } from "@/app/vacancies/new/NewVacancyComposeWithBack";
+import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default async function NewVacancyPage() {
@@ -20,7 +21,7 @@ export default async function NewVacancyPage() {
       <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
         <PublicHeaderNav session={session} />
         <main className="flex-1">
-          <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
+          <div className={PAGE_COLUMN_CLASS}>
             {me.availableAttempts > 0 ? (
               <NewVacancyComposeWithBack
                 title="Разместить рефералку"
@@ -54,7 +55,7 @@ export default async function NewVacancyPage() {
     <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
       <PublicHeaderNav session={null} />
       <main className="flex-1">
-        <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
+        <div className={PAGE_COLUMN_CLASS}>
           <NewVacancyComposeWithBack title="Разместить рефералку" showForm />
         </div>
       </main>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { UpdateProfileForm } from "./UpdateProfileForm";
+import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function ProfilePage() {
@@ -14,7 +15,7 @@ export default async function ProfilePage() {
 
   return (
     <main className="flex-1">
-      <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
+      <div className={PAGE_COLUMN_CLASS}>
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Профиль</h1>
           <p className="text-muted-foreground text-sm">Управление вашими данными</p>

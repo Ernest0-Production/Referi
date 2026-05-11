@@ -136,7 +136,7 @@ export const paymentsRouter = router({
         },
       });
 
-      const returnUrl = `${env.NEXT_PUBLIC_URL}/dashboard/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}/dashboard/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}&fromVacancy=${input.vacancyId}`;
 
       const payment = await paymentProvider.createPayment({
         idempotencyKey,

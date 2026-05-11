@@ -2,23 +2,20 @@ import { IconCoins } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import {
-  sameOriginRefererPathname,
-  vacancyCatalogDetailBackLabelFromPathname,
-} from "@/lib/vacancyNavigationBackLabel";
+import { publicVacancyDetailTrail } from "@/lib/navBreadcrumbTrail";
+import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
 import { VacancyOwnerActions } from "@/app/dashboard/vacancy/VacancyOwnerActions";
-import { VacancyDetailBackButton } from "./VacancyDetailBackButton";
 import { ReportVacancyForm } from "./ReportVacancyForm";
 import { ReferrerCompensationPanel } from "./ReferrerCompensationPanel";
 import { VacancyDetailMetaBadges } from "./VacancyDetailMetaBadges";
 import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
-import { ApplicationCountIcon } from "@/components/vacancy/VacancyFieldIcons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { formatVacancyReferralRequestFooterHint } from "@/lib/vacancyReferralRequestFooterHint";
+import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -55,16 +52,15 @@ export default async function VacancyDetailPage({ params }: PageProps) {
       maximumFractionDigits: 0,
     }).format(v);
 
-  const refererPath = await sameOriginRefererPathname();
-  const vacancyDetailBackLabel = vacancyCatalogDetailBackLabelFromPathname(refererPath, id);
+  const vacancyBreadcrumbSegments = publicVacancyDetailTrail(vacancy.title);
 
   return (
     <main className="min-h-screen bg-[var(--app-page-surface)]">
       <VacancyViewCookieWriter vacancyId={id} />
       <PublicHeaderNav session={session} />
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
-        <VacancyDetailBackButton label={vacancyDetailBackLabel} />
+      <div className={PAGE_COLUMN_CLASS}>
+        <AppNavBreadcrumb segments={vacancyBreadcrumbSegments} />
 
         <div className="flex flex-col gap-3">
           <Card>
@@ -126,14 +122,22 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                 isAuthor ? (
                   <VacancyOwnerActions
                     vacancyId={vacancy.id}
-                    editHref="/dashboard/vacancy?edit=1"
+                    editHref={`/dashboard/vacancy?edit=1&fromVacancy=${vacancy.id}`}
                     redirectAfterDelete="/"
                   />
                 ) : (
                   <div className="flex flex-col gap-2">
                     <Button asChild size="lg" className="w-full sm:w-auto">
-                      <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
-                        <ApplicationCountIcon data-icon="inline-start" className="text-current" />
+                      <Link
+                        href={`/dashboard/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
+                      >
+                        <span
+                          data-icon="inline-start"
+                          className="shrink-0 text-base leading-none"
+                          aria-hidden
+                        >
+                          🙏
+                        </span>
                         Попросить рефералку
                       </Link>
                     </Button>
