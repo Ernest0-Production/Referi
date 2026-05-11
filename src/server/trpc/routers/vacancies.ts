@@ -5,6 +5,7 @@ import { createReferrerAttemptRepository } from "@/server/repositories/referrerA
 import { cancelSLAJob } from "@/server/workers/slaWorker";
 import { scheduleRefundSeeker, scheduleRefundPaidToken } from "@/server/workers/paymentWorker";
 import { Prisma } from "@prisma/client";
+import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
 import { VACANCY_SALARY_CURRENCY_VALUES } from "@/lib/vacancySalaryCurrency";
 
 const specialtyEnum = z.enum([
@@ -35,8 +36,8 @@ const vacancyWriteSchema = z
     grade: gradeEnum,
     workFormat: workFormatEnum,
     salaryCurrency: salaryCurrencyEnum.default("RUB"),
-    salaryFrom: z.number().int().min(0).optional(),
-    salaryTo: z.number().int().min(0).optional(),
+    salaryFrom: z.number().int().min(0).max(VACANCY_SALARY_AMOUNT_MAX).optional(),
+    salaryTo: z.number().int().min(0).max(VACANCY_SALARY_AMOUNT_MAX).optional(),
     description: z.string().min(10).max(1000),
     rewardKopecks: z.number().int().min(0).max(REFERRER_BONUS_MAX_KOPECKS).default(0),
   })
@@ -58,7 +59,7 @@ const vacancyListSchema = z.object({
   grade: z.array(gradeEnum).optional(),
   workFormat: z.array(workFormatEnum).optional(),
   salaryCurrency: salaryCurrencyEnum.optional(),
-  salaryFrom: z.number().int().positive().optional(),
+  salaryFrom: z.number().int().positive().max(VACANCY_SALARY_AMOUNT_MAX).optional(),
   query: z.string().max(200).optional(),
   sort: z.enum(["created_desc", "salary_desc"]).default("created_desc"),
   page: z.number().int().min(1).default(1),

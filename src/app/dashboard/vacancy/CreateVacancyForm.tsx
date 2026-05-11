@@ -46,6 +46,7 @@ import {
   type VacancySalaryCurrency,
   isVacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
+import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
 import {
   GradeIcon,
   SalaryCurrencyIcon,
@@ -54,6 +55,7 @@ import {
 } from "@/components/vacancy/VacancyFieldIcons";
 import { useReportVacancyDashboardFormDirty } from "./VacancyDashboardFormDirtyContext";
 import {
+  clampMoneyIntegerDigits,
   formatRuMoneyIntegerDisplay,
   parseMoneyIntegerDigitsToNumber,
   sanitizeMoneyIntegerDigits,
@@ -230,6 +232,18 @@ function validateSalaryRange(fromRaw: string, toRaw: string): SalaryRangeInvalid
     return {
       message: "Минимальная зарплата не может быть меньше максимальной",
       focusId: "vac-sal-from",
+    };
+  }
+  if (from !== null && from > VACANCY_SALARY_AMOUNT_MAX) {
+    return {
+      message: `Зарплата «от» не может превышать ${VACANCY_SALARY_AMOUNT_MAX.toLocaleString("ru-RU")}.`,
+      focusId: "vac-sal-from",
+    };
+  }
+  if (to !== null && to > VACANCY_SALARY_AMOUNT_MAX) {
+    return {
+      message: `Зарплата «до» не может превышать ${VACANCY_SALARY_AMOUNT_MAX.toLocaleString("ru-RU")}.`,
+      focusId: "vac-sal-to",
     };
   }
   return null;
@@ -587,10 +601,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           </Field>
         </div>
 
-        <FieldSet
-          className="flex min-w-0 flex-col gap-2"
-          data-invalid={salaryError ? "true" : undefined}
-        >
+        <FieldSet className="flex min-w-0 flex-col gap-2">
           <FieldLegend>Зарплата</FieldLegend>
           <InputGroup className="border-border bg-card w-full min-w-0 rounded-lg shadow-sm">
             <InputGroupInput
@@ -606,7 +617,10 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setSalaryError(null);
                 setForm((f) => ({
                   ...f,
-                  salaryFrom: sanitizeMoneyIntegerDigits(e.target.value),
+                  salaryFrom: clampMoneyIntegerDigits(
+                    sanitizeMoneyIntegerDigits(e.target.value),
+                    VACANCY_SALARY_AMOUNT_MAX,
+                  ),
                 }));
               }}
               placeholder="100 000"
@@ -631,7 +645,10 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setSalaryError(null);
                 setForm((f) => ({
                   ...f,
-                  salaryTo: sanitizeMoneyIntegerDigits(e.target.value),
+                  salaryTo: clampMoneyIntegerDigits(
+                    sanitizeMoneyIntegerDigits(e.target.value),
+                    VACANCY_SALARY_AMOUNT_MAX,
+                  ),
                 }));
               }}
               placeholder="200 000"
@@ -645,8 +662,6 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                     type="button"
                     id="vac-sal-currency"
                     aria-label="Валюта зарплаты"
-                    aria-invalid={salaryError ? true : undefined}
-                    aria-describedby={salaryError ? "vac-salary-desc" : undefined}
                     className="h-8 max-w-full min-w-0 gap-1.5 rounded-lg px-2 font-medium tabular-nums"
                   >
                     <SalaryCurrencyIcon code={form.salaryCurrency} />
