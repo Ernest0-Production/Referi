@@ -21,6 +21,16 @@ export function pathnameFromPathAndSearch(pathnameWithSearch: string | null): st
   return raw;
 }
 
+/** Referer — страница новой заявки по этой же рефералке (не добавлять её в крошки карточки). */
+function refererIsApplicationNewForVacancy(refererPath: string, vacancyId: string): boolean {
+  const pn = pathnameFromPathAndSearch(refererPath);
+  if (pn !== "/dashboard/applications/new") return false;
+  const qIndex = refererPath.indexOf("?");
+  if (qIndex === -1) return false;
+  const params = new URLSearchParams(refererPath.slice(qIndex + 1));
+  return params.get("vacancyId") === vacancyId;
+}
+
 /** Публичная карточка рефералки: каталог → (предыдущая страница) → заголовок. */
 export function publicVacancyDetailTrail(
   refererPath: string | null,
@@ -30,7 +40,12 @@ export function publicVacancyDetailTrail(
   const items: NavBreadcrumbSegment[] = [{ label: "Рефералки", href: PUBLIC_CATALOG_ROOT }];
   const rp = pathnameFromPathAndSearch(refererPath);
   const selfPn = `/vacancies/${vacancyId}`;
-  if (refererPath && rp !== pathnameFromPathAndSearch(PUBLIC_CATALOG_ROOT) && rp !== selfPn) {
+  if (
+    refererPath &&
+    rp !== pathnameFromPathAndSearch(PUBLIC_CATALOG_ROOT) &&
+    rp !== selfPn &&
+    !refererIsApplicationNewForVacancy(refererPath, vacancyId)
+  ) {
     items.push({
       label: vacancyCatalogDetailBackLabelFromPathname(refererPath, vacancyId),
       href: refererPath,
