@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { formatVacancyReferralRequestFooterHint } from "@/lib/vacancyReferralRequestFooterHint";
-import { PAGE_COLUMN_MAX_W3_CLASS } from "@/lib/pageContentShell";
+import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -62,7 +62,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
       <VacancyViewCookieWriter vacancyId={id} />
       <PublicHeaderNav session={session} />
 
-      <div className={PAGE_COLUMN_MAX_W3_CLASS}>
+      <div className={PAGE_COLUMN_CLASS}>
         <AppNavBreadcrumb segments={vacancyBreadcrumbSegments} />
 
         <div className="flex flex-col gap-3">

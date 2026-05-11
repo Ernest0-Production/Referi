@@ -5,7 +5,7 @@ import { firstQueryParam } from "@/lib/searchParams";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationNewTrail } from "@/lib/navBreadcrumbTrail";
 import { sameOriginRefererPathname } from "@/lib/vacancyNavigationBackLabel";
-import { PAGE_COLUMN_MAX_W2_CLASS } from "@/lib/pageContentShell";
+import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,7 +62,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
 
   return (
     <main className="flex-1">
-      <div className={PAGE_COLUMN_MAX_W2_CLASS}>
+      <div className={PAGE_COLUMN_CLASS}>
         <AppNavBreadcrumb
           segments={dashboardApplicationNewTrail(
             refererPath,

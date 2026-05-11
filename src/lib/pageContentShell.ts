@@ -1,10 +1,5 @@
 /**
- * Единые отступы основной колонки с хлебными крошками и контентом:
- * совпадают с публичной карточкой рефералки (`/vacancies/[id]`), чтобы крошки
- * визуально стояли на одной вертикали с каталогом и кабинетом.
+ * Единая основная колонка страницы: ширина и отступы как у раздела «Настройки»
+ * (`max-w-2xl`, `gap-8`, `p-6 md:p-8`), чтобы карточки и хлебные крошки совпадали по вертикали.
  */
-export const PAGE_COLUMN_MAX_W3_CLASS =
-  "mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8";
-
-export const PAGE_COLUMN_MAX_W2_CLASS =
-  "mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8";
+export const PAGE_COLUMN_CLASS = "mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8";
