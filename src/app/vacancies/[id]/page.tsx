@@ -1,4 +1,4 @@
-import { IconCoins } from "@tabler/icons-react";
+import { IconCoins, IconMessageCircleUser } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
+import { cn } from "@/lib/utils";
 import {
   GradeIcon,
   SpecialtyIcon,
@@ -68,6 +69,9 @@ export default async function VacancyDetailPage({ params }: PageProps) {
     vacancy.salaryCurrency,
   );
   const reward = Math.round(Number(vacancy.rewardKopecks) / 100);
+  const hasSalaryBlock = Boolean(salaryLine);
+  const hasCompensationBlock = reward > 0;
+  const salaryAndCompensationRow = hasSalaryBlock && hasCompensationBlock;
 
   const fmtRub = (v: number) =>
     new Intl.NumberFormat("ru-RU", {
@@ -113,23 +117,48 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               </Badge>
             </div>
 
-            {salaryLine ? (
-              <div className="rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 py-3">
-                <p className="flex items-center gap-1.5 text-sm text-emerald-800/90 dark:text-emerald-200/90">
-                  <IconCoins className="size-4 shrink-0 opacity-90" aria-hidden />
-                  Зарплата
-                </p>
-                <p className="font-semibold text-emerald-950 dark:text-emerald-50">{salaryLine}</p>
-              </div>
-            ) : null}
+            {hasSalaryBlock || hasCompensationBlock ? (
+              <div
+                className={cn(
+                  "flex flex-col gap-4",
+                  salaryAndCompensationRow && "sm:flex-row sm:items-stretch",
+                )}
+              >
+                {salaryLine ? (
+                  <div
+                    className={cn(
+                      "flex flex-col gap-2.5 rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 py-3",
+                      salaryAndCompensationRow && "min-w-0 sm:min-h-0 sm:flex-1 sm:basis-0",
+                    )}
+                  >
+                    <p className="flex min-w-0 items-start gap-1.5 text-sm text-emerald-800/90 dark:text-emerald-200/90">
+                      <IconCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
+                      <span className="min-w-0 leading-snug break-words">Зарплата</span>
+                    </p>
+                    <p className="font-semibold break-words text-emerald-950 dark:text-emerald-50">
+                      {salaryLine}
+                    </p>
+                  </div>
+                ) : null}
 
-            {reward > 0 ? (
-              <div className="rounded-xl border border-red-600/25 bg-red-600/10 px-4 py-3">
-                <p className="flex items-center gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
-                  <IconCoins className="size-4 shrink-0 opacity-90" aria-hidden />
-                  Компенсация за рекомендацию
-                </p>
-                <p className="font-semibold text-red-950 dark:text-red-50">{fmtRub(reward)}</p>
+                {hasCompensationBlock ? (
+                  <div
+                    className={cn(
+                      "flex flex-col gap-2.5 rounded-xl border border-red-600/25 bg-red-600/10 px-4 py-3",
+                      salaryAndCompensationRow && "min-w-0 sm:min-h-0 sm:flex-1 sm:basis-0",
+                    )}
+                  >
+                    <p className="flex min-w-0 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
+                      <IconCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
+                      <span className="min-w-0 leading-snug break-words">
+                        Компенсация за рекомендацию
+                      </span>
+                    </p>
+                    <p className="font-semibold break-words text-red-950 dark:text-red-50">
+                      {fmtRub(reward)}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -151,6 +180,11 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               ) : (
                 <Button asChild size="lg" className="w-full sm:w-auto">
                   <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
+                      <IconMessageCircleUser
+                        data-icon="inline-start"
+                        className="size-4 shrink-0"
+                        aria-hidden
+                      />
                       Попросить рефералку
                   </Link>
                 </Button>
