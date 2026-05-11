@@ -7,7 +7,6 @@ import { formatVacancySalaryRange, type VacancySalaryCurrency } from "@/lib/vaca
 import {
   ApplicationCountIcon,
   GradeIcon,
-  SalaryCurrencyIcon,
   SpecialtyIcon,
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
@@ -127,8 +126,12 @@ export function VacancyCard({
               {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
             </Badge>
             {salary ? (
-              <Badge variant="outline" className="font-normal">
-                <SalaryCurrencyIcon code={vacancy.salaryCurrency} className="text-current" />
+              <Badge
+                className={cn(
+                  "border-transparent font-medium",
+                  "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200",
+                )}
+              >
                 {salary}
               </Badge>
             ) : null}
@@ -140,11 +143,10 @@ export function VacancyCard({
               <Badge
                 className={cn(
                   "border-transparent font-medium",
-                  "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200",
+                  "bg-red-600/15 text-red-800 dark:text-red-200",
                 )}
               >
-                <SalaryCurrencyIcon code="RUB" className="text-current" />
-                Бонус:{" "}
+                Компенсация:{" "}
                 {new Intl.NumberFormat("ru-RU", {
                   style: "currency",
                   currency: "RUB",

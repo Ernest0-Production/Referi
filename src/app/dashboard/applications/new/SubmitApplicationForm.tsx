@@ -43,16 +43,16 @@ export function SubmitApplicationForm({
       const msg = err.message;
       if (msg === "ACTIVE_APPLICATION_LIMIT_REACHED") {
         setError(
-          "Достигнут лимит активных откликов. Купите дополнительный токен или дождитесь завершения заявки.",
+          "Достигнут лимит активных запросов по рефералкам. Купите дополнительный токен или дождитесь завершения заявки.",
         );
       } else if (msg === "DUPLICATE_APPLICATION") {
-        setError("Вы уже откликались на эту рефералку.");
+        setError("Вы уже просили эту рефералку.");
       } else if (msg === "CANNOT_APPLY_TO_OWN_VACANCY") {
-        setError("Нельзя откликаться на собственную рефералку.");
+        setError("Нельзя попросить собственную рефералку.");
       } else if (msg === "VACANCY_NOT_ACTIVE") {
         setError("Рефералка больше не активна.");
       } else if (msg.startsWith("PAID_TOKEN_")) {
-        setError("Токен отклика недействителен. Купите новый токен для этой рефералки.");
+        setError("Токен запроса недействителен. Купите новый токен для этой рефералки.");
       } else {
         setError(err.message);
       }
@@ -182,9 +182,9 @@ export function SubmitApplicationForm({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Разовый токен отклика (199 ₽)</CardTitle>
+            <CardTitle className="text-base">Разовый токен запроса (199 ₽)</CardTitle>
             <CardDescription>
-              Если бесплатный лимит активных откликов исчерпан, купите токен для этой рефералки.
+              Если бесплатный лимит активных запросов исчерпан, купите токен для этой рефералки.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
@@ -211,7 +211,7 @@ export function SubmitApplicationForm({
         ) : null}
 
         <Button type="submit" disabled={submit.isPending} className="w-full">
-          {submit.isPending ? "Отправка…" : "Отправить отклик"}
+          {submit.isPending ? "Отправка…" : "Отправить запрос"}
         </Button>
       </FieldGroup>
     </form>

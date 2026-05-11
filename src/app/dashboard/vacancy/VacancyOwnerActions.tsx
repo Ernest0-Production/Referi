@@ -101,7 +101,7 @@ export function VacancyOwnerActions({
           <DialogHeader>
             <DialogTitle>Удалить рефералку?</DialogTitle>
             <DialogDescription>
-              Активные отклики будут отменены с возвратами по правилам платформы. Это действие
+              Активные запросы будут отменены с возвратами по правилам платформы. Это действие
               нельзя отменить.
             </DialogDescription>
           </DialogHeader>

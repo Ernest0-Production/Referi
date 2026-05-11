@@ -252,7 +252,7 @@ model Vacancy {
   blockedUntil    DateTime?     // Дата разблокировки (если BLOCKED)
   deletedAt       DateTime?
 
-  // Дата первого отклика (для расчёта SLA реакции)
+  // Дата первой заявки по рефералке (для расчёта SLA реакции)
   firstApplicationAt DateTime?
 
   referrer     User          @relation("ReferrerVacancies", fields: [referrerId], references: [id])
@@ -291,7 +291,7 @@ enum AttemptEvent {
 // ─────────────────────────────────────────────
 
 enum ApplicationStatus {
-  SUBMITTED                  // Соискатель откликнулся
+  SUBMITTED                  // Заявка создана (соискатель попросил рефералку)
   AWAITING_PAYMENT           // Реферальщик подтвердил намерение; ждём оплату
   AWAITING_RESUME_HANDOFF    // Оплата заказчика удерживается у ЮKassa (сделка); ждём передачи резюме
   SEEKER_CANCEL_REQUESTED    // Соискатель запросил отмену; ждём подтверждения рефальщика (3 дня)
@@ -328,7 +328,7 @@ model Application {
   cancelAckDeadline     DateTime?  // seekerCancelRequested → 3 дня
   companyDecisionDeadline DateTime? // awaitingCompanyDecision → 30 дней
 
-  // Платёжный токен разового отклика (если был куплен)
+  // Платёжный токен разового запроса (если был куплен)
   paidApplicationTokenId String? @db.Uuid
 
   seeker          User                @relation("SeekerApplications", fields: [seekerId], references: [id])
@@ -338,7 +338,7 @@ model Application {
   moderatorCase   ModeratorCase?
   auditLogs       AuditLog[]
 
-  // Уникальность: один активный отклик на вакансию
+  // Уникальность: одна активная заявка на рефералку (vacancy)
   @@unique([seekerId, vacancyId])
   @@index([vacancyId, status])
   @@index([seekerId, status])
@@ -397,7 +397,7 @@ model EscrowTransaction {
   @@map("escrow_transactions")
 }
 
-// Токен разового купленного отклика
+// Токен разового купленного запроса по рефералке
 model PaidApplicationToken {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   seekerId  String   @db.Uuid
@@ -575,7 +575,7 @@ DDL для PostgreSQL задаётся исходной миграцией `pris
 
 ## 9. Examples & Edge Cases
 
-### Подсчёт активных откликов соискателя
+### Подсчёт активных заявок соискателя
 
 ```typescript
 // src/server/repositories/applicationRepository.ts

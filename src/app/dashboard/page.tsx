@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
+import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -123,7 +124,7 @@ export default async function DashboardPage() {
               <span className="text-foreground text-lg font-bold">
                 {vacancyData ? vacancyData._count.applications : "—"}
               </span>
-              <span className="text-muted-foreground text-xs">Откликов</span>
+              <span className="text-muted-foreground text-xs">Запросов</span>
             </Link>
           </Button>
           <Button variant="outline" className="h-auto flex-col gap-1 py-4 font-normal" asChild>
@@ -201,7 +202,7 @@ export default async function DashboardPage() {
                     </Badge>
                   </div>
                   <p className="text-muted-foreground text-sm">
-                    {vacancyData._count.applications} откликов
+                    {formatApplicationCountLabel(vacancyData._count.applications)}
                   </p>
                 </CardContent>
               </Card>
@@ -213,7 +214,7 @@ export default async function DashboardPage() {
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
                 <p className="text-muted-foreground text-center text-sm">
-                    Создайте рефералку, чтобы получать отклики.
+                    Создайте рефералку, чтобы получать запросы.
                 </p>
                 <Button asChild>
                     <Link href="/dashboard/vacancy">Создать рефералку</Link>

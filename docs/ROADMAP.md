@@ -103,7 +103,7 @@ flowchart LR
 | `vacancies.getById` query       | `[CORE]` | Без данных реферальщика                                                                                   |
 | `vacancies.myActive` query      | `[CORE]` | Текущая рефералка реферальщика                                                                             |
 | Страница `/` — лента рефералок   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
-| Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница рефералки + кнопка «Откликнуться»                                                       |
+| Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница рефералки + кнопка «Попросить рефералку»                                                       |
 | Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей рефералкой, редактирование (`?edit=1`), блок кандидатов (`#candidates`)                                                                   |
 | Страница `/vacancies/new`       | `[CORE]` | Оформление новой рефералки без входа; OAuth GitHub при публикации, черновик формы в `sessionStorage` до авторизации                                                      |
 | Форма создания рефералки         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
@@ -144,7 +144,7 @@ flowchart LR
 | `AuditLog` запись при каждом переходе     | `[CORE]` | Все поля: from, to, actor, actorId, metadata         |
 | `applications.myList` query               | `[CORE]` | Список заявок соискателя с текущими статусами        |
 | `vacancies.update` mutation               | `[CORE]` | Реферальщик: обновление полей своей рефералки (ACTIVE / FROZEN)               |
-| `vacancies.applicants` query              | `[CORE]` | Список откликнувшихся для реферальщика (UI: секция на `/dashboard/vacancy#candidates`)               |
+| `vacancies.applicants` query              | `[CORE]` | Список соискателей, отправивших запрос, для реферальщика (UI: секция на `/dashboard/vacancy#candidates`)               |
 | Страница `/dashboard/applications`        | `[CORE]` | Соискатель: мои заявки + действия                    |
 | Редирект `/dashboard/vacancy/applicants`  | `[CORE]` | На `/dashboard/vacancy#candidates` (старые закладки)                       |
 | Правила видимости контактов               | `[CORE]` | contactInfo только в активных статусах               |
@@ -157,7 +157,7 @@ flowchart LR
 - Все guards из spec-process-application-lifecycle.md проверены unit-тестами
 - `AuditLog` создаётся при каждом переходе
 - `contactInfo` не виден в `vacancies.applicants` после терминального статуса
-- Соискатель не может откликнуться на > 2 рефералок одновременно
+- Соискатель не может иметь более 2 активных заявок по рефералкам одновременно (см. guard в spec-process-application-lifecycle.md)
 
 ---
 
@@ -177,12 +177,12 @@ flowchart LR
 | Закрытие в пользу исполнителя при offerAccepted | `[PAY]` | Шаги capture + payout (или эквивалент в API сделки)                                                                                                |
 | `refundPayment` при всех refund-переходах       | `[PAY]` | Возврат заказчику: SLA, cancel, vacancy deleted, moderator                                                                                         |
 | `payments.addPayoutCard` (бэклог)               | `[PAY]` | Отдельная tRPC-процедура не реализована; выплаты — воркер + `User.yookassaPayoutDestination`                                                       |
-| `payments.initiatePaidApplicationToken`         | `[PAY]` | Покупка разового токена отклика через Payments API                                                                                                 |
+| `payments.initiatePaidApplicationToken`         | `[PAY]` | Покупка разового токена запроса через Payments API                                                                                                 |
 | `PaidApplicationToken` использование            | `[PAY]` | При submit с токеном (`paidTokenId`) бесплатный лимит не проверяется                                                                               |
 | `subscriptions.initiatePro`                     | `[PAY]` | Подписка PRO (499 ₽/мес); первый платёж через ЮКасса + сохранение метода; автопродление через автоплатежи (`subscription_renewal`) и джобы очереди |
 | `subscriptions.cancel`                          | `[PAY]` | Отмена PRO; автосписания прекращаются                                                                                                              |
 | `subscriptions.me`                              | `[PAY]` | Статус подписки, `autoRenewEnabled`                                                                                                                |
-| Лимит 5 откликов с PRO                          | `[PAY]` | Guard в `applications.submit`: PRO при `ACTIVE` и неистёкшем `currentPeriodEnd` (`subscriptionGrantsProFeatures`)                                  |
+| Лимит 5 запросов с PRO                          | `[PAY]` | Guard в `applications.submit`: PRO при `ACTIVE` и неистёкшем `currentPeriodEnd` (`subscriptionGrantsProFeatures`)                                  |
 | Polling fallback                                | `[PAY]` | BullMQ job если webhook не пришёл за 5 мин                                                                                                         |
 | `calculateCommission`                           | `[PAY]` | Утилита + unit-тесты на граничные значения                                                                                                         |
 | Страница оплаты (`/pay/[applicationId]`)        | `[PAY]` | Редирект на ЮКасса + обратный редирект                                                                                                             |
@@ -193,7 +193,7 @@ flowchart LR
 - Реальный тестовый платёж через ЮКасса sandbox проходит end-to-end
 - Webhook с невалидной подписью возвращает 401
 - Идемпотентность: повторный webhook не создаёт дубль транзакции
-- Подписка PRO расширяет лимит до 5 откликов
+- Подписка PRO расширяет лимит до 5 запросов по рефералкам
 - Комиссия рассчитывается корректно (тест на 10 000 ₽ → 1 000 ₽ комиссия)
 
 ---
@@ -298,7 +298,7 @@ flowchart LR
 | Фича                           | Описание                                                        |
 | ------------------------------ | --------------------------------------------------------------- |
 | Push-уведомления / доп. каналы | По продуктовому решению (сторонние сервисы, не SMTP из Referi)  |
-| Базовый антифрод               | Детектор аномального поведения (множество откликов с одного IP) |
+| Базовый антифрод               | Детектор аномального поведения (множество запросов с одного IP) |
 | Расширенная аналитика          | Дашборд для реферальщика: конверсия, среднее время цикла        |
 | Уведомления о дедлайнах        | Напоминания соискателю/реферальщику за 24 часа до дедлайна      |
 

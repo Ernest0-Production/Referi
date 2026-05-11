@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { trpc } from "@/trpc/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,14 +35,14 @@ export async function VacancyApplicantsSection({
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-xl font-semibold">Кандидаты</h2>
         <p className="text-muted-foreground text-sm">
-          {vacancyTitle} · {applicants.length} откликов
+          {vacancyTitle} · {formatApplicationCountLabel(applicants.length)}
         </p>
       </div>
 
       {applicants.length === 0 ? (
         <Card>
           <CardContent className="text-muted-foreground py-10 text-center">
-            Откликов пока нет
+            Запросов пока нет
           </CardContent>
         </Card>
       ) : (

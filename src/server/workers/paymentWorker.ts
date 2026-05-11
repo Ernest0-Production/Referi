@@ -143,7 +143,7 @@ async function processJob(job: Job<PaymentJobData>) {
         idempotencyKey,
         paymentId: tok.yookassaPaymentId,
         amountKopecks: tok.amountKopecks,
-        description: `Возврат токена отклика ${tokenId}`,
+        description: `Возврат токена запроса ${tokenId}`,
       });
 
       await prisma.paidApplicationToken.update({

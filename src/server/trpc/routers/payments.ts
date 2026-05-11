@@ -141,7 +141,7 @@ export const paymentsRouter = router({
       const payment = await paymentProvider.createPayment({
         idempotencyKey,
         amountKopecks: BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP,
-        description: `Дополнительный отклик на рефералку «${vacancy.title}»`,
+        description: `Дополнительный запрос на рефералку «${vacancy.title}»`,
         metadata: {
           type: "paid_token",
           tokenId: token.id,

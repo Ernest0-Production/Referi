@@ -1,3 +1,4 @@
+import { IconCoins } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
@@ -113,16 +114,22 @@ export default async function VacancyDetailPage({ params }: PageProps) {
             </div>
 
             {salaryLine ? (
-              <div className="border-border bg-muted/50 rounded-xl border px-4 py-3">
-                <p className="text-muted-foreground text-sm">Зарплата</p>
-                <p className="text-foreground font-semibold">{salaryLine}</p>
+              <div className="rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 py-3">
+                <p className="flex items-center gap-1.5 text-sm text-emerald-800/90 dark:text-emerald-200/90">
+                  <IconCoins className="size-4 shrink-0 opacity-90" aria-hidden />
+                  Зарплата
+                </p>
+                <p className="font-semibold text-emerald-950 dark:text-emerald-50">{salaryLine}</p>
               </div>
             ) : null}
 
             {reward > 0 ? (
-              <div className="border-border bg-muted/50 rounded-xl border px-4 py-3">
-                <p className="text-muted-foreground text-sm">Бонус</p>
-                <p className="text-foreground font-semibold">{fmtRub(reward)}</p>
+              <div className="rounded-xl border border-red-600/25 bg-red-600/10 px-4 py-3">
+                <p className="flex items-center gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
+                  <IconCoins className="size-4 shrink-0 opacity-90" aria-hidden />
+                  Компенсация за рекомендацию
+                </p>
+                <p className="font-semibold text-red-950 dark:text-red-50">{fmtRub(reward)}</p>
               </div>
             ) : null}
 
@@ -144,14 +151,14 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               ) : (
                 <Button asChild size="lg" className="w-full sm:w-auto">
                   <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
-                    Откликнуться
+                      Попросить рефералку
                   </Link>
                 </Button>
               )
             ) : (
               <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>
-                  Войти чтобы откликнуться
+                    Войти, чтобы попросить рефералку
                 </Link>
               </Button>
             )}

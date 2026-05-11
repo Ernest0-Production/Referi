@@ -53,7 +53,7 @@ export async function DashboardHeaderNav({ session }: { session: Session }) {
   const vacancyLabel = "Моя рефералка";
   const applicationsSeekerHref = "/dashboard/applications";
   const applicationsReferrerHref = "/dashboard/vacancy#candidates";
-  const applicationsLabel = "Отклики";
+  const applicationsLabel = "Запросы";
 
   const primaryNav = referrerVacancy
     ? { href: vacancyHref, label: vacancyLabel, icon: Briefcase }

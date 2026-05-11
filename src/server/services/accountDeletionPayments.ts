@@ -82,7 +82,7 @@ export async function syncEscrowFinancialsBeforeAccountDeletion(
   }
 }
 
-/** Возврат оплаты неиспользованного токена отклика перед удалением пользователя. */
+/** Возврат оплаты неиспользованного токена запроса перед удалением пользователя. */
 export async function syncPaidTokenRefundBeforeAccountDeletion(
   db: PrismaClient,
   tokenId: string,

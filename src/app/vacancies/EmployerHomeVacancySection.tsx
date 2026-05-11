@@ -13,7 +13,7 @@ function CreateVacancyHomeCta({ href }: { href: string }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-muted-foreground max-w-xl text-sm">
-        Ищете сотрудника? Разместите рефералку и получайте отклики через рефералов.
+        Ищете сотрудника? Разместите рефералку и получайте запросы через рефералов.
       </p>
       <Button asChild className="shrink-0">
         <Link href={href}>Создать рефералку</Link>

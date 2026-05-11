@@ -58,7 +58,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="text-foreground text-2xl font-bold">Отклик на рефералку</h1>
+            <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>
             <p className="text-muted-foreground text-sm">
               {vacancy.title} · {vacancy.companyName}
             </p>

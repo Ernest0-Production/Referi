@@ -55,7 +55,7 @@ export default async function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle>Редактирование профиля</CardTitle>
-            <CardDescription>Имя, контакты и био для откликов</CardDescription>
+            <CardDescription>Имя, контакты и био для запросов по рефералкам</CardDescription>
           </CardHeader>
           <CardContent>
             <UpdateProfileForm

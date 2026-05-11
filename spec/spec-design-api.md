@@ -139,8 +139,8 @@ type VacancyListItem = {
 
 | Процедура                        | Тип      | Auth   | Входные данные                                                | Описание                                                             |
 | -------------------------------- | -------- | ------ | ------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `applications.submit`            | mutation | isAuth | `{ vacancyId, contactInfo, bio, coverLetter?, paidTokenId? }` | Откликнуться; guard: лимиты, статус вакансии, нельзя на свою вакансию (`CANNOT_APPLY_TO_OWN_VACANCY`) |
-| `applications.cancel`            | mutation | isAuth | `{ applicationId }`                                           | Отозвать отклик (SUBMITTED / AWAITING_PAYMENT)                       |
+| `applications.submit`            | mutation | isAuth | `{ vacancyId, contactInfo, bio, coverLetter?, paidTokenId? }` | Попросить рефералку (создать заявку); guard: лимиты, статус вакансии, нельзя на свою вакансию (`CANNOT_APPLY_TO_OWN_VACANCY`) |
+| `applications.cancel`            | mutation | isAuth | `{ applicationId }`                                           | Отозвать запрос (SUBMITTED / AWAITING_PAYMENT)                       |
 | `applications.requestCancel`     | mutation | isAuth | `{ applicationId }`                                           | Запросить отмену (AWAITING_RESUME_HANDOFF)                           |
 | `applications.myList`            | query    | isAuth | `{ status? }`                                                 | Мои заявки как соискателя                                            |
 | `applications.activeVacancyIds`  | query    | isAuth | —                                                             | `vacancyId[]` с незавершёнными заявками текущего соискателя (лимиты) |
@@ -168,7 +168,7 @@ type VacancyListItem = {
 | Процедура                               | Тип      | Auth   | Входные данные      | Описание                                                                                                                                              |
 | --------------------------------------- | -------- | ------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `payments.initiateEscrow`               | mutation | isAuth | `{ applicationId }` | Инициировать оплату соискателя по заявке (`AWAITING_PAYMENT`) через Safe deal; возвращает `{ confirmationUrl?, paymentId?, dealId?, amountKopecks? }` |
-| `payments.initiatePaidApplicationToken` | mutation | isAuth | `{ vacancyId }`     | Купить разовый токен отклика; guard: нельзя для своей вакансии; возвращает `{ confirmationUrl, paymentId, tokenId }`                                   |
+| `payments.initiatePaidApplicationToken` | mutation | isAuth | `{ vacancyId }`     | Купить разовый токен запроса; guard: нельзя для своей вакансии; возвращает `{ confirmationUrl, paymentId, tokenId }`                                   |
 | `payments.escrowStatus`                 | query    | isAuth | `{ applicationId }` | Зеркало `EscrowTransaction` для участников заявки (`paymentId`, суммы, даты)                                                                          |
 
 
@@ -181,7 +181,7 @@ type VacancyListItem = {
 | --------------------------- | -------- | ------ | -------------- | ----------------------------------------------------------------------------------------------------------- |
 | `subscriptions.me`          | query    | isAuth | —              | Текущая подписка (период, статус, `autoRenewEnabled` — автопродление для статуса `ACTIVE`)                  |
 | `subscriptions.initiatePro` | mutation | isAuth | —              | Оплата подписки «Соискатель PRO»; `confirmationUrl` (блокируется, если уже есть активный оплаченный период) |
-| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить подписку PRO (лимит откликов 2 для новых заявок; автоплатежи прекращаются)                         |
+| `subscriptions.cancel`      | mutation | isAuth | —              | Отменить подписку PRO (лимит запросов 2 для новых заявок; автоплатежи прекращаются)                         |
 
 
 ### 4.7 Router: `moderation` (только MODERATOR / ADMIN)
