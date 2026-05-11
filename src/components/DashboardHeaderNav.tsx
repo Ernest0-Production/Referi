@@ -80,9 +80,6 @@ export function DashboardHeaderNav({ session }: { session: Session }) {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard">Обзор</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings" className="flex items-center gap-2">
                   <IconSettings className="size-4 shrink-0" aria-hidden />
                   Настройки

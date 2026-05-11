@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   });
 
   if (!user?.staffRoles.includes("MODERATOR") && !user?.staffRoles.includes("ADMIN")) {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   return (

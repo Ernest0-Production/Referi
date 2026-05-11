@@ -1,7 +1,7 @@
 /** Текст под CTA «Попросить рефералку» на `/vacancies/[id]` (ru-RU). */
 export function formatVacancyReferralRequestFooterHint(count: number): string {
   const n = Math.max(0, Math.floor(count));
-  if (n === 0) return "Ты будешь первым!";
+  if (n === 0) return "Ты будешь первым! Никто еще не откликивался";
 
   const num = new Intl.NumberFormat("ru-RU").format(n);
   const mod10 = n % 10;

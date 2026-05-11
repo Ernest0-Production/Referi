@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { useVacancyDashboardFormDirtyContext } from "./VacancyDashboardFormDirtyContext";
 
-const DASHBOARD_HOME = "/dashboard";
+const DASHBOARD_HOME = "/";
 
 export function DashboardVacancyBackButton({ label }: { label: string }) {
   const router = useRouter();

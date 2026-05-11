@@ -28,7 +28,7 @@ function vacancyBackLabelFromRefererPath(
   currentVacancyDetailPath?: string,
 ): string {
   if (!pathnameWithSearch) {
-    return context === "dashboardVacancy" ? "Обзор" : "Все рефералки";
+    return context === "dashboardVacancy" ? "На главную" : "Все рефералки";
   }
 
   const pathname = pathnameOnly(pathnameWithSearch);
@@ -42,7 +42,7 @@ function vacancyBackLabelFromRefererPath(
   }
 
   if (pathname === "/dashboard/vacancy" || pathname.startsWith("/dashboard/vacancy/")) {
-    return context === "dashboardVacancy" ? "Обзор" : "Моя рефералка";
+    return context === "dashboardVacancy" ? "На главную" : "Моя рефералка";
   }
 
   if (pathname.startsWith("/dashboard/applications/new")) {
@@ -61,7 +61,7 @@ function vacancyBackLabelFromRefererPath(
     return "Профиль";
   }
   if (pathname.startsWith("/dashboard")) {
-    return "Обзор";
+    return "На главную";
   }
   if (pathname.startsWith("/vacancies/") && pathname !== "/vacancies/new") {
     return "Рефералка";
@@ -85,7 +85,7 @@ function vacancyBackLabelFromRefererPath(
     return "Оплата";
   }
 
-  return context === "dashboardVacancy" ? "Обзор" : "Все рефералки";
+  return context === "dashboardVacancy" ? "На главную" : "Все рефералки";
 }
 
 /**

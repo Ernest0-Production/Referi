@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { IconCreditCard, IconHeadset, IconUser } from "@tabler/icons-react";
 import { auth } from "@/lib/auth";
 import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
@@ -35,6 +36,8 @@ export default async function SettingsPage() {
 
   if (!user) redirect("/login");
 
+  const githubLogin = session.user.githubLogin?.trim() ?? "";
+
   return (
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
@@ -45,13 +48,30 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Профиль</CardTitle>
-            <CardDescription>GitHub и редактируемые поля</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <IconUser
+                className="text-muted-foreground size-5 shrink-0"
+                aria-hidden
+                stroke={1.75}
+              />
+              Профиль
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <p className="text-muted-foreground text-xs">GitHub аккаунт</p>
-              <p className="text-foreground text-sm">{session.user.name ?? "—"}</p>
+              {githubLogin ? (
+                <a
+                  href={`https://github.com/${encodeURIComponent(githubLogin)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground w-fit text-sm underline-offset-2 hover:underline"
+                >
+                  {githubLogin}
+                </a>
+              ) : (
+                <p className="text-foreground text-sm">{session.user.name ?? "—"}</p>
+              )}
             </div>
             <UpdateProfileForm
               currentName={user.displayName ?? ""}
@@ -63,7 +83,14 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Подписка</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <IconCreditCard
+                className="text-muted-foreground size-5 shrink-0"
+                aria-hidden
+                stroke={1.75}
+              />
+              Подписка
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {subscription ? (
@@ -86,7 +113,7 @@ export default async function SettingsPage() {
               <div className="flex flex-col gap-3">
                 <p className="text-muted-foreground text-sm">У вас нет активной подписки PRO.</p>
                 <Button asChild>
-                    <Link href="/subscribe">😎 Оформить PRO подписку</Link>
+                  <Link href="/subscribe">😎 Оформить PRO подписку</Link>
                 </Button>
               </div>
             )}
@@ -96,11 +123,18 @@ export default async function SettingsPage() {
         {moderationContactUrl ? (
           <Card>
             <CardHeader>
-              <CardTitle>Связь с модерацией</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <IconHeadset
+                  className="text-muted-foreground size-5 shrink-0"
+                  aria-hidden
+                  stroke={1.75}
+                />
+                Связь с модерацией
+              </CardTitle>
               <CardDescription>Вопросы и дополнения к жалобам — вне приложения</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="link" className="h-auto p-0" asChild>
+              <Button asChild>
                 <a href={moderationContactUrl} target="_blank" rel="noopener noreferrer">
                   Открыть контакт модерации
                 </a>

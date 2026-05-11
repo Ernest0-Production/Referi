@@ -20,7 +20,7 @@ interface LoginPageProps {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const sp = await searchParams;
   const rawCallback = Array.isArray(sp.callbackUrl) ? sp.callbackUrl[0] : sp.callbackUrl;
-  const callbackAfterAuth = safeAppPath(rawCallback, "/dashboard");
+  const callbackAfterAuth = safeAppPath(rawCallback, "/");
 
   const session = await auth();
   const userId = session?.user?.id;

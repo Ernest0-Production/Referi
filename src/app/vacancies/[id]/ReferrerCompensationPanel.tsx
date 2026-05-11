@@ -45,7 +45,7 @@ export function ReferrerCompensationPanel({
             side="top"
             align="end"
             sideOffset={4}
-            className="max-w-xs text-left leading-snug"
+            className="max-w-xs items-start text-left leading-snug"
           >
             {REFERRER_COMPENSATION_TOOLTIP}
           </TooltipContent>

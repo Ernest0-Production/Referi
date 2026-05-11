@@ -94,7 +94,7 @@ export function VacancyCard({
   return (
     <Link href={href} className="group block transition-shadow hover:shadow-md">
       <Card className="border-border bg-card relative overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
-        <CardHeader className="flex w-full min-w-0 flex-col gap-3 space-y-0">
+        <CardHeader className="flex w-full min-w-0 flex-col gap-2 space-y-0">
           <div className="flex w-full min-w-0 items-start justify-between gap-2 sm:gap-3">
             <span className="text-muted-foreground min-w-0 flex-1 truncate pr-2 text-sm font-medium">
               {vacancy.companyName}
@@ -183,7 +183,7 @@ export function VacancyCard({
                 <TooltipContent
                   side="top"
                   sideOffset={4}
-                  className="max-w-xs text-left leading-snug"
+                  className="max-w-xs items-start text-left leading-snug"
                 >
                   {REFERRER_COMPENSATION_TOOLTIP}
                 </TooltipContent>

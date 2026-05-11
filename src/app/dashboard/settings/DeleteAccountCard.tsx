@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { IconAlertTriangle, IconTrash } from "@tabler/icons-react";
 import { signOut } from "next-auth/react";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -37,12 +38,30 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
     <>
       <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle>Опасная зона</CardTitle>
-          <CardDescription>
-            Удаление аккаунта безвозвратно. Будут удалены профиль, рефералки, заявки (включая заявки
-            других пользователей на ваши рефералки), пресеты поиска, подписка и прочие данные в
-            сервисе. Неиспользованные оплаченные токены запроса и удерживаемое эскроу будут
-            возвращены по правилам платежей, если применимо.
+          <CardTitle className="flex items-center gap-2">
+            <IconAlertTriangle
+              className="text-destructive size-5 shrink-0"
+              aria-hidden
+              stroke={1.75}
+            />
+            Опасная зона
+          </CardTitle>
+          <CardDescription className="flex flex-col gap-3">
+            <p className="text-foreground/90 font-medium">Удаление аккаунта безвозвратно.</p>
+            <div className="flex flex-col gap-1.5">
+              <p>Будет удалено:</p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>профиль и связанные данные;</li>
+                <li>ваши рефералки;</li>
+                <li>заявки — в том числе заявки других пользователей на ваши рефералки;</li>
+                <li>сохранённые пресеты поиска в каталоге;</li>
+                <li>подписка и прочие данные в сервисе.</li>
+              </ul>
+            </div>
+            <p>
+              Неиспользованные оплаченные токены запроса и удерживаемое эскроу возвращаются по
+              правилам платежей, если применимо.
+            </p>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -54,6 +73,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               setOpen(true);
             }}
           >
+            <IconTrash data-icon="inline-start" className="size-4 shrink-0" aria-hidden />
             Удалить аккаунт
           </Button>
         </CardContent>
