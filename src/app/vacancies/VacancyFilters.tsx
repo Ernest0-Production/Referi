@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter, IconStack2 } from "@tabler/icons-react";
-import { ChevronDown, Copy, RotateCcw, Save, Trash2, XIcon } from "lucide-react";
+import { ChevronDown, Copy, MoreVertical, RotateCcw, Save, Trash2, XIcon } from "lucide-react";
 import {
   buildVacancyCatalogLoginReturnHref,
   flatParamsForPresetSave,
@@ -382,54 +382,6 @@ export function VacancyFilters({
     setSaveOpen(true);
   }
 
-  const presetSelectedTopActions = resolvedPresetId ? (
-    <div data-slot="button-group" className="flex min-w-0 flex-1 overflow-hidden rounded-xl">
-      <Button
-        type="button"
-        variant="destructive"
-        className="h-10 min-w-0 flex-1 gap-2 rounded-none rounded-l-xl font-semibold shadow-none"
-        disabled={deletePreset.isPending}
-        onClick={() => {
-          setPresetIdPendingDelete(resolvedPresetId);
-          setDeleteConfirmOpen(true);
-        }}
-      >
-        <Trash2 className="size-4 shrink-0" aria-hidden />
-        Удалить
-      </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="default"
-            size="icon"
-            aria-label="Дополнительные действия с фильтром"
-            className={cn(
-              ctaButtonClass,
-              "h-10 w-10 shrink-0 rounded-none rounded-r-xl border-l border-[color-mix(in_srgb,var(--app-nav-cta-fg)_22%,transparent)]",
-            )}
-          >
-            <ChevronDown className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-48">
-          <DropdownMenuItem
-            disabled={createPreset.isPending || !resolvedPresetRow}
-            onSelect={() => {
-              if (!resolvedPresetRow) return;
-              setPresetDialogSourceParams(resolvedPresetRow.params);
-              setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
-              setSaveOpen(true);
-            }}
-          >
-            <Copy className="size-4 shrink-0" aria-hidden />
-            Дублировать
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  ) : null;
-
   const combinedFooter = (
     <div className="flex w-full min-w-0 items-center gap-2">
       <Button
@@ -443,7 +395,47 @@ export function VacancyFilters({
         <RotateCcw />
       </Button>
       {resolvedPresetId ? (
-        presetSelectedTopActions
+        <>
+          <div className="min-w-0 flex-1" aria-hidden />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-10 shrink-0 rounded-full"
+                aria-label="Действия с сохранённым фильтром"
+              >
+                <MoreVertical className="size-4" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-48">
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={deletePreset.isPending}
+                onSelect={() => {
+                  setPresetIdPendingDelete(resolvedPresetId);
+                  setDeleteConfirmOpen(true);
+                }}
+              >
+                <Trash2 className="size-4 shrink-0" aria-hidden />
+                Удалить
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={createPreset.isPending || !resolvedPresetRow}
+                onSelect={() => {
+                  if (!resolvedPresetRow) return;
+                  setPresetDialogSourceParams(resolvedPresetRow.params);
+                  setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
+                  setSaveOpen(true);
+                }}
+              >
+                <Copy className="size-4 shrink-0" aria-hidden />
+                Дублировать
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
       ) : (
         <Button
           type="button"
