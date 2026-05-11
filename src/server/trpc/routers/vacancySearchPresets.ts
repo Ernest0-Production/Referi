@@ -50,10 +50,21 @@ export const vacancySearchPresetsRouter = router({
 
   update: protectedProcedure
     .input(
-      z.object({
-        id: z.string().uuid(),
-        params: presetParamsSchema,
-      }),
+      z
+        .object({
+          id: z.string().uuid(),
+          params: presetParamsSchema.optional(),
+          name: z.string().min(1).max(80).optional(),
+        })
+        .superRefine((val, ctx) => {
+          if (val.params === undefined && val.name === undefined) {
+            ctx.addIssue({
+              code: "custom",
+              message: "Укажите параметры или название фильтра",
+              path: [],
+            });
+          }
+        }),
     )
     .mutation(async ({ ctx, input }) => {
       const owned = await ctx.db.vacancySearchPreset.findFirst({
@@ -63,9 +74,16 @@ export const vacancySearchPresetsRouter = router({
       if (!owned) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
+      const data: { params?: z.infer<typeof presetParamsSchema>; name?: string } = {};
+      if (input.params !== undefined) {
+        data.params = input.params;
+      }
+      if (input.name !== undefined) {
+        data.name = input.name.trim();
+      }
       return ctx.db.vacancySearchPreset.update({
         where: { id: input.id },
-        data: { params: input.params },
+        data,
         select: { id: true, name: true, params: true },
       });
     }),
