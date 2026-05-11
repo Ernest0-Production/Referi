@@ -22,13 +22,11 @@ export function vacancyListInputStableKey(input: VacancyListTrpcInput): string {
     sort: input.sort,
     page: input.page,
     limit: input.limit,
-    excludeIds: input.excludeIds ?? null,
   });
 }
 
 export function vacancyFlatToTrpcListInput(
   flat: VacancyListFlatSearchParams,
-  viewedVacancyIds: string[],
 ): VacancyListTrpcInput {
   const page = Number(flat.page ?? 1) || 1;
   const salaryFrom = flat.salaryFrom ? Number(flat.salaryFrom) : undefined;
@@ -38,8 +36,6 @@ export function vacancyFlatToTrpcListInput(
   const specialtyParsed = parseVacancyListSpecialtyCsvParam(flat.specialty);
   const gradeParsed = parseCsvEnumParam(flat.grade, VACANCY_LIST_GRADE_VALUES);
   const workFormatParsed = parseCsvEnumParam(flat.workFormat, VACANCY_LIST_WORK_FORMAT_VALUES);
-  const excludeIds =
-    flat.hideViewed === "1" && viewedVacancyIds.length > 0 ? viewedVacancyIds : undefined;
 
   return {
     specialty: specialtyParsed,
@@ -51,6 +47,5 @@ export function vacancyFlatToTrpcListInput(
     query: flat.query,
     page,
     limit: 20,
-    excludeIds,
   };
 }

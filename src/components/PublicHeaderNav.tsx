@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
 import { IconSettings } from "@tabler/icons-react";
-import { LayoutDashboard, Briefcase, Send } from "lucide-react";
-import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,35 +38,7 @@ function initialsFromLabel(label: string): string {
   return t.slice(0, 2).toUpperCase();
 }
 
-export async function PublicHeaderNav({ session }: { session: Session | null }) {
-  const userId = session?.user?.id;
-  let referrerVacancy: { id: string } | null = null;
-
-  if (userId) {
-    referrerVacancy = await prisma.vacancy.findFirst({
-      where: { referrerId: userId, status: { in: ["ACTIVE", "FROZEN"] } },
-      select: { id: true },
-    });
-  }
-
-  const overviewHref = "/dashboard";
-  const overviewLabel = "Обзор";
-  const vacancyHref = "/dashboard/vacancy";
-  const vacancyLabel = "Моя рефералка";
-  const applicationsSeekerHref = "/dashboard/applications";
-  const applicationsReferrerHref = "/dashboard/vacancy#candidates";
-  const applicationsLabel = "Запросы";
-
-  const primaryNav = referrerVacancy
-    ? { href: vacancyHref, label: vacancyLabel, icon: Briefcase }
-    : { href: overviewHref, label: overviewLabel, icon: LayoutDashboard };
-  const secondaryNav = referrerVacancy
-    ? { href: applicationsReferrerHref, label: applicationsLabel, icon: Send }
-    : { href: applicationsSeekerHref, label: applicationsLabel, icon: Send };
-
-  const PrimaryIcon = primaryNav.icon;
-  const SecondaryIcon = secondaryNav.icon;
-
+export function PublicHeaderNav({ session }: { session: Session | null }) {
   const profileLabel = session?.user ? sessionDisplayLabel(session.user) : "";
   const avatarUrl = session?.user ? userAvatarImageUrl(session.user) : undefined;
 
@@ -87,23 +57,6 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
           </span>
           <span className="truncate text-lg">Referi</span>
         </Link>
-
-        {userId ? (
-          <div className="hidden items-center gap-1 md:flex">
-            <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
-              <Link href={primaryNav.href}>
-                <PrimaryIcon data-icon="inline-start" />
-                {primaryNav.label}
-              </Link>
-            </Button>
-            <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
-              <Link href={secondaryNav.href}>
-                <SecondaryIcon data-icon="inline-start" />
-                {secondaryNav.label}
-              </Link>
-            </Button>
-          </div>
-        ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">

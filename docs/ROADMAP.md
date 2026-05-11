@@ -98,7 +98,7 @@ flowchart LR
 | ------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
 | `vacancies.create` mutation     | `[CORE]` | Guard: 1 активная рефералка, пул попыток > 0                                                               |
 | `vacancies.delete` mutation     | `[CORE]` | Cascade refund (пока без реальных денег)                                                                  |
-| `vacancies.list` query          | `[CORE]` | Фильтры: specialty, grade, workFormat, salaryCurrency, salary, query; исключение просмотренных; пагинация |
+| `vacancies.list` query          | `[CORE]` | Фильтры: specialty, grade, workFormat, salaryCurrency, salary, query; пагинация |
 | `vacancySearchPresets` router   | `[CORE]` | Сохранённые наборы фильтров каталога: list/create/update/delete                                           |
 | `vacancies.getById` query       | `[CORE]` | Без данных реферальщика                                                                                   |
 | `vacancies.myActive` query      | `[CORE]` | Текущая рефералка реферальщика                                                                             |

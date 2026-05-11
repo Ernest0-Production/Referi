@@ -86,7 +86,7 @@ export default async function SettingsPage() {
               <div className="flex flex-col gap-3">
                 <p className="text-muted-foreground text-sm">У вас нет активной подписки PRO.</p>
                 <Button asChild>
-                  <Link href="/subscribe">Оформить PRO подписку</Link>
+                    <Link href="/subscribe">😎 Оформить PRO подписку</Link>
                 </Button>
               </div>
             )}

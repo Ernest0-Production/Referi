@@ -125,18 +125,15 @@ export function VacancyCatalogClient({
   }, [presets, activeVacancyPresetId]);
 
   const initialListInput = useMemo(
-    () => vacancyFlatToTrpcListInput(initialParams, viewedVacancyIds),
-    [initialParams, viewedVacancyIds],
+    () => vacancyFlatToTrpcListInput(initialParams),
+    [initialParams],
   );
   const initialStableKey = useMemo(
     () => vacancyListInputStableKey(initialListInput),
     [initialListInput],
   );
 
-  const listInput = useMemo(
-    () => vacancyFlatToTrpcListInput(params, viewedVacancyIds),
-    [params, viewedVacancyIds],
-  );
+  const listInput = useMemo(() => vacancyFlatToTrpcListInput(params), [params]);
 
   const listQuery = trpcReact.vacancies.list.useQuery(listInput, {
     placeholderData: keepPreviousData,
@@ -150,6 +147,7 @@ export function VacancyCatalogClient({
   });
 
   const activeSeekerVacancyIds = new Set(activeIdsQuery.data ?? []);
+  const viewedVacancyIdSet = useMemo(() => new Set(viewedVacancyIds), [viewedVacancyIds]);
 
   const applyPatch = (patch: Partial<VacancyListFlatSearchParams>) => {
     setParams((c) => mergeVacancyListFlat(c, patch));
@@ -229,6 +227,7 @@ export function VacancyCatalogClient({
                 key={vacancy.id}
                 vacancy={vacancy}
                 hasActiveSeekerApplication={activeSeekerVacancyIds.has(vacancy.id)}
+                isViewed={viewedVacancyIdSet.has(vacancy.id)}
               />
             ))}
           </div>

@@ -79,7 +79,6 @@ export type VacancyListFlatSearchParams = {
   sort?: string;
   query?: string;
   page?: string;
-  hideViewed?: string;
 };
 
 export type VacancyListSearchParamsInput = {
@@ -91,7 +90,6 @@ export type VacancyListSearchParamsInput = {
   sort?: string | string[];
   query?: string | string[];
   page?: string | string[];
-  hideViewed?: string | string[];
   openVacancyPresetSave?: string | string[];
 };
 
@@ -103,9 +101,6 @@ function scalarSearchParam(raw: string | string[] | undefined): string | undefin
 export function normalizeVacancyListSearchParams(
   raw: VacancyListSearchParamsInput,
 ): VacancyListFlatSearchParams {
-  const hideRaw = scalarSearchParam(raw.hideViewed);
-  const hideOn =
-    hideRaw === "1" || hideRaw?.toLowerCase() === "true" || hideRaw?.toLowerCase() === "yes";
   return {
     specialty: scalarSearchParam(raw.specialty),
     grade: scalarSearchParam(raw.grade),
@@ -115,7 +110,6 @@ export function normalizeVacancyListSearchParams(
     sort: scalarSearchParam(raw.sort),
     query: scalarSearchParam(raw.query),
     page: scalarSearchParam(raw.page),
-    hideViewed: hideOn ? "1" : undefined,
   };
 }
 
@@ -131,7 +125,6 @@ export function vacancyListFlatToSearchParams(
   if (params.salaryCurrency?.trim()) q.set("salaryCurrency", params.salaryCurrency.trim());
   if (params.salaryFrom?.trim()) q.set("salaryFrom", params.salaryFrom.trim());
   if (params.page) q.set("page", params.page);
-  if (params.hideViewed === "1") q.set("hideViewed", "1");
   return q;
 }
 

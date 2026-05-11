@@ -23,7 +23,7 @@ export async function VacancyListing({ params }: { params: VacancyListSearchPara
   const cookieStore = await cookies();
   const viewedVacancyIds = readVacancyViewedIdsFromCookies(cookieStore);
 
-  const listInput = vacancyFlatToTrpcListInput(flat, viewedVacancyIds);
+  const listInput = vacancyFlatToTrpcListInput(flat);
   const initialList = await trpc.vacancies.list(listInput);
 
   const initialActiveVacancyIds = session?.user?.id

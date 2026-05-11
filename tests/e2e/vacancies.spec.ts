@@ -4,9 +4,7 @@ test.describe("Vacancies catalog", () => {
   test("home page shows vacancy catalog without auth", async ({ page }) => {
     await page.goto("/");
     await expect(page).not.toHaveURL(/login/);
-    await expect(
-      page.getByRole("heading", { name: /Ваша следующая роль|Рефералки/i }),
-    ).toBeVisible();
+    await expect(page.getByPlaceholder("Название рефералки или компании")).toBeVisible();
   });
 
   test("home shows catalog preserving initial query params", async ({ page }) => {

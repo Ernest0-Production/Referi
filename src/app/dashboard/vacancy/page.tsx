@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
+import {
+  sameOriginRefererPathname,
+  vacancyDashboardBackLabelFromPathname,
+  vacancyDashboardEditBackLabelFromPathname,
+} from "@/lib/vacancyNavigationBackLabel";
 import { CreateVacancyForm } from "./CreateVacancyForm";
+import { DashboardVacancyPageShell } from "./DashboardVacancyPageShell";
 import { EditVacancyCard } from "./EditVacancyCard";
 import { ManageVacancyPanel } from "./ManageVacancyPanel";
 import { VacancyApplicantsSection } from "./VacancyApplicantsSection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 type PageProps = {
   searchParams: Promise<{ edit?: string }>;
@@ -22,11 +28,20 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
   const me = await trpc.auth.me();
   const vacancy = await trpc.vacancies.myActive();
 
+  const refererPath = await sameOriginRefererPathname();
+  const vacancyBackLabel = vacancyDashboardBackLabelFromPathname(refererPath);
+  const editVacancyBackLabel = vacancyDashboardEditBackLabelFromPathname(refererPath);
+
   return (
     <main className="flex-1">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
+      <DashboardVacancyPageShell
+        backLabel={vacancyBackLabel}
+        hideBack={Boolean(vacancy && editMode)}
+      >
         <div className="flex flex-col gap-1">
-          <h1 className="text-foreground text-2xl font-bold">Моя рефералка</h1>
+          <h1 className="text-foreground text-2xl font-bold">
+            {vacancy ? "Моя рефералка" : "Создание рефералки"}
+          </h1>
           {vacancy ? (
             <p className="text-muted-foreground text-sm">
               Доступных попыток: {me.availableAttempts} из 3
@@ -37,6 +52,7 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
         {vacancy ? (
           editMode ? (
             <EditVacancyCard
+              backNavLabel={editVacancyBackLabel}
               vacancy={{
                 id: vacancy.id,
                 title: vacancy.title,
@@ -59,10 +75,6 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
           )
         ) : (
           <Card>
-            <CardHeader>
-                <CardTitle>Разместить рефералку</CardTitle>
-                <CardDescription>У вас нет активной рефералки. Заполните форму ниже.</CardDescription>
-            </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {me.availableAttempts > 0 ? (
                 <CreateVacancyForm />
@@ -77,7 +89,7 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
             </CardContent>
           </Card>
         )}
-      </div>
+      </DashboardVacancyPageShell>
     </main>
   );
 }

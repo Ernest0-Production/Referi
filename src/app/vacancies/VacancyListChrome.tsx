@@ -3,8 +3,6 @@
 import { IconClockHour4, IconCoins } from "@tabler/icons-react";
 import { Search } from "lucide-react";
 import { useState, useTransition } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,9 +15,9 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-  InputGroupText,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { formatVacancyCatalogCountLabel } from "@/lib/vacancyCatalogCountLabel";
 import { type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
 
 export function VacancyListChrome({
@@ -42,22 +40,10 @@ export function VacancyListChrome({
     });
   }
 
-  const hideViewedOn = currentParams.hideViewed === "1";
-
   const sortValue = currentParams.sort ?? "created_desc";
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="font-heading text-foreground text-3xl font-bold tracking-tight md:text-4xl">
-          Ваша следующая роль — с рефералом
-        </h1>
-        <p className="text-muted-foreground max-w-2xl text-sm md:text-base">
-          Рефералки от разработчиков внутри компаний: прозрачный процесс и защищённое вознаграждение
-          рефереру.
-        </p>
-      </header>
-
+    <div className="flex flex-col gap-3">
       <InputGroup
         aria-busy={listBusy || isPending}
         className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12"
@@ -76,9 +62,6 @@ export function VacancyListChrome({
         />
         <InputGroupAddon>{isPending ? <Spinner /> : <Search />}</InputGroupAddon>
         <InputGroupAddon align="inline-end" className="gap-2 pr-2">
-          <InputGroupText className="hidden shrink-0 whitespace-nowrap sm:inline-flex">
-            Найдено: {total}
-          </InputGroupText>
           <InputGroupButton
             type="button"
             variant="secondary"
@@ -91,52 +74,38 @@ export function VacancyListChrome({
         </InputGroupAddon>
       </InputGroup>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-4">
-          <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>
-            <SelectTrigger className="border-border bg-card h-9 w-[min(100%,220px)] rounded-lg">
-              <SelectValue placeholder="Сортировка" />
-            </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} align="start">
-              <SelectItem value="created_desc" textValue="Сначала новые">
-                <span className="flex items-center gap-2">
-                  <IconClockHour4
-                    className="text-muted-foreground size-4 shrink-0"
-                    stroke={1.75}
-                    aria-hidden
-                  />
-                  Сначала новые
-                </span>
-              </SelectItem>
-              <SelectItem value="salary_desc" textValue="По зарплате">
-                <span className="flex items-center gap-2">
-                  <IconCoins
-                    className="text-muted-foreground size-4 shrink-0"
-                    stroke={1.75}
-                    aria-hidden
-                  />
-                  По зарплате
-                </span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>
+          <SelectTrigger className="border-border bg-card h-9 w-[min(100%,220px)] rounded-lg">
+            <SelectValue placeholder="Сортировка" />
+          </SelectTrigger>
+          <SelectContent position="popper" sideOffset={4} align="start">
+            <SelectItem value="created_desc" textValue="Сначала новые">
+              <span className="flex items-center gap-2">
+                <IconClockHour4
+                  className="text-muted-foreground size-4 shrink-0"
+                  stroke={1.75}
+                  aria-hidden
+                />
+                Сначала новые
+              </span>
+            </SelectItem>
+            <SelectItem value="salary_desc" textValue="По зарплате">
+              <span className="flex items-center gap-2">
+                <IconCoins
+                  className="text-muted-foreground size-4 shrink-0"
+                  stroke={1.75}
+                  aria-hidden
+                />
+                По зарплате
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="hide-viewed"
-              checked={hideViewedOn}
-              onCheckedChange={(c) => onApplyPatch({ hideViewed: c === true ? "1" : undefined })}
-            />
-            <Label
-              htmlFor="hide-viewed"
-              className="text-muted-foreground cursor-pointer text-sm font-normal"
-            >
-              Скрыть просмотренные
-            </Label>
-          </div>
-        </div>
-
-        <p className="text-muted-foreground text-sm sm:hidden">Найдено: {total}</p>
+        <p className="text-muted-foreground shrink-0 text-end text-sm">
+          {formatVacancyCatalogCountLabel(total)}
+        </p>
       </div>
     </div>
   );

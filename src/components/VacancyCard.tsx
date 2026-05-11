@@ -75,10 +75,12 @@ function formatUpdatedRelative(updatedAt: Date): string {
 export function VacancyCard({
   vacancy,
   hasActiveSeekerApplication = false,
+  isViewed = false,
   detailHref,
 }: {
   vacancy: Vacancy;
   hasActiveSeekerApplication?: boolean;
+    isViewed?: boolean;
   detailHref?: string;
 }) {
   const salary = formatVacancySalaryRange(
@@ -92,68 +94,28 @@ export function VacancyCard({
   return (
     <Link href={href} className="group block transition-shadow hover:shadow-md">
       <Card className="border-border bg-card relative overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
-        <CardHeader className="flex flex-col gap-3 space-y-0">
-          <div className="flex items-start gap-2 sm:gap-3">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <span className="text-muted-foreground truncate text-sm font-medium">
-                {vacancy.companyName}
-              </span>
-              <div className="flex min-w-0 flex-wrap gap-1.5">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant="secondary" className="font-normal">
-                      <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
-                      {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={4}>
-                    Формат работы
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant="secondary" className="font-normal">
-                      <GradeIcon className="text-current" />
-                      {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={4}>
-                    Грейд
-                  </TooltipContent>
-                </Tooltip>
-                {hasActiveSeekerApplication ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        variant="secondary"
-                        className="bg-primary/15 text-primary dark:bg-primary/25 border-transparent font-medium"
-                      >
-                        Активная заявка
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      sideOffset={4}
-                      className="max-w-xs text-left leading-snug"
-                    >
-                      У вас уже есть активная заявка по этой рефералке
-                    </TooltipContent>
-                  </Tooltip>
-                ) : null}
-              </div>
-            </div>
+        <CardHeader className="flex w-full min-w-0 flex-col gap-3 space-y-0">
+          <div className="flex w-full min-w-0 items-start justify-between gap-2 sm:gap-3">
+            <span className="text-muted-foreground min-w-0 flex-1 truncate pr-2 text-sm font-medium">
+              {vacancy.companyName}
+            </span>
             <time
-              className="text-muted-foreground pointer-events-none max-w-[11.5rem] shrink-0 pt-0.5 text-right text-xs leading-tight"
+              className="text-muted-foreground pointer-events-none max-w-[11.5rem] shrink-0 self-start pt-0.5 text-end text-xs leading-tight"
               dateTime={vacancy.updatedAt.toISOString()}
             >
               {formatUpdatedRelative(vacancy.updatedAt)}
             </time>
           </div>
-          <h3 className="text-foreground text-lg leading-snug font-bold tracking-tight md:text-xl">
+          <h3
+            className={cn(
+              "text-lg leading-snug font-bold tracking-tight md:text-xl",
+              isViewed ? "text-muted-foreground" : "text-foreground",
+            )}
+          >
             {vacancy.title}
           </h3>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -211,11 +173,11 @@ export function VacancyCard({
                     )}
                   >
                     <HandCoins className="shrink-0 text-current" aria-hidden />
-                    {`- ${new Intl.NumberFormat("ru-RU", {
+                    {new Intl.NumberFormat("ru-RU", {
                       style: "currency",
                       currency: "RUB",
                       maximumFractionDigits: 0,
-                    }).format(reward)}`}
+                    }).format(reward)}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent
@@ -224,6 +186,49 @@ export function VacancyCard({
                   className="max-w-xs text-left leading-snug"
                 >
                   {REFERRER_COMPENSATION_TOOLTIP}
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-normal">
+                  <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
+                  {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                Формат работы
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-normal">
+                  <GradeIcon className="text-current" />
+                  {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                Грейд
+              </TooltipContent>
+            </Tooltip>
+            {hasActiveSeekerApplication ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="secondary"
+                    className="bg-primary/15 text-primary dark:bg-primary/25 border-transparent font-medium"
+                  >
+                    Активная заявка
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={4}
+                  className="max-w-xs text-left leading-snug"
+                >
+                  У вас уже есть активная заявка по этой рефералке
                 </TooltipContent>
               </Tooltip>
             ) : null}

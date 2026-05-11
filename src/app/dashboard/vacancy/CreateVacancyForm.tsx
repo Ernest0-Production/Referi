@@ -52,6 +52,7 @@ import {
   SpecialtyIcon,
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
+import { useReportVacancyDashboardFormDirty } from "./VacancyDashboardFormDirtyContext";
 import {
   formatRuMoneyIntegerDisplay,
   parseMoneyIntegerDigitsToNumber,
@@ -267,6 +268,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
   const mode = isEditVacancyFormProps(props) ? "edit" : "create";
   const vacancy = isEditVacancyFormProps(props) ? props.vacancy : undefined;
   const onDirtyChange = props.onDirtyChange;
+  const reportDashboardDirty = useReportVacancyDashboardFormDirty();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -290,14 +292,16 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
   const createBaseline = useMemo(() => initialFormState("create"), []);
 
   useEffect(() => {
-    if (!onDirtyChange) return;
+    let dirty = false;
     if (mode === "edit") {
       if (!editBaseline) return;
-      onDirtyChange(isVacancyFormDirty(form, editBaseline));
-      return;
+      dirty = isVacancyFormDirty(form, editBaseline);
+    } else {
+      dirty = isVacancyFormDirty(form, createBaseline);
     }
-    onDirtyChange(isVacancyFormDirty(form, createBaseline));
-  }, [form, mode, editBaseline, createBaseline, onDirtyChange]);
+    onDirtyChange?.(dirty);
+    reportDashboardDirty?.(dirty);
+  }, [form, mode, editBaseline, createBaseline, onDirtyChange, reportDashboardDirty]);
 
   useEffect(() => {
     if (mode !== "create" || draftRestoredRef.current) return;
@@ -548,10 +552,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 <SelectGroup>
                   {GRADES.map((g) => (
                     <SelectItem key={g} value={g} textValue={GRADE_LABELS[g]}>
-                      <span className="flex items-center gap-2">
-                        <GradeIcon className="size-4" />
-                        {GRADE_LABELS[g]}
-                      </span>
+                      {GRADE_LABELS[g]}
                     </SelectItem>
                   ))}
                 </SelectGroup>
