@@ -248,7 +248,7 @@ flowchart LR
 | `moderation.resolveForSeeker`           | `[MOD]` | refund → закрыть `ModeratorCase`                                                         |
 | Страница `/dashboard/applications/[id]` | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                                                |
 | Блокировка пользователя / рефералки      | `[MOD]` | `moderation.blockUser`; рефералка — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
-| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` после жалобы и в настройках               |
+| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` в настройках (`/dashboard/settings`)    |
 
 
 ### Definition of Done

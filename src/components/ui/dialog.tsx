@@ -7,6 +7,53 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
 
+function dialogTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable || target.closest('[contenteditable="true"]')) return true;
+  const field = target.closest("input, textarea, select");
+  if (!field) return false;
+  if (field instanceof HTMLInputElement) {
+    const t = field.type;
+    if (
+      t === "button" ||
+      t === "submit" ||
+      t === "reset" ||
+      t === "checkbox" ||
+      t === "radio" ||
+      t === "file"
+    ) {
+      return false;
+    }
+    return true;
+  }
+  return field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement;
+}
+
+/** Поля вне футера — оставляем стандартный автофокус Radix (например форма с именем пресета). */
+function dialogHasTextFieldOutsideFooter(container: HTMLElement): boolean {
+  const footer = container.querySelector('[data-slot="dialog-footer"]');
+  for (const el of container.querySelectorAll('input, textarea, [contenteditable="true"]')) {
+    if (!(el instanceof HTMLElement)) continue;
+    if (footer?.contains(el)) continue;
+    if (el instanceof HTMLInputElement) {
+      const t = el.type;
+      if (
+        t === "hidden" ||
+        t === "button" ||
+        t === "submit" ||
+        t === "reset" ||
+        t === "checkbox" ||
+        t === "radio" ||
+        t === "file"
+      ) {
+        continue;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
@@ -43,10 +90,44 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  actionHotkeys = false,
+  onKeyDown,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  actionHotkeys?: boolean;
 }) {
+  const handleOpenAutoFocus = (e: Event) => {
+    onOpenAutoFocus?.(e);
+    if (!actionHotkeys || e.defaultPrevented) return;
+    const container = e.currentTarget as HTMLElement;
+    if (dialogHasTextFieldOutsideFooter(container)) return;
+    const primary = container.querySelector<HTMLButtonElement>(
+      '[data-dialog-hotkey="confirm"]:not([disabled])',
+    );
+    if (!primary || primary.getAttribute("aria-disabled") === "true") return;
+    e.preventDefault();
+    queueMicrotask(() => primary.focus());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(e);
+    if (!actionHotkeys || e.defaultPrevented) return;
+    if (e.key !== "Enter" || e.repeat) return;
+    if (e.nativeEvent.isComposing) return;
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    if (e.target instanceof HTMLButtonElement) return;
+    if (dialogTypingTarget(e.target)) return;
+    const root = e.currentTarget;
+    const primary = root.querySelector<HTMLButtonElement>(
+      '[data-dialog-hotkey="confirm"]:not([disabled])',
+    );
+    if (!primary || primary.getAttribute("aria-disabled") === "true") return;
+    e.preventDefault();
+    primary.click();
+  };
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -57,6 +138,8 @@ function DialogContent({
           className,
         )}
         {...props}
+        onKeyDown={actionHotkeys ? handleKeyDown : onKeyDown}
+        onOpenAutoFocus={actionHotkeys ? handleOpenAutoFocus : onOpenAutoFocus}
       >
         {children}
         {showCloseButton && (

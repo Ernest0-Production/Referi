@@ -195,6 +195,14 @@ export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Reco
   return out;
 }
 
+/** Параметры каталога без привязанного пресета: «как после полного сброса» (первая страница, нет полей пресета). */
+export function isVacancyCatalogFlatBaseline(flat: VacancyListFlatSearchParams): boolean {
+  if (Object.keys(flatParamsForPresetSave(flat)).length > 0) return false;
+  const page = flat.page?.trim();
+  if (page && page !== "1") return false;
+  return true;
+}
+
 export function presetParamsFromJson(
   raw: unknown,
 ): Partial<

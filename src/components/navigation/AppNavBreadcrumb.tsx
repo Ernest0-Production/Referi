@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogHotkeyKbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import type { NavBreadcrumbSegment } from "@/lib/navBreadcrumbTrail";
 
@@ -124,7 +125,7 @@ export function AppNavBreadcrumb({
             }
           }}
         >
-          <DialogContent showCloseButton>
+          <DialogContent showCloseButton actionHotkeys>
             <DialogHeader>
               <DialogTitle>{leaveDialogTitle}</DialogTitle>
               <DialogDescription>{leaveDialogDescription}</DialogDescription>
@@ -139,9 +140,16 @@ export function AppNavBreadcrumb({
                 }}
               >
                 Остаться
+                <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
               </Button>
-              <Button type="button" variant="destructive" onClick={confirmLeave}>
+              <Button
+                type="button"
+                variant="destructive"
+                data-dialog-hotkey="confirm"
+                onClick={confirmLeave}
+              >
                 Выйти
+                <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
               </Button>
             </DialogFooter>
           </DialogContent>
