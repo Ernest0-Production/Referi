@@ -12,7 +12,6 @@ import { ReportVacancyForm } from "./ReportVacancyForm";
 import { ReferrerCompensationPanel } from "./ReferrerCompensationPanel";
 import { VacancyDetailMetaBadges } from "./VacancyDetailMetaBadges";
 import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
-import { ApplicationCountIcon } from "@/components/vacancy/VacancyFieldIcons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
@@ -134,7 +133,13 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                       <Link
                         href={`/dashboard/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
                       >
-                        <ApplicationCountIcon data-icon="inline-start" className="text-current" />
+                        <span
+                          data-icon="inline-start"
+                          className="shrink-0 text-base leading-none"
+                          aria-hidden
+                        >
+                          🙏
+                        </span>
                         Попросить рефералку
                       </Link>
                     </Button>
