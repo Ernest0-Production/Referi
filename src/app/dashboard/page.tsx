@@ -185,7 +185,7 @@ export default async function DashboardPage() {
 
         <section className="flex flex-col gap-3">
           <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-            Моя вакансия
+            Моя рефералка
           </h2>
           {vacancyData ? (
             <Link href="/dashboard/vacancy">
@@ -209,14 +209,14 @@ export default async function DashboardPage() {
           ) : (
             <Card className="border-dashed">
               <CardHeader>
-                <CardTitle className="text-base">Нет активной вакансии</CardTitle>
+                  <CardTitle className="text-base">Нет активной рефералки</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
                 <p className="text-muted-foreground text-center text-sm">
-                  Создайте вакансию, чтобы получать отклики.
+                    Создайте рефералку, чтобы получать отклики.
                 </p>
                 <Button asChild>
-                  <Link href="/dashboard/vacancy">Создать вакансию</Link>
+                    <Link href="/dashboard/vacancy">Создать рефералку</Link>
                 </Button>
               </CardContent>
             </Card>

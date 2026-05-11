@@ -23,14 +23,14 @@ export default async function NewVacancyPage() {
           <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
             {me.availableAttempts > 0 ? (
               <NewVacancyComposeWithBack
-                title="Разместить вакансию"
+                title="Разместить рефералку"
                 subtitle={`Доступных попыток: ${me.availableAttempts} из 3`}
-                cardDescription="Заполните поля и нажмите «Опубликовать вакансию»."
+                cardDescription="Заполните поля и нажмите «Опубликовать рефералку»."
                 showForm
               />
             ) : (
               <NewVacancyComposeWithBack
-                title="Разместить вакансию"
+                  title="Разместить рефералку"
                 subtitle={`Доступных попыток: ${me.availableAttempts} из 3`}
                 showForm={false}
                 emptyState={
@@ -55,7 +55,7 @@ export default async function NewVacancyPage() {
       <PublicHeaderNav session={null} />
       <main className="flex-1">
         <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
-          <NewVacancyComposeWithBack title="Разместить вакансию" showForm />
+          <NewVacancyComposeWithBack title="Разместить рефералку" showForm />
         </div>
       </main>
     </div>

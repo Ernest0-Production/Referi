@@ -52,7 +52,7 @@ export function EditVacancyCard({ vacancy }: { vacancy: EditVacancyFormVacancy }
       )}
       <Card>
         <CardHeader>
-          <CardTitle>Редактирование вакансии</CardTitle>
+          <CardTitle>Редактирование рефералки</CardTitle>
         </CardHeader>
         <CardContent>
           <CreateVacancyForm

@@ -82,7 +82,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
 
       <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
         <Button variant="ghost" size="sm" className="w-fit" asChild>
-          <Link href="/">← Все вакансии</Link>
+          <Link href="/">← Все рефералки</Link>
         </Button>
 
         <Card>

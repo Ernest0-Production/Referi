@@ -54,7 +54,7 @@ export async function PublicHeaderNav({ session }: { session: Session | null }) 
   const overviewHref = "/dashboard";
   const overviewLabel = "Обзор";
   const vacancyHref = "/dashboard/vacancy";
-  const vacancyLabel = "Моя вакансия";
+  const vacancyLabel = "Моя рефералка";
   const applicationsSeekerHref = "/dashboard/applications";
   const applicationsReferrerHref = "/dashboard/vacancy#candidates";
   const applicationsLabel = "Отклики";

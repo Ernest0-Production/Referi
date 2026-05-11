@@ -17,7 +17,7 @@ const STATUS_LABELS: Record<string, string> = {
   DISPUTED: "Спор",
   REFUNDED_BY_CANCEL_ACK: "Возврат (отмена)",
   REFUNDED_BY_SLA: "Возврат (SLA)",
-  REFUNDED_BY_VACANCY_DELETED: "Возврат (вакансия удалена)",
+  REFUNDED_BY_VACANCY_DELETED: "Возврат (рефералка удалена)",
 };
 
 export async function VacancyApplicantsSection({

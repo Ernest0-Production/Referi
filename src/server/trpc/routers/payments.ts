@@ -76,7 +76,7 @@ export const paymentsRouter = router({
         dealId: deal.dealId,
         amountKopecks: chargeAmount,
         payoutSettlementKopecks: netPayout,
-        description: `Заявка на вакансию "${app.vacancy.title}" в ${app.vacancy.companyName}`,
+        description: `Заявка на рефералку "${app.vacancy.title}" в ${app.vacancy.companyName}`,
         metadata: { applicationId: app.id, type: "escrow" },
         returnUrl,
       });
@@ -141,7 +141,7 @@ export const paymentsRouter = router({
       const payment = await paymentProvider.createPayment({
         idempotencyKey,
         amountKopecks: BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP,
-        description: `Дополнительный отклик на вакансию «${vacancy.title}»`,
+        description: `Дополнительный отклик на рефералку «${vacancy.title}»`,
         metadata: {
           type: "paid_token",
           tokenId: token.id,

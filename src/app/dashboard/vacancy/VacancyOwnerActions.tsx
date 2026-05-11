@@ -90,7 +90,7 @@ export function VacancyOwnerActions({
               }}
             >
               <IconTrash className="size-4" />
-              Удалить вакансию
+              Удалить рефералку
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -99,7 +99,7 @@ export function VacancyOwnerActions({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent showCloseButton>
           <DialogHeader>
-            <DialogTitle>Удалить вакансию?</DialogTitle>
+            <DialogTitle>Удалить рефералку?</DialogTitle>
             <DialogDescription>
               Активные отклики будут отменены с возвратами по правилам платформы. Это действие
               нельзя отменить.

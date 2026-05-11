@@ -37,7 +37,8 @@ export default async function AttemptsPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Пул попыток</h1>
           <p className="text-muted-foreground text-sm">
-            Каждая публикация вакансии расходует 1 попытку. Попытки восстанавливаются через 60 дней.
+            Каждая публикация рефералки расходует 1 попытку. Попытки восстанавливаются через 60
+            дней.
           </p>
         </div>
 

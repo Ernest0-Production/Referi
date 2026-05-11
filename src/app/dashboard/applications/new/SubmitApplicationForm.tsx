@@ -46,13 +46,13 @@ export function SubmitApplicationForm({
           "Достигнут лимит активных откликов. Купите дополнительный токен или дождитесь завершения заявки.",
         );
       } else if (msg === "DUPLICATE_APPLICATION") {
-        setError("Вы уже откликались на эту вакансию.");
+        setError("Вы уже откликались на эту рефералку.");
       } else if (msg === "CANNOT_APPLY_TO_OWN_VACANCY") {
-        setError("Нельзя откликаться на собственную вакансию.");
+        setError("Нельзя откликаться на собственную рефералку.");
       } else if (msg === "VACANCY_NOT_ACTIVE") {
-        setError("Вакансия больше не активна.");
+        setError("Рефералка больше не активна.");
       } else if (msg.startsWith("PAID_TOKEN_")) {
-        setError("Токен отклика недействителен. Купите новый токен для этой вакансии.");
+        setError("Токен отклика недействителен. Купите новый токен для этой рефералки.");
       } else {
         setError(err.message);
       }
@@ -170,7 +170,7 @@ export function SubmitApplicationForm({
               setCoverError(null);
               setForm((f) => ({ ...f, coverLetter: e.target.value }));
             }}
-            placeholder="Почему именно эта вакансия?"
+            placeholder="Почему именно эта рефералка?"
           />
           <FieldDescription
             id="app-cover-desc"
@@ -184,7 +184,7 @@ export function SubmitApplicationForm({
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Разовый токен отклика (199 ₽)</CardTitle>
             <CardDescription>
-              Если бесплатный лимит активных откликов исчерпан, купите токен для этой вакансии.
+              Если бесплатный лимит активных откликов исчерпан, купите токен для этой рефералки.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">

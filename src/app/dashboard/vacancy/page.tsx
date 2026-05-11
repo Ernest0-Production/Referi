@@ -26,7 +26,7 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
     <main className="flex-1">
       <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-foreground text-2xl font-bold">Моя вакансия</h1>
+          <h1 className="text-foreground text-2xl font-bold">Моя рефералка</h1>
           {vacancy ? (
             <p className="text-muted-foreground text-sm">
               Доступных попыток: {me.availableAttempts} из 3
@@ -60,8 +60,8 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Разместить вакансию</CardTitle>
-              <CardDescription>У вас нет активной вакансии. Заполните форму ниже.</CardDescription>
+                <CardTitle>Разместить рефералку</CardTitle>
+                <CardDescription>У вас нет активной рефералки. Заполните форму ниже.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {me.availableAttempts > 0 ? (

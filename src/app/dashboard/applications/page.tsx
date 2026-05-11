@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
   REFUNDED_BY_CANCEL_ACK: "Возврат",
   REFUNDED_BY_SLA: "Возврат (SLA)",
   REFUNDED_BY_CANCEL_AUTO: "Автовозврат",
-  REFUNDED_BY_VACANCY_DELETED: "Возврат (вакансия)",
+  REFUNDED_BY_VACANCY_DELETED: "Возврат (рефералка)",
   REFUNDED_BY_MODERATOR: "Возврат (модератор)",
 };
 
@@ -52,7 +52,7 @@ export default async function ApplicationsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-foreground text-2xl font-bold">Мои заявки</h1>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/">Найти вакансии</Link>
+            <Link href="/">Найти рефералки</Link>
           </Button>
         </div>
 
@@ -61,7 +61,7 @@ export default async function ApplicationsPage() {
             <CardContent className="flex flex-col items-center gap-4 py-10">
               <p className="text-muted-foreground">У вас пока нет заявок</p>
               <Button asChild>
-                <Link href="/">Смотреть вакансии</Link>
+                <Link href="/">Смотреть рефералки</Link>
               </Button>
             </CardContent>
           </Card>

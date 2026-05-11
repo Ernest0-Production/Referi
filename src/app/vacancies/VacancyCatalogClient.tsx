@@ -215,7 +215,7 @@ export function VacancyCatalogClient({
 
         {items.length === 0 ? (
           <div className="border-border bg-card rounded-2xl border p-8 text-center">
-            <p className="text-muted-foreground">Вакансии не найдены</p>
+            <p className="text-muted-foreground">Рефералки не найдены</p>
             <p className="text-muted-foreground mt-1 text-sm">Попробуйте изменить фильтры</p>
           </div>
         ) : (

@@ -51,7 +51,7 @@ flowchart LR
 - `docker compose up` поднимает приложение без ошибок
 - `npm run lint && npm run typecheck && npm run test` проходят
 - `prisma migrate dev` выполняется без ошибок
-- `GET /` — каталог вакансий; фильтры, поиск и пагинация **не меняют** строку адреса; данные ленты — `**trpc.vacancies.list`** на клиенте с гидратацией из первого SSR; без полной перезагрузки документа
+- `GET /` — каталог рефералок; фильтры, поиск и пагинация **не меняют** строку адреса; данные ленты — `**trpc.vacancies.list`** на клиенте с гидратацией из первого SSR; без полной перезагрузки документа
 - CI pipeline зелёный на пустом PR
 
 ---
@@ -89,35 +89,35 @@ flowchart LR
 
 ## Phase 2 — Vacancies & Profiles
 
-**Цель**: реферальщики могут создавать вакансии; соискатели — просматривать ленту с фильтрами.
+**Цель**: реферальщики могут создавать рефералки; соискатели — просматривать ленту с фильтрами.
 
 ### Deliverables
 
 
 | Задача                          | Флаг     | Описание                                                                                                  |
 | ------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| `vacancies.create` mutation     | `[CORE]` | Guard: 1 активная вакансия, пул попыток > 0                                                               |
+| `vacancies.create` mutation     | `[CORE]` | Guard: 1 активная рефералка, пул попыток > 0                                                               |
 | `vacancies.delete` mutation     | `[CORE]` | Cascade refund (пока без реальных денег)                                                                  |
 | `vacancies.list` query          | `[CORE]` | Фильтры: specialty, grade, workFormat, salaryCurrency, salary, query; исключение просмотренных; пагинация |
 | `vacancySearchPresets` router   | `[CORE]` | Сохранённые наборы фильтров каталога: list/create/update/delete                                           |
 | `vacancies.getById` query       | `[CORE]` | Без данных реферальщика                                                                                   |
-| `vacancies.myActive` query      | `[CORE]` | Текущая вакансия реферальщика                                                                             |
-| Страница `/` — лента вакансий   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
-| Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница вакансии + кнопка «Откликнуться»                                                       |
-| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей вакансией, редактирование (`?edit=1`), блок кандидатов (`#candidates`)                                                                   |
-| Страница `/vacancies/new`       | `[CORE]` | Оформление новой вакансии без входа; OAuth GitHub при публикации, черновик формы в `sessionStorage` до авторизации                                                      |
-| Форма создания вакансии         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
+| `vacancies.myActive` query      | `[CORE]` | Текущая рефералка реферальщика                                                                             |
+| Страница `/` — лента рефералок   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
+| Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница рефералки + кнопка «Откликнуться»                                                       |
+| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей рефералкой, редактирование (`?edit=1`), блок кандидатов (`#candidates`)                                                                   |
+| Страница `/vacancies/new`       | `[CORE]` | Оформление новой рефералки без входа; OAuth GitHub при публикации, черновик формы в `sessionStorage` до авторизации                                                      |
+| Форма создания рефералки         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
 | `ReferrerAttemptLedger` базовый | `[CORE]` | `getAvailableAttempts()` возвращает корректное значение                                                   |
 | Full-text поиск                 | `[CORE]` | `pg_trgm` или `tsvector` для title/description                                                            |
 
 
 ### Definition of Done
 
-- Реферальщик создаёт вакансию; вторая попытка создать вакансию заблокирована
-- Лента отображает активные вакансии с корректными фильтрами
-- Замороженные/удалённые вакансии не отображаются в ленте
+- Реферальщик создаёт рефералку; вторая попытка создать рефералку заблокирована
+- Лента отображает активные рефералки с корректными фильтрами
+- Замороженные/удалённые рефералки не отображаются в ленте
 - Full-text поиск по названию и описанию работает
-- Unit-тесты на guard «1 активная вакансия»
+- Unit-тесты на guard «1 активная рефералка»
 
 ---
 
@@ -130,7 +130,7 @@ flowchart LR
 
 | Задача                                    | Флаг     | Описание                                             |
 | ----------------------------------------- | -------- | ---------------------------------------------------- |
-| `applications.submit` mutation            | `[CORE]` | Guard: лимит 2, статус вакансии, уникальность пары   |
+| `applications.submit` mutation            | `[CORE]` | Guard: лимит 2, статус рефералки, уникальность пары   |
 | `applications.cancel` mutation            | `[CORE]` | SUBMITTED / AWAITING_PAYMENT                         |
 | `applications.confirmIntent` mutation     | `[CORE]` | Guards: попытки, активное рассмотрение, статус       |
 | `applications.reject` mutation            | `[CORE]` | SUBMITTED → REJECTED_BY_REFERRER                     |
@@ -143,7 +143,7 @@ flowchart LR
 | `applications.denyRejection`              | `[CORE]` | Реферальщик опровергает → DISPUTED                   |
 | `AuditLog` запись при каждом переходе     | `[CORE]` | Все поля: from, to, actor, actorId, metadata         |
 | `applications.myList` query               | `[CORE]` | Список заявок соискателя с текущими статусами        |
-| `vacancies.update` mutation               | `[CORE]` | Реферальщик: обновление полей своей вакансии (ACTIVE / FROZEN)               |
+| `vacancies.update` mutation               | `[CORE]` | Реферальщик: обновление полей своей рефералки (ACTIVE / FROZEN)               |
 | `vacancies.applicants` query              | `[CORE]` | Список откликнувшихся для реферальщика (UI: секция на `/dashboard/vacancy#candidates`)               |
 | Страница `/dashboard/applications`        | `[CORE]` | Соискатель: мои заявки + действия                    |
 | Редирект `/dashboard/vacancy/applicants`  | `[CORE]` | На `/dashboard/vacancy#candidates` (старые закладки)                       |
@@ -157,7 +157,7 @@ flowchart LR
 - Все guards из spec-process-application-lifecycle.md проверены unit-тестами
 - `AuditLog` создаётся при каждом переходе
 - `contactInfo` не виден в `vacancies.applicants` после терминального статуса
-- Соискатель не может откликнуться на > 2 вакансий одновременно
+- Соискатель не может откликнуться на > 2 рефералок одновременно
 
 ---
 
@@ -200,21 +200,21 @@ flowchart LR
 
 ## Phase 5 — SLA Timers & Automation
 
-**Цель**: все SLA-таймеры работают; авто-санкции, фриз вакансий, регенерация попыток.
+**Цель**: все SLA-таймеры работают; авто-санкции, фриз рефералок, регенерация попыток.
 
 ### Deliverables
 
 
 | Задача                                    | Флаг     | Описание                                                                         |
 | ----------------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| `slaWorker` — `reaction-sla`              | `[AUTO]` | Фриз вакансии через 7 дней без реакции                                           |
+| `slaWorker` — `reaction-sla`              | `[AUTO]` | Фриз рефералки через 7 дней без реакции                                           |
 | `slaWorker` — `payment-deadline`          | `[AUTO]` | Отмена платежа через 5 дней                                                      |
 | `slaWorker` — `resume-handoff-sla`        | `[AUTO]` | Возврат + бан реферальщика через 5 дней                                          |
 | `slaWorker` — `cancel-ack-sla`            | `[AUTO]` | Авто-возврат через 3 дня                                                         |
 | `slaWorker` — `company-decision-sla`      | `[AUTO]` | Авто-открытие спора через 30 дней                                                |
-| `slaWorker` — `vacancy-unfreeze`          | `[AUTO]` | Разморозка вакансии через 14 дней                                                |
+| `slaWorker` — `vacancy-unfreeze`          | `[AUTO]` | Разморозка рефералки через 14 дней                                                |
 | `slaWorker` — регенерация попыток         | `[AUTO]` | Восстановление попытки через 60 дней (логика в `slaWorker`, не отдельный воркер) |
-| Авто-удаление вакансии при OFFER_ACCEPTED | `[AUTO]` | Внутри команды `acceptOffer`                                                     |
+| Авто-удаление рефералки при OFFER_ACCEPTED | `[AUTO]` | Внутри команды `acceptOffer`                                                     |
 | `vacancyDeletedCascade`                   | `[AUTO]` | Возврат средств и попыток при ручном удалении                                    |
 | `ReferrerSanction` проверка в guards      | `[AUTO]` | `isReferrerBanned()` в `confirmReferralIntent`                                   |
 | `deadline` поля в `Application`           | `[AUTO]` | Устанавливаются в командах; проверяются в воркерах                               |
@@ -225,7 +225,7 @@ flowchart LR
 ### Definition of Done
 
 - Integration-тест: `resume-handoff-sla` срабатывает (mockdate + 5 дней) → деньги возвращены, бан создан
-- Integration-тест: `reaction-sla` срабатывает → вакансия FROZEN, не в ленте
+- Integration-тест: `reaction-sla` срабатывает → рефералка FROZEN, не в ленте
 - Unit-тест: `getAvailableAttempts` = 3 при пустом ledger, 0 после 3 CONSUMED
 - Тест на noop при изменившемся статусе заявки при срабатывании SLA
 - `attempt-regen` не создаёт дубль `REGENERATED` при двойном срабатывании
@@ -247,7 +247,7 @@ flowchart LR
 | `moderation.resolveForReferrer`         | `[MOD]` | постановка выплаты по Safe deal (воркер) → закрыть `ModeratorCase`                       |
 | `moderation.resolveForSeeker`           | `[MOD]` | refund → закрыть `ModeratorCase`                                                         |
 | Страница `/dashboard/applications/[id]` | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                                                |
-| Блокировка пользователя / вакансии      | `[MOD]` | `moderation.blockUser`; вакансия — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
+| Блокировка пользователя / рефералки      | `[MOD]` | `moderation.blockUser`; рефералка — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
 | UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` после жалобы и в настройках               |
 
 
@@ -272,8 +272,8 @@ flowchart LR
 | Полировка UI                   | `[CORE]` | Единый UI shell (шапки, `--app-page-surface`, shadcn); адаптивность, accessibility (Lighthouse ≥ 95), темизация                       |
 | Страница настроек пользователя | `[CORE]` | Профиль, подписка; опционально блок «Связь с модерацией» по `NEXT_PUBLIC_MODERATION_CONTACT_URL`                                      |
 | Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                                                                                         |
-| Дашборд реферальщика           | `[CORE]` | Вакансия, список кандидатов, пул попыток                                                                                              |
-| E2E-тесты Playwright           | `[CORE]` | Сценарии: регистрация, создание вакансии, полный цикл заявки, спор                                                                    |
+| Дашборд реферальщика           | `[CORE]` | Рефералка, список кандидатов, пул попыток                                                                                              |
+| E2E-тесты Playwright           | `[CORE]` | Сценарии: регистрация, создание рефералки, полный цикл заявки, спор                                                                    |
 | `docker-compose.prod.yml`      | `[CORE]` | Production конфигурация с env из secrets                                                                                              |
 | CI/CD деплой                   | `[CORE]` | GitHub Actions → деплой на Yandex Cloud / Railway                                                                                     |
 | Мониторинг                     | `[CORE]` | Sentry (ошибки) + базовые метрики BullMQ                                                                                              |
@@ -311,7 +311,7 @@ flowchart LR
 | Верификация по корп. email | Опциональная верификация реферальщика по `@company.com` домену |
 | Рейтинг реферальщиков      | Публичный рейтинг на основе % успешных рефералов               |
 | API для ATS                | Интеграция с системами подбора персонала                       |
-| Корпоративные тарифы       | Для компаний с несколькими вакансиями одновременно             |
+| Корпоративные тарифы       | Для компаний с несколькими рефералками одновременно             |
 
 
 ---

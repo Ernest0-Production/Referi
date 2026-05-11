@@ -5,7 +5,7 @@ test.describe("Vacancies catalog", () => {
     await page.goto("/");
     await expect(page).not.toHaveURL(/login/);
     await expect(
-      page.getByRole("heading", { name: /Ваша следующая роль|Вакансии/i }),
+      page.getByRole("heading", { name: /Ваша следующая роль|Рефералки/i }),
     ).toBeVisible();
   });
 

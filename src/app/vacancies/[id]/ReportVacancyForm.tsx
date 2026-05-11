@@ -19,7 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 const REASONS = [
-  { value: "FAKE_VACANCY", label: "Подозрение в фейковой вакансии" },
+  { value: "FAKE_VACANCY", label: "Подозрение в фейковой рефералке" },
   { value: "INAPPROPRIATE_BEHAVIOR", label: "Неприемлемое поведение" },
   { value: "FRAUD", label: "Мошенничество" },
   { value: "OTHER", label: "Другое" },
@@ -73,7 +73,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
   return (
     <Card className="w-full border-dashed">
       <CardHeader>
-        <CardTitle className="text-base">Жалоба на вакансию</CardTitle>
+        <CardTitle className="text-base">Жалоба на рефералку</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <FieldGroup>

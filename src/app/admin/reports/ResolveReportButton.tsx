@@ -65,7 +65,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
             disabled={resolve.isPending}
           />
           <Label htmlFor="block-vacancy" className="text-muted-foreground text-sm font-normal">
-            Заблокировать вакансию
+            Заблокировать рефералку
           </Label>
         </div>
       ) : null}

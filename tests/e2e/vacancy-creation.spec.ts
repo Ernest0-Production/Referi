@@ -48,8 +48,8 @@ test.describe("Public vacancy compose page", () => {
   test("guest can open compose form without redirect to login", async ({ page }) => {
     await page.goto("/vacancies/new");
     await expect(page).not.toHaveURL(/\/login/);
-    await expect(page.getByRole("heading", { name: "Разместить вакансию" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Опубликовать вакансию" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Разместить рефералку" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Опубликовать рефералку" })).toBeVisible();
   });
 });
 

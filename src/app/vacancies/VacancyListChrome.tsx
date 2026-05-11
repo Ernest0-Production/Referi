@@ -53,7 +53,7 @@ export function VacancyListChrome({
           Ваша следующая роль — с рефералом
         </h1>
         <p className="text-muted-foreground max-w-2xl text-sm md:text-base">
-          Вакансии от разработчиков внутри компаний: прозрачный процесс и защищённое вознаграждение
+          Рефералки от разработчиков внутри компаний: прозрачный процесс и защищённое вознаграждение
           рефереру.
         </p>
       </header>
@@ -63,7 +63,7 @@ export function VacancyListChrome({
         className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12"
       >
         <InputGroupInput
-          placeholder="Название вакансии или компании"
+          placeholder="Название рефералки или компании"
           value={queryDraft}
           onChange={(e) => setQueryDraft(e.target.value)}
           onKeyDown={(e) => {

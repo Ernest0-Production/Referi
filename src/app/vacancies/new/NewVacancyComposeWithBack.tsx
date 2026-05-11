@@ -43,12 +43,12 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
   const backControl =
     showForm && dirty ? (
       <Button type="button" variant="ghost" size="sm" className="w-fit" onClick={handleBackClick}>
-        ← К вакансиям
+        ← К рефералкам
       </Button>
     ) : (
       <Button variant="ghost" size="sm" className="w-fit" asChild>
         <Link href={CATALOG_HREF} onClick={() => clearVacancyCreateDraft()}>
-          ← К вакансиям
+            ← К рефералкам
         </Link>
       </Button>
     );
@@ -65,7 +65,7 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
           {backControl}
           <Card>
             <CardHeader>
-              <CardTitle>Новая вакансия</CardTitle>
+              <CardTitle>Новая рефералка</CardTitle>
               {cardDescription ? <CardDescription>{cardDescription}</CardDescription> : null}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -102,12 +102,12 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
         <>
           <Button variant="ghost" size="sm" className="w-fit" asChild>
             <Link href={CATALOG_HREF} onClick={() => clearVacancyCreateDraft()}>
-              ← К вакансиям
+                ← К рефералкам
             </Link>
           </Button>
           <Card>
             <CardHeader>
-              <CardTitle>Новая вакансия</CardTitle>
+                <CardTitle>Новая рефералка</CardTitle>
               {cardDescription ? <CardDescription>{cardDescription}</CardDescription> : null}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">{props.emptyState}</CardContent>

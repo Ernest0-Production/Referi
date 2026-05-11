@@ -13,10 +13,10 @@ function CreateVacancyHomeCta({ href }: { href: string }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-muted-foreground max-w-xl text-sm">
-        Ищете сотрудника? Разместите вакансию и получайте отклики через рефералов.
+        Ищете сотрудника? Разместите рефералку и получайте отклики через рефералов.
       </p>
       <Button asChild className="shrink-0">
-        <Link href={href}>Создать вакансию</Link>
+        <Link href={href}>Создать рефералку</Link>
       </Button>
     </div>
   );
@@ -48,7 +48,7 @@ export function EmployerHomeVacancySection({
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">
         <div className="flex flex-row items-center justify-between gap-2">
           <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
-            Ваша вакансия
+            Ваша рефералка
           </h2>
           <Button variant="link" className="text-primary h-auto px-0 py-0 text-sm" asChild>
             <Link href="/dashboard/vacancy">Управление</Link>

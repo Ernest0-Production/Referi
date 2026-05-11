@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
   REFUNDED_BY_CANCEL_ACK: "Возврат (подтверждена отмена)",
   REFUNDED_BY_SLA: "Возврат (SLA)",
   REFUNDED_BY_CANCEL_AUTO: "Автоматический возврат",
-  REFUNDED_BY_VACANCY_DELETED: "Возврат (вакансия удалена)",
+  REFUNDED_BY_VACANCY_DELETED: "Возврат (рефералка удалена)",
   REFUNDED_BY_MODERATOR: "Возврат по решению модератора",
 };
 

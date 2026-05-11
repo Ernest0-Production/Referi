@@ -284,7 +284,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     if (!vacancy || mode !== "edit") return null;
     return initialFormState("edit", vacancy);
     // Baseline — снимок при открытии; не привязываем к ссылке на объект vacancy от родителя.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- пересчёт только при смене вакансии (id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- пересчёт только при смене id карточки
   }, [mode, vacancy?.id]);
 
   const createBaseline = useMemo(() => initialFormState("create"), []);
@@ -466,7 +466,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       <FieldGroup>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field data-invalid={titleError ? "true" : undefined}>
-            <FieldLabel htmlFor="vac-title">Название вакансии *</FieldLabel>
+            <FieldLabel htmlFor="vac-title">Название рефералки *</FieldLabel>
             <Input
               id="vac-title"
               maxLength={200}
@@ -742,7 +742,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setDescriptionError(null);
                 setForm((f) => ({ ...f, description: e.target.value }));
               }}
-              placeholder="Расскажите о вакансии, требованиях и условиях работы"
+              placeholder="Расскажите о рефералке, требованиях и условиях работы"
             />
             <span
               id="vac-desc-counter"
@@ -780,7 +780,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 : "Публикация…"
               : mode === "edit"
                 ? "Сохранить"
-                : "Опубликовать вакансию"}
+                : "Опубликовать рефералку"}
         </Button>
       </FieldGroup>
     </form>
