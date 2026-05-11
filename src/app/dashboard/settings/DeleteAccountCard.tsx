@@ -107,6 +107,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               disabled={del.isPending}
               onClick={() => del.mutate()}
             >
+              <IconTrash className="size-4 shrink-0" aria-hidden />
               {del.isPending ? "Удаление…" : "Удалить навсегда"}
             </Button>
           </DialogFooter>

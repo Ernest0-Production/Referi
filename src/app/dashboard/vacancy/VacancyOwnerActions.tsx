@@ -90,7 +90,7 @@ export function VacancyOwnerActions({
               }}
             >
               <IconTrash className="size-4" />
-              Удалить рефералку
+              Удалить
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -116,6 +116,7 @@ export function VacancyOwnerActions({
               disabled={del.isPending}
               onClick={() => del.mutate({ id: vacancyId })}
             >
+              <IconTrash className="size-4 shrink-0" aria-hidden />
               {del.isPending ? "Удаление…" : "Удалить"}
             </Button>
           </DialogFooter>
