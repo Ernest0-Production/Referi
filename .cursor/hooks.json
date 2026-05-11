@@ -3,7 +3,7 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "node .cursor/hooks/prettier-after-agent-edit.cjs"
+        "command": "node scripts/cursor-after-file-edit-format-eslint.mjs"
       }
     ]
   }
