@@ -53,7 +53,7 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
           <h1 className="text-foreground text-2xl font-bold">
             {vacancy ? "Моя рефералка" : "Создание рефералки"}
           </h1>
-          {vacancy ? (
+          {vacancy && !editMode ? (
             <p className="text-muted-foreground text-sm">
               Доступных попыток: {me.availableAttempts} из 3
             </p>
