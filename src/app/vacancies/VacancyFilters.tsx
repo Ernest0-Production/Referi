@@ -26,7 +26,6 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
-import { vacancySearchPresetNameWithRandomBadge } from "@/lib/vacancySearchPresetNameBadge";
 import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/moneyIntegerInput";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -292,12 +291,31 @@ export function VacancyFilters({
   const [presetDialogSourceParams, setPresetDialogSourceParams] = useState<unknown>(null);
   const utils = trpcReact.useUtils();
   const autoOpenedSaveAfterAuth = useRef(false);
+  const presetNameSaveInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!saveOpen) return;
+    let cancelled = false;
+    const outer = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const el = presetNameSaveInputRef.current;
+        if (!el) return;
+        const len = el.value.length;
+        el.setSelectionRange(len, len);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(outer);
+    };
+  }, [saveOpen]);
 
   useEffect(() => {
     if (!resumeVacancyPresetSave || !isLoggedIn || autoOpenedSaveAfterAuth.current) return;
     autoOpenedSaveAfterAuth.current = true;
     setPresetDialogSourceParams(null);
-    setPresetName(vacancySearchPresetNameWithRandomBadge(""));
+    setPresetName("");
     setSaveOpen(true);
   }, [resumeVacancyPresetSave, isLoggedIn]);
 
@@ -432,7 +450,7 @@ export function VacancyFilters({
       return;
     }
     setPresetDialogSourceParams(null);
-    setPresetName(vacancySearchPresetNameWithRandomBadge(""));
+    setPresetName("");
     setSaveOpen(true);
   }
 
@@ -765,6 +783,7 @@ export function VacancyFilters({
               <Field data-invalid={presetNameInvalid ? true : undefined}>
                 <FieldLabel htmlFor="preset-name">Введите название</FieldLabel>
                 <Input
+                  ref={presetNameSaveInputRef}
                   id="preset-name"
                   value={presetName}
                   onChange={(e) => {
@@ -772,7 +791,7 @@ export function VacancyFilters({
                     setPresetNameInvalid(false);
                   }}
                   maxLength={80}
-                  placeholder="Например: Удалённый бэкенд"
+                  placeholder="Удалённый бэкенд"
                   className="h-9"
                   aria-invalid={presetNameInvalid}
                   aria-describedby={presetNameInvalid ? "preset-name-desc" : undefined}
