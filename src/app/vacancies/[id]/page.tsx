@@ -6,45 +6,14 @@ import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
 import { VacancyOwnerActions } from "@/app/dashboard/vacancy/VacancyOwnerActions";
 import { ReportVacancyForm } from "./ReportVacancyForm";
+import { ReferrerCompensationPanel } from "./ReferrerCompensationPanel";
+import { VacancyDetailMetaBadges } from "./VacancyDetailMetaBadges";
 import { VacancyViewCookieWriter } from "../VacancyViewCookieWriter";
-import { Badge } from "@/components/ui/badge";
+import { ApplicationCountIcon } from "@/components/vacancy/VacancyFieldIcons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { cn } from "@/lib/utils";
-import {
-  GradeIcon,
-  SpecialtyIcon,
-  WorkFormatIcon,
-  ApplicationCountIcon,
-} from "@/components/vacancy/VacancyFieldIcons";
-
-const SPECIALTY_LABELS: Record<string, string> = {
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-  FULLSTACK: "Fullstack",
-  IOS_MOBILE: "iOS",
-  ANDROID_MOBILE: "Android",
-  DEVOPS: "DevOps",
-  QA: "QA",
-  DATA: "Data",
-  ML_AI: "ML/AI",
-  SECURITY: "Security",
-};
-
-const GRADE_LABELS: Record<string, string> = {
-  JUNIOR: "Junior",
-  MIDDLE: "Middle",
-  SENIOR: "Senior",
-  LEAD: "Lead",
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  OFFICE: "Офис",
-  HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
-};
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -98,24 +67,12 @@ export default async function VacancyDetailPage({ params }: PageProps) {
             </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="font-normal">
-                <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
-                {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
-              </Badge>
-              <Badge variant="secondary" className="font-normal">
-                <GradeIcon className="text-current" />
-                {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
-              </Badge>
-              <Badge variant="secondary" className="font-normal">
-                <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
-                {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
-              </Badge>
-              <Badge variant="outline" className="font-normal">
-                <ApplicationCountIcon className="text-current" />
-                {formatApplicationCountLabel(vacancy.applicationCount)}
-              </Badge>
-            </div>
+            <VacancyDetailMetaBadges
+              specialty={vacancy.specialty}
+              grade={vacancy.grade}
+              workFormat={vacancy.workFormat}
+              applicationCount={vacancy.applicationCount}
+            />
 
             {hasSalaryBlock || hasCompensationBlock ? (
               <div
@@ -142,22 +99,10 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                 ) : null}
 
                 {hasCompensationBlock ? (
-                  <div
-                    className={cn(
-                      "flex flex-col gap-2.5 rounded-xl border border-red-600/25 bg-red-600/10 px-4 py-3",
-                      salaryAndCompensationRow && "min-w-0 sm:min-h-0 sm:flex-1 sm:basis-0",
-                    )}
-                  >
-                    <p className="flex min-w-0 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
-                      <IconCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
-                      <span className="min-w-0 leading-snug break-words">
-                        Компенсация за рекомендацию
-                      </span>
-                    </p>
-                    <p className="font-semibold break-words text-red-950 dark:text-red-50">
-                      {fmtRub(reward)}
-                    </p>
-                  </div>
+                  <ReferrerCompensationPanel
+                    amountText={fmtRub(reward)}
+                    className={cn(salaryAndCompensationRow && "sm:min-h-0 sm:flex-1 sm:basis-0")}
+                  />
                 ) : null}
               </div>
             ) : null}
@@ -180,6 +125,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               ) : (
                 <Button asChild size="lg" className="w-full sm:w-auto">
                     <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
+                      <ApplicationCountIcon data-icon="inline-start" className="text-current" />
                       Попросить рефералку
                   </Link>
                 </Button>

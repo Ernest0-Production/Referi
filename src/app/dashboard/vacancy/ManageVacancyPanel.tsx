@@ -59,7 +59,7 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">
+          <Badge variant="secondary">
             <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
             {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
           </Badge>

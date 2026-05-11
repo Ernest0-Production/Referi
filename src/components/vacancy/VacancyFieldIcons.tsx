@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import {
   IconBrandAndroid,
   IconBrandApple,
@@ -13,12 +14,12 @@ import {
   IconDatabase,
   IconDots,
   IconHomeShare,
+  IconBadges,
   IconLayout,
   IconServer,
   IconShield,
   IconSend,
   IconStack2,
-  IconTopologyStar3,
   IconWorld,
 } from "@tabler/icons-react";
 import { type VacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
@@ -82,9 +83,9 @@ export function SalaryCurrencyIcon({
 }
 
 export function GradeIcon({ className }: { className?: string }) {
-  return <IconTopologyStar3 className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />;
+  return <IconBadges className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />;
 }
 
-export function ApplicationCountIcon({ className }: { className?: string }) {
-  return <IconSend className={cn(SELECT_TRIGGER_ICON, className)} aria-hidden />;
+export function ApplicationCountIcon({ className, ...props }: ComponentProps<typeof IconSend>) {
+  return <IconSend className={cn(SELECT_TRIGGER_ICON, className)} {...props} aria-hidden />;
 }

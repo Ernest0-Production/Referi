@@ -4,6 +4,7 @@ import { TRPCProvider } from "@/trpc/provider";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,8 +43,10 @@ export default function RootLayout({
         >
           <AuthSessionProvider>
             <TRPCProvider>
-              {children}
-              <Toaster position="top-center" richColors />
+              <TooltipProvider delayDuration={200}>
+                {children}
+                <Toaster position="top-center" richColors />
+              </TooltipProvider>
             </TRPCProvider>
           </AuthSessionProvider>
         </ThemeProvider>

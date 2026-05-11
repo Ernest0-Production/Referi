@@ -1,9 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { formatVacancySalaryRange, type VacancySalaryCurrency } from "@/lib/vacancySalaryCurrency";
+import {
+  REFERRER_COMPENSATION_TOOLTIP,
+  VACANCY_APPLICATION_COUNT_TOOLTIP,
+} from "@/lib/vacancyTooltipMessages";
 import {
   ApplicationCountIcon,
   GradeIcon,
@@ -82,38 +89,61 @@ export function VacancyCard({
 
   return (
     <Link href={href} className="group block transition-shadow hover:shadow-md">
-      <Card className="border-border bg-card overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
-        <CardHeader className="flex flex-col gap-3 space-y-0">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <span className="text-muted-foreground truncate text-sm font-medium">
-                {vacancy.companyName}
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="secondary" className="font-normal">
-                  <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
-                  {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
-                </Badge>
-                <Badge variant="secondary" className="font-normal">
-                  <GradeIcon className="text-current" />
-                  {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
-                </Badge>
-                {hasActiveSeekerApplication ? (
-                  <Badge
-                    variant="outline"
-                    className="border-primary/60 text-primary dark:border-primary/50 font-medium"
-                  >
-                    Активная заявка
+      <Card className="border-border bg-card relative overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
+        <time
+          className="text-muted-foreground pointer-events-none absolute top-4 right-4 z-10 max-w-[min(100%,14rem)] text-right text-xs leading-tight"
+          dateTime={vacancy.updatedAt.toISOString()}
+        >
+          {formatUpdatedRelative(vacancy.updatedAt)}
+        </time>
+        <CardHeader className="flex flex-col gap-3 space-y-0 pr-32 sm:pr-36">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="text-muted-foreground truncate text-sm font-medium">
+              {vacancy.companyName}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="font-normal">
+                    <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
+                    {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
                   </Badge>
-                ) : null}
-              </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={4}>
+                  Формат работы
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="font-normal">
+                    <GradeIcon className="text-current" />
+                    {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={4}>
+                  Грейд
+                </TooltipContent>
+              </Tooltip>
+              {hasActiveSeekerApplication ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/15 text-primary dark:bg-primary/25 border-transparent font-medium"
+                    >
+                      Активная заявка
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    sideOffset={4}
+                    className="max-w-xs text-left leading-snug"
+                  >
+                    У вас уже есть активная заявка по этой рефералке
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
             </div>
-            <time
-              className="text-muted-foreground shrink-0 text-xs"
-              dateTime={vacancy.updatedAt.toISOString()}
-            >
-              {formatUpdatedRelative(vacancy.updatedAt)}
-            </time>
           </div>
           <h3 className="text-foreground text-lg leading-snug font-bold tracking-tight md:text-xl">
             {vacancy.title}
@@ -121,38 +151,69 @@ export function VacancyCard({
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="font-normal">
-              <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
-              {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-normal">
+                  <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
+                  {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                Специализация
+              </TooltipContent>
+            </Tooltip>
             {salary ? (
-              <Badge
-                className={cn(
-                  "border-transparent font-medium",
-                  "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200",
-                )}
-              >
-                {salary}
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    className={cn(
+                      "border-transparent font-medium",
+                      "bg-emerald-600/15 text-emerald-800 dark:text-emerald-200",
+                    )}
+                  >
+                    {salary}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={4}>
+                  Зарплата
+                </TooltipContent>
+              </Tooltip>
             ) : null}
-            <Badge variant="outline" className="font-normal">
-              <ApplicationCountIcon className="text-current" />
-              {formatApplicationCountLabel(vacancy.applicationCount)}
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-normal">
+                  <ApplicationCountIcon className="text-current" />
+                  {formatApplicationCountLabel(vacancy.applicationCount)}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} className="max-w-xs text-left leading-snug">
+                {VACANCY_APPLICATION_COUNT_TOOLTIP}
+              </TooltipContent>
+            </Tooltip>
             {reward > 0 ? (
-              <Badge
-                className={cn(
-                  "border-transparent font-medium",
-                  "bg-red-600/15 text-red-800 dark:text-red-200",
-                )}
-              >
-                Компенсация:{" "}
-                {new Intl.NumberFormat("ru-RU", {
-                  style: "currency",
-                  currency: "RUB",
-                  maximumFractionDigits: 0,
-                }).format(reward)}
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    className={cn(
+                      "border-transparent font-medium",
+                      "bg-red-600/15 text-red-800 dark:text-red-200",
+                    )}
+                  >
+                    {`-${new Intl.NumberFormat("ru-RU", {
+                      style: "currency",
+                      currency: "RUB",
+                      maximumFractionDigits: 0,
+                    }).format(reward)}`}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={4}
+                  className="max-w-xs text-left leading-snug"
+                >
+                  {REFERRER_COMPENSATION_TOOLTIP}
+                </TooltipContent>
+              </Tooltip>
             ) : null}
           </div>
         </CardContent>

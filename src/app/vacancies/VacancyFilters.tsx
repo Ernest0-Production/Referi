@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter, IconStack2 } from "@tabler/icons-react";
-import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ChevronDown, RefreshCw, RotateCcw, Save, Trash2, XIcon } from "lucide-react";
 import {
   buildVacancyCatalogLoginReturnHref,
   flatParamsForPresetSave,
@@ -27,7 +27,7 @@ import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/m
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { SheetFooter, SheetTitle } from "@/components/ui/sheet";
+import { SheetClose, SheetFooter, SheetTitle } from "@/components/ui/sheet";
 import {
   InputGroup,
   InputGroupAddon,
@@ -458,11 +458,23 @@ export function VacancyFilters({
       )}
     >
       {isSheet ? (
-        <div className="flex shrink-0 flex-col gap-1 px-5 pt-10 pb-3">
-          <SheetTitle className="flex items-center gap-2 text-base font-semibold">
+        <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-3">
+          <SheetTitle className="flex min-w-0 flex-1 items-center gap-2 text-base font-semibold">
             <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
             Фильтры
           </SheetTitle>
+          <SheetClose asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0"
+              aria-label="Закрыть"
+            >
+              <XIcon />
+              <span className="sr-only">Закрыть</span>
+            </Button>
+          </SheetClose>
         </div>
       ) : (
         <CardHeader className="px-5 pb-3">
