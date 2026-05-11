@@ -1,4 +1,4 @@
-import { IconCoins, IconMessageCircleUser } from "@tabler/icons-react";
+import { IconCoins } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
@@ -179,12 +179,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                 />
               ) : (
                 <Button asChild size="lg" className="w-full sm:w-auto">
-                  <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
-                      <IconMessageCircleUser
-                        data-icon="inline-start"
-                        className="size-4 shrink-0"
-                        aria-hidden
-                      />
+                    <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
                       Попросить рефералку
                   </Link>
                 </Button>
