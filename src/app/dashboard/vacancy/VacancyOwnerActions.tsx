@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogHotkeyKbd } from "@/components/ui/kbd";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,7 +98,7 @@ export function VacancyOwnerActions({
       </div>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent showCloseButton>
+        <DialogContent showCloseButton actionHotkeys>
           <DialogHeader>
             <DialogTitle>Удалить рефералку?</DialogTitle>
             <DialogDescription>
@@ -106,18 +107,21 @@ export function VacancyOwnerActions({
             </DialogDescription>
           </DialogHeader>
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
               Отмена
+              <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
             </Button>
             <Button
               type="button"
               variant="destructive"
               disabled={del.isPending}
+              data-dialog-hotkey="confirm"
               onClick={() => del.mutate({ id: vacancyId })}
             >
               <IconTrash className="size-4 shrink-0" aria-hidden />
               {del.isPending ? "Удаление…" : "Удалить"}
+              <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
             </Button>
           </DialogFooter>
         </DialogContent>

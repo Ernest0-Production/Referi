@@ -17,6 +17,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatVacancyCatalogCountLabel } from "@/lib/vacancyCatalogCountLabel";
 import { type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
 
@@ -103,9 +104,16 @@ export function VacancyListChrome({
           </SelectContent>
         </Select>
 
-        <p className="text-muted-foreground shrink-0 text-end text-sm">
-          {formatVacancyCatalogCountLabel(total)}
-        </p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-muted-foreground shrink-0 cursor-default text-end text-sm">
+              {formatVacancyCatalogCountLabel(total)}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={4}>
+            Найденное количество рефералок
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

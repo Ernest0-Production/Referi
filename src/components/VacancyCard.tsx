@@ -128,6 +128,30 @@ export function VacancyCard({
                 Специализация
               </TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-normal">
+                  <GradeIcon className="text-current" />
+                  {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                Грейд
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-normal">
+                  <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
+                  {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                Формат работы
+              </TooltipContent>
+            </Tooltip>
             {salary ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -143,23 +167,6 @@ export function VacancyCard({
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   Зарплата
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-            {vacancy.applicationCount > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="font-normal">
-                    <ApplicationCountIcon className="text-current" />
-                    {formatApplicationCountLabel(vacancy.applicationCount)}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  sideOffset={4}
-                  className="max-w-xs text-left leading-snug"
-                >
-                  {VACANCY_APPLICATION_COUNT_TOOLTIP}
                 </TooltipContent>
               </Tooltip>
             ) : null}
@@ -189,30 +196,23 @@ export function VacancyCard({
                 </TooltipContent>
               </Tooltip>
             ) : null}
-          </div>
-          <div className="flex min-w-0 flex-wrap gap-1.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="secondary" className="font-normal">
-                  <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
-                  {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                Формат работы
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="secondary" className="font-normal">
-                  <GradeIcon className="text-current" />
-                  {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                Грейд
-              </TooltipContent>
-            </Tooltip>
+            {vacancy.applicationCount > 0 ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="font-normal">
+                    <ApplicationCountIcon className="text-current" />
+                    {formatApplicationCountLabel(vacancy.applicationCount)}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={4}
+                  className="max-w-xs text-left leading-snug"
+                >
+                  {VACANCY_APPLICATION_COUNT_TOOLTIP}
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
             {hasActiveSeekerApplication ? (
               <Tooltip>
                 <TooltipTrigger asChild>

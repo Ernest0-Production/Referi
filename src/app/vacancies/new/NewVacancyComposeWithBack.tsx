@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogHotkeyKbd } from "@/components/ui/kbd";
 
 const CATALOG_HREF = "/";
 
@@ -73,7 +74,7 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
             </CardContent>
           </Card>
           <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-            <DialogContent showCloseButton>
+            <DialogContent showCloseButton actionHotkeys>
               <DialogHeader>
                 <DialogTitle>Выйти без сохранения?</DialogTitle>
                 <DialogDescription>
@@ -83,16 +84,19 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
                   Остаться
+                  <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
                 </Button>
                 <Button
                   type="button"
                   variant="destructive"
+                  data-dialog-hotkey="confirm"
                   onClick={() => {
                     setConfirmOpen(false);
                     leave();
                   }}
                 >
                   Выйти
+                  <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
                 </Button>
               </DialogFooter>
             </DialogContent>

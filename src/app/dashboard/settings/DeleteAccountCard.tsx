@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogHotkeyKbd } from "@/components/ui/kbd";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
@@ -80,7 +81,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent showCloseButton={!del.isPending}>
+        <DialogContent showCloseButton={!del.isPending} actionHotkeys>
           <DialogHeader>
             <DialogTitle>Удалить аккаунт навсегда?</DialogTitle>
             <DialogDescription>
@@ -100,15 +101,18 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               onClick={() => setOpen(false)}
             >
               Отмена
+              <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
             </Button>
             <Button
               type="button"
               variant="destructive"
               disabled={del.isPending}
+              data-dialog-hotkey="confirm"
               onClick={() => del.mutate()}
             >
               <IconTrash className="size-4 shrink-0" aria-hidden />
               {del.isPending ? "Удаление…" : "Удалить навсегда"}
+              <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
             </Button>
           </DialogFooter>
         </DialogContent>
