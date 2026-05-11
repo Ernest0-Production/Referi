@@ -25,7 +25,11 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
-import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits, clampMoneyIntegerDigits } from "@/lib/moneyIntegerInput";
+import {
+  formatRuMoneyIntegerDisplay,
+  sanitizeMoneyIntegerDigits,
+  clampMoneyIntegerDigits,
+} from "@/lib/moneyIntegerInput";
 import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -156,7 +160,10 @@ function VacancyFilterSalaryBlock({
           value={formatRuMoneyIntegerDisplay(salaryFrom)}
           onChange={(e) =>
             setSalaryFrom(
-              clampMoneyIntegerDigits(sanitizeMoneyIntegerDigits(e.target.value), VACANCY_SALARY_AMOUNT_MAX),
+              clampMoneyIntegerDigits(
+                sanitizeMoneyIntegerDigits(e.target.value),
+                VACANCY_SALARY_AMOUNT_MAX,
+              ),
             )
           }
           onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
@@ -445,10 +452,10 @@ export function VacancyFilters({
       ) : (
         <Button
           type="button"
-            variant="default"
-            className={cn(ctaButtonClass, "h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold")}
-            onClick={handleSaveFiltersFooterAction}
-          >
+          variant="default"
+          className={cn(ctaButtonClass, "h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold")}
+          onClick={handleSaveFiltersFooterAction}
+        >
           <Save className="size-4 shrink-0" aria-hidden />
           Сохранить
         </Button>
@@ -628,7 +635,7 @@ export function VacancyFilters({
         </SheetFooter>
       ) : (
         <CardFooter className="border-border bg-card flex flex-col gap-3 border-t px-5 py-4">
-            {combinedFooter}
+          {combinedFooter}
         </CardFooter>
       )}
 
@@ -731,11 +738,11 @@ export function VacancyFilters({
                 const params =
                   presetDialogSourceParams != null
                     ? flatParamsForPresetSave(
-                      mergeVacancyListFlat(
-                        { page: "1" },
-                        presetParamsFromJson(presetDialogSourceParams),
-                      ),
-                    )
+                        mergeVacancyListFlat(
+                          { page: "1" },
+                          presetParamsFromJson(presetDialogSourceParams),
+                        ),
+                      )
                     : flatParamsForPresetSave(currentParams);
                 createPreset.mutate({ name, params });
               }}

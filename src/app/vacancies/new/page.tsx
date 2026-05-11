@@ -30,7 +30,7 @@ export default async function NewVacancyPage() {
               />
             ) : (
               <NewVacancyComposeWithBack
-                  title="Разместить рефералку"
+                title="Разместить рефералку"
                 subtitle={`Доступных попыток: ${me.availableAttempts} из 3`}
                 showForm={false}
                 emptyState={
