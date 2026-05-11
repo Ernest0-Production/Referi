@@ -1,6 +1,6 @@
 "use client";
 
-import { IconFilter } from "@tabler/icons-react";
+import { IconFilter, IconFilterFilled } from "@tabler/icons-react";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { ComponentProps } from "react";
@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import type { AppRouter } from "@/server/trpc/root";
 import {
   findMatchingVacancySearchPresetId,
+  isVacancyCatalogFlatBaseline,
   mergeVacancyListFlat,
   presetParamsFromJson,
   vacancyListFlatToSearchParams,
@@ -42,6 +43,7 @@ type VacancyFiltersProps = ComponentProps<typeof VacancyFilters>;
 
 function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
   const [open, setOpen] = useState(false);
+  const filtersActive = !isVacancyCatalogFlatBaseline(props.currentParams);
 
   return (
     <>
@@ -65,7 +67,11 @@ function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
         )}
         onClick={() => setOpen(true)}
       >
-        <IconFilter className="size-6 shrink-0" aria-hidden stroke={1.75} />
+        {filtersActive ? (
+          <IconFilterFilled className="size-6 shrink-0" aria-hidden />
+        ) : (
+          <IconFilter className="size-6 shrink-0" aria-hidden stroke={1.75} />
+        )}
       </Button>
     </>
   );
@@ -242,6 +248,8 @@ export function VacancyCatalogClient({
             presets={presets}
             value={savedPresetCarouselValue}
             onValueChange={handleSavedPresetCarouselChange}
+            onReset={resetCatalog}
+            showReset={!isVacancyCatalogFlatBaseline(params)}
           />
         ) : null}
         <VacancyListChrome

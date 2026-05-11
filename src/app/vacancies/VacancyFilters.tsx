@@ -55,6 +55,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogHotkeyKbd } from "@/components/ui/kbd";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -301,6 +302,7 @@ export function VacancyFilters({
         if (cancelled) return;
         const el = presetNameSaveInputRef.current;
         if (!el) return;
+        el.focus();
         const len = el.value.length;
         el.setSelectionRange(len, len);
       });
@@ -718,7 +720,7 @@ export function VacancyFilters({
           if (!open) setPresetIdPendingDelete(null);
         }}
       >
-        <DialogContent showCloseButton>
+        <DialogContent showCloseButton actionHotkeys>
           <DialogHeader>
             <DialogTitle>Удалить фильтр?</DialogTitle>
             <DialogDescription>
@@ -732,7 +734,7 @@ export function VacancyFilters({
               )}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -742,11 +744,13 @@ export function VacancyFilters({
               }}
             >
               Отмена
+              <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
             </Button>
             <Button
               type="button"
               variant="destructive"
               disabled={!presetIdPendingDelete || deletePreset.isPending}
+              data-dialog-hotkey="confirm"
               onClick={() => {
                 if (!presetIdPendingDelete) return;
                 deletePreset.mutate({ id: presetIdPendingDelete });
@@ -754,6 +758,7 @@ export function VacancyFilters({
             >
               <Trash2 className="size-4 shrink-0" aria-hidden />
               Удалить
+              <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -767,7 +772,7 @@ export function VacancyFilters({
           if (!open) setPresetDialogSourceParams(null);
         }}
       >
-        <DialogContent>
+        <DialogContent actionHotkeys>
           <DialogHeader>
             <DialogTitle>Сохранить фильтр</DialogTitle>
           </DialogHeader>
@@ -803,12 +808,14 @@ export function VacancyFilters({
                 ) : null}
               </Field>
             </FieldGroup>
-            <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setSaveOpen(false)}>
                 Отмена
+                <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
               </Button>
-              <Button type="submit" disabled={createPreset.isPending}>
+              <Button type="submit" disabled={createPreset.isPending} data-dialog-hotkey="confirm">
                 Сохранить
+                <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
               </Button>
             </DialogFooter>
           </form>

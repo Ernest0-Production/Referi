@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogHotkeyKbd } from "@/components/ui/kbd";
 import { useVacancyDashboardFormDirtyContext } from "./VacancyDashboardFormDirtyContext";
 
 const DASHBOARD_HOME = "/";
@@ -62,7 +63,7 @@ export function DashboardVacancyBackButton({ label }: { label: string }) {
       </Button>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent showCloseButton>
+        <DialogContent showCloseButton actionHotkeys>
           <DialogHeader>
             <DialogTitle>Отменить изменения?</DialogTitle>
             <DialogDescription>Есть несохранённые правки. Выйти без сохранения?</DialogDescription>
@@ -70,9 +71,16 @@ export function DashboardVacancyBackButton({ label }: { label: string }) {
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
               Остаться
+              <DialogHotkeyKbd className="ml-1">Esc</DialogHotkeyKbd>
             </Button>
-            <Button type="button" variant="destructive" onClick={confirmLeave}>
+            <Button
+              type="button"
+              variant="destructive"
+              data-dialog-hotkey="confirm"
+              onClick={confirmLeave}
+            >
               Выйти
+              <DialogHotkeyKbd className="ml-1">⏎</DialogHotkeyKbd>
             </Button>
           </DialogFooter>
         </DialogContent>
