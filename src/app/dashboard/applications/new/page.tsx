@@ -56,16 +56,15 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
   return (
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6 md:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>
-            <p className="text-muted-foreground text-sm">
-              {vacancy.title} · {vacancy.companyName}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/vacancies/${vacancyId}`}>← Назад к рефералке</Link>
-          </Button>
+        <Button variant="ghost" size="sm" className="w-fit" asChild>
+          <Link href={`/vacancies/${vacancyId}`}>← Рефералка</Link>
+        </Button>
+
+        <div className="flex flex-col gap-1">
+          <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>
+          <p className="text-muted-foreground text-sm">
+            {vacancy.title} · {vacancy.companyName}
+          </p>
         </div>
 
         <Card>
