@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { firstQueryParam } from "@/lib/searchParams";
 import { trpc } from "@/trpc/server";
-import { sameOriginRefererPathname } from "@/lib/vacancyNavigationBackLabel";
 import { dashboardVacancyEditTrail, dashboardVacancyTrail } from "@/lib/navBreadcrumbTrail";
 import { CreateVacancyForm } from "./CreateVacancyForm";
 import { DashboardVacancyNav } from "./DashboardVacancyNav";
@@ -29,20 +28,14 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
   const me = await trpc.auth.me();
   const vacancy = await trpc.vacancies.myActive();
 
-  const refererPath = await sameOriginRefererPathname();
   const openedFromPublicVacancyDetail = Boolean(
     vacancy && editMode && fromVacancyParam === vacancy.id,
   );
 
   const breadcrumbSegments =
     vacancy && editMode
-      ? dashboardVacancyEditTrail(
-          refererPath,
-          vacancy.id,
-          vacancy.title,
-          openedFromPublicVacancyDetail,
-        )
-      : dashboardVacancyTrail(refererPath, vacancy ? "Моя рефералка" : "Создание рефералки");
+      ? dashboardVacancyEditTrail(vacancy.id, vacancy.title, openedFromPublicVacancyDetail)
+      : dashboardVacancyTrail(vacancy ? "Моя рефералка" : "Создание рефералки");
 
   return (
     <main className="flex-1">

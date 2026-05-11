@@ -2,7 +2,6 @@ import { IconCoins } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { sameOriginRefererPathname } from "@/lib/vacancyNavigationBackLabel";
 import { publicVacancyDetailTrail } from "@/lib/navBreadcrumbTrail";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
@@ -53,8 +52,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
       maximumFractionDigits: 0,
     }).format(v);
 
-  const refererPath = await sameOriginRefererPathname();
-  const vacancyBreadcrumbSegments = publicVacancyDetailTrail(refererPath, id, vacancy.title);
+  const vacancyBreadcrumbSegments = publicVacancyDetailTrail(vacancy.title);
 
   return (
     <main className="min-h-screen bg-[var(--app-page-surface)]">

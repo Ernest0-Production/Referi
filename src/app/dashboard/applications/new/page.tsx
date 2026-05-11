@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { firstQueryParam } from "@/lib/searchParams";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationNewTrail } from "@/lib/navBreadcrumbTrail";
-import { sameOriginRefererPathname } from "@/lib/vacancyNavigationBackLabel";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
@@ -57,7 +56,6 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
 
   const vacancy = { ...v, me };
 
-  const refererPath = await sameOriginRefererPathname();
   const openedFromPublicVacancyDetail = fromVacancyParam === vacancyId;
 
   return (
@@ -65,7 +63,6 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
       <div className={PAGE_COLUMN_CLASS}>
         <AppNavBreadcrumb
           segments={dashboardApplicationNewTrail(
-            refererPath,
             vacancyId,
             vacancy.title,
             openedFromPublicVacancyDetail,
