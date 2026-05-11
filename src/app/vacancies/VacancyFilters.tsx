@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconFilter, IconStack2 } from "@tabler/icons-react";
@@ -26,6 +26,7 @@ import {
   VACANCY_SALARY_CURRENCY_VALUES,
   type VacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
+import { vacancySearchPresetNameWithRandomBadge } from "@/lib/vacancySearchPresetNameBadge";
 import { formatRuMoneyIntegerDisplay, sanitizeMoneyIntegerDigits } from "@/lib/moneyIntegerInput";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ import {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -72,6 +74,48 @@ import {
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
 import { cn } from "@/lib/utils";
+
+function VacancyCatalogActivePresetNameRow({
+  serverName,
+  deletePending,
+  onCommit,
+}: {
+  serverName: string;
+  deletePending: boolean;
+  onCommit: (trimmed: string) => void;
+}) {
+  const [draft, setDraft] = useState(serverName);
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- синхронизация с сервером после refresh / переименования пресета
+    setDraft(serverName);
+  }, [serverName]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="vacancy-preset-name-display" className="text-sm font-medium">
+        Название фильтра
+      </Label>
+      <Input
+        id="vacancy-preset-name-display"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        maxLength={80}
+        disabled={deletePending}
+        onBlur={(e) => {
+          const trimmed = e.currentTarget.value.trim();
+          if (trimmed === "") {
+            toast.error("Введите название фильтра");
+            setDraft(serverName);
+            return;
+          }
+          if (trimmed === serverName) return;
+          onCommit(trimmed);
+        }}
+        className="bg-card border-border h-9 shadow-sm"
+      />
+    </div>
+  );
+}
 
 function duplicateVacancyPresetDisplayName(sourceName: string): string {
   const base = sourceName.trim() || "Фильтр";
@@ -219,7 +263,7 @@ interface Props {
   variant?: "default" | "sheet";
   /** После авторизации с каталога: один раз открыть диалог сохранения фильтров. */
   resumeVacancyPresetSave?: boolean;
-  /** Дополнительное действие по кнопке «Применить» (например закрытие мобильного `Sheet`). */
+  /** После сохранения набора в диалоге или после подтверждённого удаления пресета: например закрытие мобильного `Sheet`. */
   onApplyFilters?: () => void;
   /** После успешного создания пресета в диалоге — выбрать его в каталоге. */
   onVacancySearchPresetCreated?: (row: { id: string; params: unknown }) => void;
@@ -253,6 +297,7 @@ export function VacancyFilters({
     if (!resumeVacancyPresetSave || !isLoggedIn || autoOpenedSaveAfterAuth.current) return;
     autoOpenedSaveAfterAuth.current = true;
     setPresetDialogSourceParams(null);
+    setPresetName(vacancySearchPresetNameWithRandomBadge(""));
     setSaveOpen(true);
   }, [resumeVacancyPresetSave, isLoggedIn]);
 
@@ -266,6 +311,7 @@ export function VacancyFilters({
       await utils.vacancySearchPresets.list.invalidate();
       await router.refresh();
       onVacancySearchPresetCreated?.({ id: data.id, params: data.params });
+      onApplyFilters?.();
     },
     onError: (e) => toast.error(e.message || "Не удалось сохранить"),
   });
@@ -292,6 +338,7 @@ export function VacancyFilters({
       setPresetIdPendingDelete(null);
       await utils.vacancySearchPresets.list.invalidate();
       router.refresh();
+      onApplyFilters?.();
     },
     onError: (e) => toast.error(e.message || "Не удалось удалить"),
   });
@@ -373,38 +420,59 @@ export function VacancyFilters({
   const isSheet = variant === "sheet";
 
   function handleSaveFiltersFooterAction() {
-    onApplyFilters?.();
     if (!isSheet) {
       document
         .querySelector("[data-vacancy-catalog-main]")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
     if (!isLoggedIn) {
+      onApplyFilters?.();
       const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
       router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
       return;
     }
     setPresetDialogSourceParams(null);
-    setPresetName("");
+    setPresetName(vacancySearchPresetNameWithRandomBadge(""));
     setSaveOpen(true);
+  }
+
+  function submitVacancyPresetSaveDialog() {
+    if (createPreset.isPending) return;
+    const name = presetName.trim();
+    if (!name) {
+      setPresetNameInvalid(true);
+      return;
+    }
+    const params =
+      presetDialogSourceParams != null
+        ? flatParamsForPresetSave(
+            mergeVacancyListFlat({ page: "1" }, presetParamsFromJson(presetDialogSourceParams)),
+          )
+        : flatParamsForPresetSave(currentParams);
+    createPreset.mutate({ name, params });
   }
 
   const combinedFooter = (
     <div className="flex w-full min-w-0 items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="size-10 shrink-0 rounded-full"
-        disabled={vacancyFiltersResetDisabled}
-        onClick={() => {
-          onReset();
-          toast.success("Фильтр сброшен");
-        }}
-        aria-label="Сбросить фильтры"
-      >
-        <RotateCcw />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-10 shrink-0 rounded-full"
+            disabled={vacancyFiltersResetDisabled}
+            onClick={() => {
+              onReset();
+              toast.success("Фильтр сброшен");
+            }}
+            aria-label="Сбросить фильтры"
+          >
+            <RotateCcw />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">Сбросить фильтры</TooltipContent>
+      </Tooltip>
       <div className="min-w-0 flex-1" aria-hidden />
       {resolvedPresetId ? (
         <DropdownMenu>
@@ -421,17 +489,6 @@ export function VacancyFilters({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-48">
             <DropdownMenuItem
-              variant="destructive"
-              disabled={deletePreset.isPending}
-              onSelect={() => {
-                setPresetIdPendingDelete(resolvedPresetId);
-                setDeleteConfirmOpen(true);
-              }}
-            >
-              <Trash2 className="size-4 shrink-0" aria-hidden />
-              Удалить
-            </DropdownMenuItem>
-            <DropdownMenuItem
               disabled={createPreset.isPending || !resolvedPresetRow}
               onSelect={() => {
                 if (!resolvedPresetRow) return;
@@ -442,6 +499,18 @@ export function VacancyFilters({
             >
               <Copy className="size-4 shrink-0" aria-hidden />
               Дублировать
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              disabled={deletePreset.isPending}
+              onSelect={() => {
+                setPresetIdPendingDelete(resolvedPresetId);
+                setDeleteConfirmOpen(true);
+              }}
+            >
+              <Trash2 className="size-4 shrink-0" aria-hidden />
+              Удалить
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -507,29 +576,12 @@ export function VacancyFilters({
         )}
       >
         {resolvedPresetRow && resolvedPresetId ? (
-          <div key={resolvedPresetId} className="flex flex-col gap-2">
-            <Label htmlFor="vacancy-preset-name-display" className="text-sm font-medium">
-              Название фильтра
-            </Label>
-            <Input
-              id="vacancy-preset-name-display"
-              maxLength={80}
-              defaultValue={resolvedPresetRow.name}
-              disabled={deletePreset.isPending}
-              onBlur={(e) => {
-                const raw = e.currentTarget.value;
-                const trimmed = raw.trim();
-                if (trimmed === "") {
-                  toast.error("Введите название фильтра");
-                  e.currentTarget.value = resolvedPresetRow.name;
-                  return;
-                }
-                if (trimmed === resolvedPresetRow.name) return;
-                updatePreset.mutate({ id: resolvedPresetId, name: trimmed });
-              }}
-              className="bg-card border-border h-9 shadow-sm"
-            />
-          </div>
+          <VacancyCatalogActivePresetNameRow
+            key={resolvedPresetId}
+            serverName={resolvedPresetRow.name}
+            deletePending={deletePreset.isPending}
+            onCommit={(trimmed) => updatePreset.mutate({ id: resolvedPresetId, name: trimmed })}
+          />
         ) : null}
 
         <div className="flex flex-col gap-2">
@@ -699,60 +751,48 @@ export function VacancyFilters({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Сохранить фильтры</DialogTitle>
+            <DialogTitle>Сохранить фильтр</DialogTitle>
           </DialogHeader>
-          <FieldGroup>
-            <Field data-invalid={presetNameInvalid ? true : undefined}>
-              <FieldLabel htmlFor="preset-name">Название</FieldLabel>
-              <Input
-                id="preset-name"
-                value={presetName}
-                onChange={(e) => {
-                  setPresetName(e.target.value);
-                  setPresetNameInvalid(false);
-                }}
-                maxLength={80}
-                placeholder="Например: Удалённый бэкенд"
-                className="h-9"
-                aria-invalid={presetNameInvalid}
-                aria-describedby="preset-name-desc"
-              />
-              <FieldDescription
-                id="preset-name-desc"
-                className={presetNameInvalid ? "text-destructive" : undefined}
-              >
-                {presetNameInvalid ? "Введите название" : "До 80 символов."}
-              </FieldDescription>
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="flex flex-row gap-2 sm:justify-end">
-            <Button type="button" variant="outline" onClick={() => setSaveOpen(false)}>
-              Отмена
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                const name = presetName.trim();
-                if (!name) {
-                  setPresetNameInvalid(true);
-                  return;
-                }
-                const params =
-                  presetDialogSourceParams != null
-                    ? flatParamsForPresetSave(
-                        mergeVacancyListFlat(
-                          { page: "1" },
-                          presetParamsFromJson(presetDialogSourceParams),
-                        ),
-                      )
-                    : flatParamsForPresetSave(currentParams);
-                createPreset.mutate({ name, params });
-              }}
-              disabled={createPreset.isPending}
-            >
-              Сохранить
-            </Button>
-          </DialogFooter>
+          <form
+            className="contents"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitVacancyPresetSaveDialog();
+            }}
+          >
+            <FieldGroup>
+              <Field data-invalid={presetNameInvalid ? true : undefined}>
+                <FieldLabel htmlFor="preset-name">Введите название</FieldLabel>
+                <Input
+                  id="preset-name"
+                  value={presetName}
+                  onChange={(e) => {
+                    setPresetName(e.target.value);
+                    setPresetNameInvalid(false);
+                  }}
+                  maxLength={80}
+                  placeholder="Например: Удалённый бэкенд"
+                  className="h-9"
+                  aria-invalid={presetNameInvalid}
+                  aria-describedby={presetNameInvalid ? "preset-name-desc" : undefined}
+                />
+                {presetNameInvalid ? (
+                  <FieldDescription id="preset-name-desc" className="text-destructive">
+                    Укажите непустое название
+                  </FieldDescription>
+                ) : null}
+              </Field>
+            </FieldGroup>
+            <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => setSaveOpen(false)}>
+                Отмена
+              </Button>
+              <Button type="submit" disabled={createPreset.isPending}>
+                Сохранить
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </Card>
