@@ -63,6 +63,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   GradeIcon,
   SalaryCurrencyIcon,
@@ -347,9 +348,9 @@ export function VacancyFilters({
     return presets.find((p) => p.id === presetIdPendingDelete)?.name ?? "";
   }, [presetIdPendingDelete, presets]);
 
-  const ctaButtonClass = cn(
-    "h-10 gap-2 font-semibold shadow-none",
-    "bg-[var(--app-nav-cta-bg)] text-[var(--app-nav-cta-fg)] hover:bg-[var(--app-nav-cta-hover)]",
+  const hasVacancyFiltersToSave = useMemo(
+    () => Object.keys(flatParamsForPresetSave(currentParams)).length > 0,
+    [currentParams],
   );
 
   const specialtyValues = parseVacancyListSpecialtyCsvParam(currentParams.specialty) ?? [];
@@ -394,59 +395,63 @@ export function VacancyFilters({
       >
         <RotateCcw />
       </Button>
+      <div className="min-w-0 flex-1" aria-hidden />
       {resolvedPresetId ? (
-        <>
-          <div className="min-w-0 flex-1" aria-hidden />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-10 shrink-0 rounded-full"
-                aria-label="Действия с сохранённым фильтром"
-              >
-                <MoreVertical className="size-4" aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-48">
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={deletePreset.isPending}
-                onSelect={() => {
-                  setPresetIdPendingDelete(resolvedPresetId);
-                  setDeleteConfirmOpen(true);
-                }}
-              >
-                <Trash2 className="size-4 shrink-0" aria-hidden />
-                Удалить
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={createPreset.isPending || !resolvedPresetRow}
-                onSelect={() => {
-                  if (!resolvedPresetRow) return;
-                  setPresetDialogSourceParams(resolvedPresetRow.params);
-                  setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
-                  setSaveOpen(true);
-                }}
-              >
-                <Copy className="size-4 shrink-0" aria-hidden />
-                Дублировать
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </>
-      ) : (
-        <Button
-          type="button"
-            variant="default"
-            className={cn(ctaButtonClass, "h-10 min-w-0 flex-1 gap-2 rounded-xl font-semibold")}
-            onClick={handleSaveFiltersFooterAction}
-          >
-          <Save className="size-4 shrink-0" aria-hidden />
-          Сохранить
-        </Button>
-      )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-10 shrink-0 rounded-full"
+              aria-label="Действия с сохранённым фильтром"
+            >
+              <MoreVertical className="size-4" aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-48">
+            <DropdownMenuItem
+              variant="destructive"
+              disabled={deletePreset.isPending}
+              onSelect={() => {
+                setPresetIdPendingDelete(resolvedPresetId);
+                setDeleteConfirmOpen(true);
+              }}
+            >
+              <Trash2 className="size-4 shrink-0" aria-hidden />
+              Удалить
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={createPreset.isPending || !resolvedPresetRow}
+              onSelect={() => {
+                if (!resolvedPresetRow) return;
+                setPresetDialogSourceParams(resolvedPresetRow.params);
+                setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
+                setSaveOpen(true);
+              }}
+            >
+              <Copy className="size-4 shrink-0" aria-hidden />
+              Дублировать
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : hasVacancyFiltersToSave ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-10 shrink-0 rounded-full"
+              onClick={handleSaveFiltersFooterAction}
+              aria-label="Сохранить фильтр"
+            >
+              <Save className="size-4 shrink-0" aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Сохранить фильтр</TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   );
 
