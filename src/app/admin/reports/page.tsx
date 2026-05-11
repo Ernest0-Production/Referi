@@ -1,19 +1,19 @@
 import { trpc } from "@/trpc/server";
+import { ru } from "@/locales";
 import { ResolveReportButton } from "./ResolveReportButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default async function AdminReportsPage() {
   const reports = await trpc.moderation.abuseReports({ resolved: false });
+  const a = ru.admin.reports;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-foreground text-2xl font-bold">Жалобы</h1>
+        <h1 className="text-foreground text-2xl font-bold">{a.title}</h1>
         <p className="text-muted-foreground text-sm">
-          {reports.length === 0
-            ? "Нет нерассмотренных жалоб."
-            : `${reports.length} жалоб(а) ожидают рассмотрения.`}
+          {reports.length === 0 ? a.empty : a.count(reports.length)}
         </p>
       </div>
 
@@ -30,7 +30,7 @@ export default async function AdminReportsPage() {
                 ) : null}
               </p>
               <p className="text-muted-foreground text-sm">
-                От: {r.reporter.displayName ?? r.reporter.id}
+                {a.from} {r.reporter.displayName ?? r.reporter.id}
               </p>
               {r.comment ? <p className="text-muted-foreground text-sm">«{r.comment}»</p> : null}
               <p className="text-muted-foreground text-xs">
@@ -42,7 +42,7 @@ export default async function AdminReportsPage() {
               </p>
             </div>
             <Badge variant="destructive" className="shrink-0">
-              Новая
+              {a.badgeNew}
             </Badge>
           </CardHeader>
           <CardContent>

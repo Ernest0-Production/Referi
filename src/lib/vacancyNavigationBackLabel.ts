@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { ru } from "@/locales";
 
 type VacancyBackLabelContext = "dashboardVacancy" | "vacancyCatalogDetail";
 
@@ -27,8 +28,10 @@ function vacancyBackLabelFromRefererPath(
   context: VacancyBackLabelContext,
   currentVacancyDetailPath?: string,
 ): string {
+  const b = ru.site.vacancyBack;
+
   if (!pathnameWithSearch) {
-    return context === "dashboardVacancy" ? "На главную" : "Все рефералки";
+    return context === "dashboardVacancy" ? b.dashboardDefault : b.catalogDefault;
   }
 
   const pathname = pathnameOnly(pathnameWithSearch);
@@ -38,54 +41,54 @@ function vacancyBackLabelFromRefererPath(
     currentVacancyDetailPath &&
     pathname === currentVacancyDetailPath
   ) {
-    return "Все рефералки";
+    return b.allVacancies;
   }
 
   if (pathname === "/dashboard/vacancy" || pathname.startsWith("/dashboard/vacancy/")) {
-    return context === "dashboardVacancy" ? "На главную" : "Моя рефералка";
+    return context === "dashboardVacancy" ? b.dashboardDefault : b.myVacancy;
   }
 
   if (pathname.startsWith("/dashboard/applications/new")) {
-    return "Попросить рефералку";
+    return b.requestVacancy;
   }
   if (pathname.startsWith("/dashboard/applications")) {
-    return "Мои заявки";
+    return b.myApplications;
   }
   if (pathname.startsWith("/dashboard/settings")) {
-    return "Настройки аккаунта";
+    return b.accountSettings;
   }
   if (pathname.startsWith("/dashboard/attempts")) {
-    return "Пул попыток";
+    return b.attemptsPool;
   }
   if (pathname.startsWith("/dashboard/profile")) {
-    return "Профиль";
+    return b.profile;
   }
   if (pathname.startsWith("/dashboard")) {
-    return "На главную";
+    return b.dashboardHome;
   }
   if (pathname.startsWith("/vacancies/") && pathname !== "/vacancies/new") {
-    return "Рефералка";
+    return b.vacancySingular;
   }
   if (pathname.startsWith("/vacancies/new")) {
-    return "Разместить рефералку";
+    return b.newVacancy;
   }
   if (pathname === "/") {
-    return "Все рефералки";
+    return b.allVacancies;
   }
   if (pathname.startsWith("/login")) {
-    return "Вход";
+    return b.login;
   }
   if (pathname.startsWith("/registration")) {
-    return "Регистрация";
+    return b.registration;
   }
   if (pathname.startsWith("/admin")) {
-    return "Админка";
+    return b.admin;
   }
   if (pathname.startsWith("/pay/")) {
-    return "Оплата";
+    return b.payment;
   }
 
-  return context === "dashboardVacancy" ? "На главную" : "Все рефералки";
+  return context === "dashboardVacancy" ? b.dashboardDefault : b.catalogDefault;
 }
 
 /**
@@ -115,10 +118,11 @@ export function vacancyCatalogDetailBackLabelFromPathname(
 export function vacancyDashboardEditBackLabelFromPathname(
   pathnameWithSearch: string | null,
 ): string {
-  if (!pathnameWithSearch) return "Просмотр";
+  const b = ru.site.vacancyBack;
+  if (!pathnameWithSearch) return b.editPreview;
   const pathname = pathnameOnly(pathnameWithSearch);
   if (pathname === "/dashboard/vacancy" || pathname.startsWith("/dashboard/vacancy/")) {
-    return "Просмотр";
+    return b.editPreview;
   }
   return vacancyDashboardBackLabelFromPathname(pathnameWithSearch);
 }

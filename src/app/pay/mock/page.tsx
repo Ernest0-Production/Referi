@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { PayMockContent } from "./PayMockContent";
 import { Card, CardContent } from "@/components/ui/card";
+import { ru } from "@/locales";
 
 export default async function PayMockPage() {
   return (
@@ -12,7 +13,7 @@ export default async function PayMockPage() {
           fallback={
             <Card className="w-full max-w-md">
               <CardContent className="text-muted-foreground py-10 text-center">
-                Загрузка…
+                {ru.common.loading}
               </CardContent>
             </Card>
           }

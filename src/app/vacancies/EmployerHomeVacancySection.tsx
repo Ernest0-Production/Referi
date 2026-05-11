@@ -6,17 +6,18 @@ import type { AppRouter } from "@/server/trpc/root";
 import { trpcReact } from "@/trpc/client";
 import { VacancyCard } from "@/components/VacancyCard";
 import { Button } from "@/components/ui/button";
+import { ru } from "@/locales";
 
 type MyActiveOut = inferRouterOutputs<AppRouter>["vacancies"]["myActive"];
+
+const E = ru.vacancies.employerSection;
 
 function CreateVacancyHomeCta({ href }: { href: string }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-muted-foreground max-w-xl text-sm">
-        Хочешь найти коллегу себе в команду? Размести рефералку!
-      </p>
+      <p className="text-muted-foreground max-w-xl text-sm">{E.pitch}</p>
       <Button asChild className="shrink-0">
-        <Link href={href}>🙌 Я хочу зарефералить</Link>
+        <Link href={href}>{E.cta}</Link>
       </Button>
     </div>
   );
@@ -48,10 +49,10 @@ export function EmployerHomeVacancySection({
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">
         <div className="flex flex-row items-center justify-between gap-2">
           <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
-            Ваша рефералка
+            {E.yourVacancy}
           </h2>
           <Button variant="link" className="text-primary h-auto px-0 py-0 text-sm" asChild>
-            <Link href="/dashboard/vacancy">Управление</Link>
+            <Link href="/dashboard/vacancy">{E.manage}</Link>
           </Button>
         </div>
         <VacancyCard vacancy={vacancy} detailHref={detailHref} />

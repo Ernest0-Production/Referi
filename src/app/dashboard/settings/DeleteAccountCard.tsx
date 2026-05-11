@@ -15,6 +15,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ru } from "@/locales";
+
+const D = ru.dashboard.deleteAccount;
+const C = ru.common;
 
 export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
   const [open, setOpen] = useState(false);
@@ -44,24 +48,19 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               aria-hidden
               stroke={1.75}
             />
-            Опасная зона
+            {D.title}
           </CardTitle>
           <CardDescription className="flex flex-col gap-3">
-            <p className="text-foreground/90 font-medium">Удаление аккаунта безвозвратно.</p>
+            <p className="text-foreground/90 font-medium">{D.lead}</p>
             <div className="flex flex-col gap-1.5">
-              <p>Будет удалено:</p>
+              <p>{D.willDeleteTitle}</p>
               <ul className="list-disc space-y-1 pl-5">
-                <li>профиль и связанные данные;</li>
-                <li>ваши рефералки;</li>
-                <li>заявки — в том числе заявки других пользователей на ваши рефералки;</li>
-                <li>сохранённые пресеты поиска в каталоге;</li>
-                <li>подписка и прочие данные в сервисе.</li>
+                {D.bullets.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
               </ul>
             </div>
-            <p>
-              Неиспользованные оплаченные токены запроса и удерживаемое эскроу возвращаются по
-              правилам платежей, если применимо.
-            </p>
+            <p>{D.refundNote}</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -74,7 +73,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
             }}
           >
             <IconTrash data-icon="inline-start" className="size-4 shrink-0" aria-hidden />
-            Удалить аккаунт
+            {D.open}
           </Button>
         </CardContent>
       </Card>
@@ -82,10 +81,8 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent showCloseButton={!del.isPending}>
           <DialogHeader>
-            <DialogTitle>Удалить аккаунт навсегда?</DialogTitle>
-            <DialogDescription>
-              Это действие нельзя отменить. Все ваши данные в Referi будут удалены.
-            </DialogDescription>
+            <DialogTitle>{D.dialogTitle}</DialogTitle>
+            <DialogDescription>{D.dialogDescription}</DialogDescription>
           </DialogHeader>
           {error ? (
             <Alert variant="destructive">
@@ -99,7 +96,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               disabled={del.isPending}
               onClick={() => setOpen(false)}
             >
-              Отмена
+              {C.cancel}
             </Button>
             <Button
               type="button"
@@ -108,7 +105,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               onClick={() => del.mutate()}
             >
               <IconTrash className="size-4 shrink-0" aria-hidden />
-              {del.isPending ? "Удаление…" : "Удалить навсегда"}
+              {del.isPending ? D.confirmPending : D.confirm}
             </Button>
           </DialogFooter>
         </DialogContent>

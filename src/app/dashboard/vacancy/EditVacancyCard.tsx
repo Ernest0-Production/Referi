@@ -13,6 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ru } from "@/locales";
+
+const V = ru.dashboard.vacancy;
 
 const DASHBOARD_VACANCY = "/dashboard/vacancy";
 
@@ -68,7 +71,7 @@ export function EditVacancyCard({
       </Button>
       <Card>
         <CardHeader>
-          <CardTitle>Редактирование рефералки</CardTitle>
+          <CardTitle>{V.editCardTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           <CreateVacancyForm
@@ -83,15 +86,15 @@ export function EditVacancyCard({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent showCloseButton>
           <DialogHeader>
-            <DialogTitle>Отменить изменения?</DialogTitle>
-            <DialogDescription>Есть несохранённые правки. Выйти без сохранения?</DialogDescription>
+            <DialogTitle>{V.dirtyTitle}</DialogTitle>
+            <DialogDescription>{V.dirtyDescription}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-              Остаться
+              {V.stay}
             </Button>
             <Button type="button" variant="destructive" onClick={confirmLeave}>
-              Выйти
+              {V.leave}
             </Button>
           </DialogFooter>
         </DialogContent>

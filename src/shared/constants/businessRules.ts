@@ -37,13 +37,13 @@ export const BUSINESS_RULES = {
   // Paid application token validity (days)
   PAID_APPLICATION_TOKEN_VALIDITY_DAYS: 30,
 
-  /** Подписка PRO: длина оплаченного периода */
+  /** PRO subscription: paid period length */
   SUBSCRIPTION_PERIOD_MS: 30 * 24 * 60 * 60 * 1000,
 
-  /** Допуск при сверке конца периода в джобе продления (мс) */
+  /** Tolerance (ms) when comparing period end in renewal job */
   SUBSCRIPTION_RENEWAL_ANCHOR_TOLERANCE_MS: 120_000,
 
-  /** Ретраи автосписания после PAST_DUE */
+  /** Retry count for auto-charge after PAST_DUE */
   SUBSCRIPTION_RETRY_MAX_ATTEMPTS: 4,
   SUBSCRIPTION_RETRY_DELAY_MS: 3 * 24 * 60 * 60 * 1000,
 } as const;

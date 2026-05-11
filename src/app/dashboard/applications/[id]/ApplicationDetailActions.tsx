@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { ru } from "@/locales";
 
 interface Props {
   applicationId: string;
@@ -22,6 +23,9 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
   const [showAbuse, setShowAbuse] = useState(false);
   const [abuseError, setAbuseError] = useState<string | null>(null);
   const [abuseSuccess, setAbuseSuccess] = useState(false);
+  const act = ru.applications.actions;
+  const ab = ru.applications.abuse;
+  const c = ru.common;
 
   function onSuccess() {
     router.refresh();
@@ -58,7 +62,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
             disabled={cancelMutation.isPending}
             onClick={() => cancelMutation.mutate({ applicationId: id })}
           >
-            {cancelMutation.isPending ? "…" : "Отозвать заявку"}
+            {cancelMutation.isPending ? c.ellipsis : act.withdrawDetail}
           </Button>
         )}
 
@@ -69,7 +73,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
             disabled={requestCancelMutation.isPending}
             onClick={() => requestCancelMutation.mutate({ applicationId: id })}
           >
-            {requestCancelMutation.isPending ? "…" : "Запросить отмену"}
+            {requestCancelMutation.isPending ? c.ellipsis : act.requestCancel}
           </Button>
         )}
 
@@ -80,7 +84,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
               disabled={acceptOfferMutation.isPending}
               onClick={() => acceptOfferMutation.mutate({ applicationId: id })}
             >
-              {acceptOfferMutation.isPending ? "…" : "Принять оффер"}
+              {acceptOfferMutation.isPending ? c.ellipsis : act.acceptOffer}
             </Button>
             <Button
               variant="outline"
@@ -88,7 +92,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
               disabled={reportRejectionMutation.isPending}
               onClick={() => reportRejectionMutation.mutate({ applicationId: id })}
             >
-              {reportRejectionMutation.isPending ? "…" : "Получил отказ"}
+              {reportRejectionMutation.isPending ? c.ellipsis : act.gotRejection}
             </Button>
           </>
         )}
@@ -103,16 +107,16 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
               setAbuseDetailError(null);
             }}
           >
-            Пожаловаться
+            {act.report}
           </Button>
         )}
       </div>
 
       {abuseSuccess ? (
         <Alert>
-          <AlertTitle>Жалоба зарегистрирована</AlertTitle>
+          <AlertTitle>{ab.successTitle}</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
-            <span>При необходимости уточнений можно связаться с модерацией по ссылке ниже.</span>
+            <span>{ab.successDescription}</span>
             <ModerationContactLink />
           </AlertDescription>
         </Alert>
@@ -121,12 +125,12 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
       {showAbuse ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Причина жалобы</CardTitle>
+            <CardTitle className="text-base">{ab.reasonTitle}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <FieldGroup>
               <Field data-invalid={abuseDetailError ? "true" : undefined}>
-                <FieldLabel htmlFor="abuse-detail">Опишите ситуацию</FieldLabel>
+                <FieldLabel htmlFor="abuse-detail">{ab.situationLabel}</FieldLabel>
                 <Textarea
                   id="abuse-detail"
                   rows={3}
@@ -137,13 +141,13 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
                     setAbuseDetailError(null);
                     setAbuseReason(e.target.value);
                   }}
-                  placeholder="Опишите, что произошло"
+                  placeholder={ab.situationPlaceholder}
                 />
                 <FieldDescription
                   id="abuse-detail-desc"
                   className={abuseDetailError ? "text-destructive" : undefined}
                 >
-                  {abuseDetailError ?? "Минимум 5 символов."}
+                  {abuseDetailError ?? ab.situationHint}
                 </FieldDescription>
               </Field>
             </FieldGroup>
@@ -159,7 +163,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
                 onClick={() => {
                   setAbuseDetailError(null);
                   if (abuseReason.trim().length < 5) {
-                    setAbuseDetailError("Опишите ситуацию (минимум 5 символов).");
+                    setAbuseDetailError(ab.situationError);
                     return;
                   }
                   abuseReportMutation.mutate({
@@ -168,10 +172,10 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
                   });
                 }}
               >
-                {abuseReportMutation.isPending ? "…" : "Отправить"}
+                {abuseReportMutation.isPending ? c.ellipsis : act.send}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setShowAbuse(false)}>
-                Отмена
+                {c.cancel}
               </Button>
             </div>
           </CardContent>

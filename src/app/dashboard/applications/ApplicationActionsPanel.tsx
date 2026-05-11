@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
+import { ru } from "@/locales";
 
 interface Props {
   applicationId: string;
@@ -12,6 +13,8 @@ interface Props {
 export function ApplicationActionsPanel({ applicationId, status }: Props) {
   const router = useRouter();
   const utils = trpcReact.useUtils();
+  const act = ru.applications.actions;
+  const c = ru.common;
 
   function refresh() {
     void utils.applications.myList.invalidate();
@@ -40,7 +43,7 @@ export function ApplicationActionsPanel({ applicationId, status }: Props) {
         disabled={cancelMutation.isPending}
         onClick={() => cancelMutation.mutate({ applicationId: id })}
       >
-        {cancelMutation.isPending ? "…" : "Отозвать"}
+        {cancelMutation.isPending ? c.ellipsis : act.withdraw}
       </Button>
     );
   }
@@ -53,7 +56,7 @@ export function ApplicationActionsPanel({ applicationId, status }: Props) {
         disabled={requestCancelMutation.isPending}
         onClick={() => requestCancelMutation.mutate({ applicationId: id })}
       >
-        {requestCancelMutation.isPending ? "…" : "Запросить отмену"}
+        {requestCancelMutation.isPending ? c.ellipsis : act.requestCancel}
       </Button>
     );
   }
@@ -66,7 +69,7 @@ export function ApplicationActionsPanel({ applicationId, status }: Props) {
           disabled={acceptOfferMutation.isPending}
           onClick={() => acceptOfferMutation.mutate({ applicationId: id })}
         >
-          {acceptOfferMutation.isPending ? "…" : "Принять оффер"}
+          {acceptOfferMutation.isPending ? c.ellipsis : act.acceptOffer}
         </Button>
         <Button
           variant="outline"
@@ -74,7 +77,7 @@ export function ApplicationActionsPanel({ applicationId, status }: Props) {
           disabled={reportRejectionMutation.isPending}
           onClick={() => reportRejectionMutation.mutate({ applicationId: id })}
         >
-          {reportRejectionMutation.isPending ? "…" : "Получил отказ"}
+          {reportRejectionMutation.isPending ? c.ellipsis : act.gotRejection}
         </Button>
       </div>
     );

@@ -1,12 +1,8 @@
+import { ru } from "@/locales";
+
 export const VACANCY_SALARY_CURRENCY_VALUES = ["RUB", "USD", "EUR"] as const;
 
 export type VacancySalaryCurrency = (typeof VACANCY_SALARY_CURRENCY_VALUES)[number];
-
-export const VACANCY_SALARY_CURRENCY_LABELS: Record<VacancySalaryCurrency, string> = {
-  RUB: "RUB — руб.",
-  USD: "USD — доллар",
-  EUR: "EUR — евро",
-};
 
 export function isVacancySalaryCurrency(v: string): v is VacancySalaryCurrency {
   return (VACANCY_SALARY_CURRENCY_VALUES as readonly string[]).includes(v);
@@ -18,7 +14,7 @@ function minorToMajor(amountMinor: string | bigint): number | null {
   return Math.round(n / 100);
 }
 
-/** Число без символа валюты и сам символ (для диапазонов без дублирования ₽/$/€). */
+/** Amount digits without currency symbol (for ranges without duplicating ₽/$/€). */
 function formatVacancySalaryMajorAmountAndSymbol(
   major: number,
   currency: VacancySalaryCurrency,
@@ -73,6 +69,7 @@ export function formatVacancySalaryRange(
     const symbol = a.symbol || b.symbol;
     return `${a.amount} — ${b.amount}${symbol ? ` ${symbol}` : ""}`;
   }
-  if (fromFull) return `от ${fromFull}`;
-  return `до ${toFull!}`;
+  const R = ru.vacancies.salaryRangeDisplay;
+  if (fromFull) return R.from(fromFull);
+  return R.to(toFull!);
 }

@@ -18,7 +18,7 @@ export function saveVacancyCreateDraft(data: VacancyCreateDraftFields): void {
   try {
     sessionStorage.setItem(VACANCY_CREATE_DRAFT_STORAGE_KEY, JSON.stringify(data));
   } catch {
-    // sessionStorage может быть недоступен (приватный режим / квота)
+    // sessionStorage may be unavailable (private mode / quota)
   }
 }
 

@@ -118,6 +118,7 @@ referi/
 │   │   └── utils/
 │   │       └── money.ts             # Конвертация копеек ↔ рубли
 │   ├── components/                  # Переиспользуемые UI-компоненты; оболочка навигации — [spec-ui-shell.md](spec-ui-shell.md)
+│   ├── locales/                     # Словарь ru для UI и серверных текстов — [spec-ui-i18n-ru.md](spec-ui-i18n-ru.md)
 │   └── lib/
 │       ├── prisma.ts                # Prisma Client singleton
 │       ├── redis.ts                 # Redis/BullMQ client

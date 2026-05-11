@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { refundEscrowOrThrow } from "@/server/services/paymentService";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
+import { ru } from "@/locales";
 
 export type SLAJobType =
   | "reaction-sla"
@@ -242,7 +243,7 @@ async function handleResumeHandoffSLA(applicationId: string) {
           amountKopecks: app.escrowTx.amountKopecks,
           netPayoutKopecks: app.escrowTx.netPayoutKopecks,
         },
-        description: "Возврат по истечении SLA передачи резюме",
+        description: ru.server.slaWorker.refundResumeSla,
       });
     } catch (err) {
       console.error("[SLA] Refund failed:", err);
@@ -266,7 +267,7 @@ async function handleResumeHandoffSLA(applicationId: string) {
       data: {
         referrerId: app.vacancy.referrerId,
         sanctionType: "RESUME_HANDOFF_BAN",
-        reason: "Не передал резюме HR в установленный срок",
+        reason: ru.server.slaWorker.resumeMissedReason,
         expiresAt: banExpiresAt,
         applicationId,
       },
@@ -334,7 +335,7 @@ async function handleCancelAckSLA(applicationId: string) {
           amountKopecks: app.escrowTx.amountKopecks,
           netPayoutKopecks: app.escrowTx.netPayoutKopecks,
         },
-        description: "Авто-возврат по запросу соискателя",
+        description: ru.server.slaWorker.refundSeekerRequest,
       });
     } catch (err) {
       console.error("[SLA] Cancel-auto refund failed:", err);

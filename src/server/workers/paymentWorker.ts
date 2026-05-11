@@ -11,6 +11,7 @@ import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentS
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { getPaymentQueue, type PaymentJobData } from "@/server/workers/paymentQueue";
 import { scheduleSubscriptionRenewRetry } from "@/server/workers/subscriptionRenewalScheduler";
+import { ru } from "@/locales";
 
 export type { PaymentJobData, PaymentJobType } from "@/server/workers/paymentQueue";
 
@@ -87,7 +88,7 @@ async function processJob(job: Job<PaymentJobData>) {
         idempotencyKey,
         dealId,
         amountKopecks: escrowTx.netPayoutKopecks,
-        description: `Реферальное вознаграждение по заявке ${applicationId}`,
+        description: ru.server.paymentWorker.reward(applicationId),
         yooMoneyWallet: dest,
         metadata: { referrerId: vacancy.referrerId, applicationId },
       });
@@ -124,7 +125,7 @@ async function processJob(job: Job<PaymentJobData>) {
           amountKopecks: app.escrowTx.amountKopecks,
           netPayoutKopecks: app.escrowTx.netPayoutKopecks,
         },
-        description: `Возврат по заявке ${applicationId}`,
+        description: ru.server.paymentWorker.refundApplication(applicationId),
       });
 
       await prisma.escrowTransaction.update({
@@ -143,7 +144,7 @@ async function processJob(job: Job<PaymentJobData>) {
         idempotencyKey,
         paymentId: tok.yookassaPaymentId,
         amountKopecks: tok.amountKopecks,
-        description: `Возврат токена запроса ${tokenId}`,
+        description: ru.server.paymentWorker.refundToken(tokenId),
       });
 
       await prisma.paidApplicationToken.update({
@@ -207,7 +208,7 @@ async function processJob(job: Job<PaymentJobData>) {
         const result = await paymentProvider.createPaymentWithSavedMethod({
           idempotencyKey: chargeKey,
           amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,
-          description: "Продление Referi PRO на 1 месяц",
+          description: ru.server.paymentWorker.proRenewal,
           metadata: { userId, type: "subscription_renewal" },
           paymentMethodId: pm,
         });
@@ -255,7 +256,7 @@ async function processJob(job: Job<PaymentJobData>) {
         const result = await paymentProvider.createPaymentWithSavedMethod({
           idempotencyKey: chargeKey,
           amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,
-          description: "Продление Referi PRO на 1 месяц",
+          description: ru.server.paymentWorker.proRenewal,
           metadata: { userId, type: "subscription_renewal" },
           paymentMethodId: pm,
         });

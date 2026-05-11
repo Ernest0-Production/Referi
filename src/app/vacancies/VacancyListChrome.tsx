@@ -19,6 +19,9 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { formatVacancyCatalogCountLabel } from "@/lib/vacancyCatalogCountLabel";
 import { type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
+import { ru } from "@/locales";
+
+const L = ru.vacancies.listChrome;
 
 export function VacancyListChrome({
   currentParams,
@@ -49,7 +52,7 @@ export function VacancyListChrome({
         className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12"
       >
         <InputGroupInput
-          placeholder="Название рефералки или компании"
+          placeholder={L.searchPlaceholder}
           value={queryDraft}
           onChange={(e) => setQueryDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -69,7 +72,7 @@ export function VacancyListChrome({
             disabled={isPending}
             onClick={runSearch}
           >
-            Искать
+            {L.search}
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
@@ -77,27 +80,27 @@ export function VacancyListChrome({
       <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>
           <SelectTrigger className="border-border bg-card h-9 w-[min(100%,220px)] rounded-lg">
-            <SelectValue placeholder="Сортировка" />
+            <SelectValue placeholder={L.sortPlaceholder} />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={4} align="start">
-            <SelectItem value="created_desc" textValue="Сначала новые">
+            <SelectItem value="created_desc" textValue={L.sortNewFirst}>
               <span className="flex items-center gap-2">
                 <IconClockHour4
                   className="text-muted-foreground size-4 shrink-0"
                   stroke={1.75}
                   aria-hidden
                 />
-                Сначала новые
+                {L.sortNewFirst}
               </span>
             </SelectItem>
-            <SelectItem value="salary_desc" textValue="По зарплате">
+            <SelectItem value="salary_desc" textValue={L.sortSalary}>
               <span className="flex items-center gap-2">
                 <IconCoins
                   className="text-muted-foreground size-4 shrink-0"
                   stroke={1.75}
                   aria-hidden
                 />
-                По зарплате
+                {L.sortSalary}
               </span>
             </SelectItem>
           </SelectContent>

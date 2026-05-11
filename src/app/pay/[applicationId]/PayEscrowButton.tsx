@@ -4,6 +4,7 @@ import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ru } from "@/locales";
 
 export function PayEscrowButton({ applicationId }: { applicationId: string }) {
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export function PayEscrowButton({ applicationId }: { applicationId: string }) {
         disabled={initiate.isPending}
         onClick={() => initiate.mutate({ applicationId })}
       >
-        {initiate.isPending ? "Создание платежа…" : "Перейти к оплате"}
+        {initiate.isPending ? ru.payAuth.application.payPending : ru.payAuth.application.payCta}
       </Button>
       {error ? (
         <Alert variant="destructive">

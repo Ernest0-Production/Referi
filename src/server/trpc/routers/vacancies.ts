@@ -6,6 +6,7 @@ import { cancelSLAJob } from "@/server/workers/slaWorker";
 import { scheduleRefundSeeker, scheduleRefundPaidToken } from "@/server/workers/paymentWorker";
 import { Prisma } from "@prisma/client";
 import { VACANCY_SALARY_CURRENCY_VALUES } from "@/lib/vacancySalaryCurrency";
+import { ru } from "@/locales";
 
 const specialtyEnum = z.enum([
   "FRONTEND",
@@ -41,11 +42,11 @@ const vacancyWriteSchema = z
     rewardKopecks: z.number().int().min(0).max(REFERRER_BONUS_MAX_KOPECKS).default(0),
   })
   .refine((d) => d.salaryFrom == null || d.salaryTo == null || d.salaryFrom < d.salaryTo, {
-    message: "Минимальная зарплата не может быть меньше максимальной",
+    message: ru.server.vacancies.salaryOrder,
     path: ["salaryTo"],
   })
   .refine((d) => d.rewardKopecks % REFERRER_BONUS_STEP_KOPECKS === 0, {
-    message: "Компенсация реферальщику должна быть от 0 до 100 000 ₽ с шагом 10 000 ₽.",
+    message: ru.server.vacancies.compensationRange,
     path: ["rewardKopecks"],
   });
 

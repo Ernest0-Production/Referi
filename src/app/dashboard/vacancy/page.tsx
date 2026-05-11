@@ -6,6 +6,7 @@ import {
   vacancyDashboardBackLabelFromPathname,
   vacancyDashboardEditBackLabelFromPathname,
 } from "@/lib/vacancyNavigationBackLabel";
+import { ru } from "@/locales";
 import { CreateVacancyForm } from "./CreateVacancyForm";
 import { DashboardVacancyPageShell } from "./DashboardVacancyPageShell";
 import { EditVacancyCard } from "./EditVacancyCard";
@@ -17,6 +18,8 @@ import { Card, CardContent } from "@/components/ui/card";
 type PageProps = {
   searchParams: Promise<{ edit?: string }>;
 };
+
+const V = ru.dashboard.vacancy;
 
 export default async function DashboardVacancyPage({ searchParams }: PageProps) {
   const session = await auth();
@@ -40,12 +43,10 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
       >
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">
-            {vacancy ? "Моя рефералка" : "Создание рефералки"}
+            {vacancy ? V.titleMine : V.titleCreate}
           </h1>
           {vacancy ? (
-            <p className="text-muted-foreground text-sm">
-              Доступных попыток: {me.availableAttempts} из 3
-            </p>
+            <p className="text-muted-foreground text-sm">{V.attemptsLine(me.availableAttempts)}</p>
           ) : null}
         </div>
 
@@ -80,10 +81,8 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
                 <CreateVacancyForm />
               ) : (
                 <Alert>
-                  <AlertTitle>Нет попыток</AlertTitle>
-                  <AlertDescription>
-                    Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60 дней.
-                  </AlertDescription>
+                  <AlertTitle>{V.noAttemptsTitle}</AlertTitle>
+                  <AlertDescription>{V.noAttemptsBody}</AlertDescription>
                 </Alert>
               )}
             </CardContent>

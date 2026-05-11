@@ -9,6 +9,7 @@ import {
   cancelSubscriptionPaymentJobsForUser,
 } from "@/server/workers/paymentQueue";
 import { cancelSLAJob } from "@/server/workers/slaWorker";
+import { ru } from "@/locales";
 
 export async function deleteAccountAndAllData(db: PrismaClient, userId: string): Promise<void> {
   const user = await db.user.findUnique({
@@ -23,7 +24,7 @@ export async function deleteAccountAndAllData(db: PrismaClient, userId: string):
   if (user.staffRoles.length > 0) {
     throw new BusinessError(
       "ACCOUNT_DELETE_STAFF_FORBIDDEN",
-      "Удаление недоступно для аккаунтов персонала",
+      ru.server.deleteAccount.staffBlocked,
     );
   }
 

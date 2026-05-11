@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ru } from "@/locales";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -100,9 +101,7 @@ const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
 };
 
 const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
-  OFFICE: "Офис",
-  HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
+  ...ru.vacancies.workFormatLabels,
 };
 
 const REFERRER_BONUS_MAX_RUBLES = 100_000;
@@ -210,25 +209,25 @@ function validateSalaryRange(fromRaw: string, toRaw: string): SalaryRangeInvalid
 
   if (fromTouched && from === null) {
     return {
-      message: "В поле «Зарплата от» укажите целое неотрицательное число.",
+      message: ru.dashboard.vacancyForm.salaryFromInvalid,
       focusId: "vac-sal-from",
     };
   }
   if (toTouched && to === null) {
     return {
-      message: "В поле «Зарплата до» укажите целое неотрицательное число.",
+      message: ru.dashboard.vacancyForm.salaryToInvalid,
       focusId: "vac-sal-to",
     };
   }
   if (from !== null && from < 0) {
-    return { message: "Зарплата «от» не может быть отрицательной.", focusId: "vac-sal-from" };
+    return { message: ru.dashboard.vacancyForm.salaryFromNegative, focusId: "vac-sal-from" };
   }
   if (to !== null && to < 0) {
-    return { message: "Зарплата «до» не может быть отрицательной.", focusId: "vac-sal-to" };
+    return { message: ru.dashboard.vacancyForm.salaryToNegative, focusId: "vac-sal-to" };
   }
   if (from !== null && to !== null && from >= to) {
     return {
-      message: "Минимальная зарплата не может быть меньше максимальной",
+      message: ru.dashboard.vacancyForm.salaryRange,
       focusId: "vac-sal-from",
     };
   }
@@ -263,6 +262,9 @@ function isEditVacancyFormProps(
 ): props is { mode: "edit"; vacancy: EditVacancyFormVacancy } {
   return props.mode === "edit";
 }
+
+const VF = ru.dashboard.vacancyForm;
+const salaryCurrencyLabels = ru.vacancies.salaryCurrencyLabels;
 
 export function CreateVacancyForm(props: CreateVacancyFormProps) {
   const mode = isEditVacancyFormProps(props) ? "edit" : "create";
@@ -384,38 +386,38 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
     const titleTrim = form.title.trim();
     if (titleTrim.length < 3) {
-      flushSync(() => setTitleError("Введите название (минимум 3 символа)."));
+      flushSync(() => setTitleError(VF.titleMin));
       focusVacancyFormField("vac-title");
       return;
     }
     if (titleTrim.length > 200) {
-      flushSync(() => setTitleError("Не более 200 символов."));
+      flushSync(() => setTitleError(VF.titleMax));
       focusVacancyFormField("vac-title");
       return;
     }
 
     const companyTrim = form.companyName.trim();
     if (companyTrim.length < 2) {
-      flushSync(() => setCompanyError("Введите компанию (минимум 2 символа)."));
+      flushSync(() => setCompanyError(VF.companyMin));
       focusVacancyFormField("vac-company");
       return;
     }
     if (companyTrim.length > 200) {
-      flushSync(() => setCompanyError("Не более 200 символов."));
+      flushSync(() => setCompanyError(VF.companyMax));
       focusVacancyFormField("vac-company");
       return;
     }
 
     const descTrim = form.description.trim();
     if (descTrim.length < 10) {
-      flushSync(() => setDescriptionError("Описание должно содержать минимум 10 символов."));
+      flushSync(() => setDescriptionError(VF.descriptionMin));
       focusVacancyFormField("vac-desc");
       return;
     }
     if (descTrim.length > VACANCY_DESCRIPTION_MAX_LEN) {
       flushSync(() =>
         setDescriptionError(
-          `Не более ${VACANCY_DESCRIPTION_MAX_LEN.toLocaleString("ru-RU")} символов.`,
+          VF.descriptionMax(VACANCY_DESCRIPTION_MAX_LEN.toLocaleString("ru-RU")),
         ),
       );
       focusVacancyFormField("vac-desc");
@@ -470,7 +472,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       <FieldGroup>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field data-invalid={titleError ? "true" : undefined}>
-            <FieldLabel htmlFor="vac-title">Название рефералки *</FieldLabel>
+            <FieldLabel htmlFor="vac-title">{VF.titleLabel}</FieldLabel>
             <Input
               id="vac-title"
               maxLength={200}
@@ -490,7 +492,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
             ) : null}
           </Field>
           <Field data-invalid={companyError ? "true" : undefined}>
-            <FieldLabel htmlFor="vac-company">Компания *</FieldLabel>
+            <FieldLabel htmlFor="vac-company">{VF.companyLabel}</FieldLabel>
             <Input
               id="vac-company"
               maxLength={200}
@@ -501,7 +503,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setCompanyError(null);
                 setForm((f) => ({ ...f, companyName: e.target.value }));
               }}
-              placeholder="ООО Пример"
+              placeholder={VF.companyPlaceholder}
             />
             {companyError ? (
               <FieldDescription id="vac-company-desc" className="text-destructive">
@@ -513,7 +515,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Field>
-            <FieldLabel>Специальность</FieldLabel>
+            <FieldLabel>{VF.specialtyLabel}</FieldLabel>
             <Select
               value={form.specialty}
               onValueChange={(v) =>
@@ -539,7 +541,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
             </Select>
           </Field>
           <Field>
-            <FieldLabel>Грейд</FieldLabel>
+            <FieldLabel>{VF.gradeLabel}</FieldLabel>
             <Select
               value={form.grade}
               onValueChange={(v) => setForm((f) => ({ ...f, grade: v as (typeof GRADES)[number] }))}
@@ -560,7 +562,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
             </Select>
           </Field>
           <Field>
-            <FieldLabel>Формат</FieldLabel>
+            <FieldLabel>{VF.formatLabel}</FieldLabel>
             <Select
               value={form.workFormat}
               onValueChange={(v) =>
@@ -591,14 +593,14 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           className="flex min-w-0 flex-col gap-2"
           data-invalid={salaryError ? "true" : undefined}
         >
-          <FieldLegend>Зарплата</FieldLegend>
+          <FieldLegend>{VF.salaryLegend}</FieldLegend>
           <InputGroup className="border-border bg-card w-full min-w-0 rounded-lg shadow-sm">
             <InputGroupInput
               id="vac-sal-from"
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              aria-label="Зарплата от"
+              aria-label={VF.salaryFromAria}
               value={formatRuMoneyIntegerDisplay(form.salaryFrom)}
               aria-invalid={salaryError ? true : undefined}
               aria-describedby={salaryError ? "vac-salary-desc" : undefined}
@@ -623,7 +625,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              aria-label="Зарплата до"
+              aria-label={VF.salaryToAria}
               value={formatRuMoneyIntegerDisplay(form.salaryTo)}
               aria-invalid={salaryError ? true : undefined}
               aria-describedby={salaryError ? "vac-salary-desc" : undefined}
@@ -644,7 +646,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                     variant="ghost"
                     type="button"
                     id="vac-sal-currency"
-                    aria-label="Валюта зарплаты"
+                    aria-label={VF.salaryCurrencyAria}
                     aria-invalid={salaryError ? true : undefined}
                     aria-describedby={salaryError ? "vac-salary-desc" : undefined}
                     className="h-8 max-w-full min-w-0 gap-1.5 rounded-lg px-2 font-medium tabular-nums"
@@ -664,7 +666,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                     {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
                       <DropdownMenuRadioItem key={c} value={c} className="gap-2">
                         <SalaryCurrencyIcon code={c} />
-                        {c}
+                        {salaryCurrencyLabels[c]}
                       </DropdownMenuRadioItem>
                     ))}
                   </DropdownMenuRadioGroup>
@@ -681,7 +683,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
         <Field>
           <FieldLabel htmlFor="vac-reward">
-            <span className="text-emerald-600 dark:text-emerald-400">Компенсация</span> реферальщику
+            <span className="text-emerald-600 dark:text-emerald-400">{VF.rewardLead}</span> {VF.rewardTrail}
             (₽)
           </FieldLabel>
           <div className="flex flex-col gap-3 pt-0.5">
@@ -692,7 +694,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
             >
               <span>
                 {form.referrerBonusRubles === 0 ? (
-                  "Бесплатно"
+                  VF.free
                 ) : (
                   <>
                     {form.referrerBonusRubles.toLocaleString("ru-RU")}{" "}
@@ -718,7 +720,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
               aria-describedby="vac-reward-summary"
               aria-valuetext={
                 form.referrerBonusRubles === 0
-                  ? "Бесплатно"
+                  ? VF.free
                   : `${form.referrerBonusRubles.toLocaleString("ru-RU")} ₽`
               }
             />
@@ -726,7 +728,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
         </Field>
 
         <Field data-invalid={descriptionError ? "true" : undefined}>
-          <FieldLabel htmlFor="vac-desc">Описание *</FieldLabel>
+          <FieldLabel htmlFor="vac-desc">{VF.descriptionLabel}</FieldLabel>
           <div className="relative">
             <Textarea
               id="vac-desc"
@@ -744,14 +746,14 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
                 setDescriptionError(null);
                 setForm((f) => ({ ...f, description: e.target.value }));
               }}
-              placeholder="Расскажите о рефералке, требованиях и условиях работы"
+              placeholder={VF.descriptionPlaceholder}
             />
             <span
               id="vac-desc-counter"
               className="text-muted-foreground pointer-events-none absolute right-3 bottom-2 text-xs tabular-nums"
               aria-live="polite"
             >
-              Осталось{" "}
+              {VF.charsLeft}{" "}
               {(VACANCY_DESCRIPTION_MAX_LEN - form.description.length).toLocaleString("ru-RU")}
             </span>
           </div>
@@ -775,14 +777,14 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           className="h-11 w-full text-base font-semibold"
         >
           {authRedirectPending
-            ? "Переход к входу…"
+            ? VF.redirectLogin
             : pending
               ? mode === "edit"
-                ? "Сохранение…"
-                : "Публикация…"
+                ? VF.savePending
+                : VF.publishPending
               : mode === "edit"
-                ? "Сохранить"
-                : "Опубликовать рефералку"}
+                ? VF.save
+                : VF.publish}
         </Button>
       </FieldGroup>
     </form>

@@ -2,28 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
+import { ru } from "@/locales";
 import { ApplicationActionsPanel } from "./ApplicationActionsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-const STATUS_LABELS: Record<string, string> = {
-  SUBMITTED: "Подана",
-  AWAITING_PAYMENT: "Ожидает оплаты",
-  AWAITING_RESUME_HANDOFF: "Передача резюме",
-  SEEKER_CANCEL_REQUESTED: "Запрос отмены",
-  AWAITING_COMPANY_DECISION: "На рассмотрении",
-  OFFER_ACCEPTED: "Оффер принят",
-  REJECTED_BY_REFERRER: "Отклонена",
-  REJECTED_BY_COMPANY: "Отказ",
-  CANCELLED: "Отменена",
-  DISPUTED: "Спор",
-  REFUNDED_BY_CANCEL_ACK: "Возврат",
-  REFUNDED_BY_SLA: "Возврат (SLA)",
-  REFUNDED_BY_CANCEL_AUTO: "Автовозврат",
-  REFUNDED_BY_VACANCY_DELETED: "Возврат (рефералка)",
-  REFUNDED_BY_MODERATOR: "Возврат (модератор)",
-};
+const STATUS_LABELS: Record<string, string> = { ...ru.applications.statusList };
 
 const TERMINAL = new Set([
   "OFFER_ACCEPTED",
@@ -36,6 +21,8 @@ const TERMINAL = new Set([
   "REFUNDED_BY_VACANCY_DELETED",
   "REFUNDED_BY_MODERATOR",
 ]);
+
+const A = ru.applications;
 
 export default async function ApplicationsPage() {
   const session = await auth();
@@ -50,18 +37,18 @@ export default async function ApplicationsPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-foreground text-2xl font-bold">Мои заявки</h1>
+          <h1 className="text-foreground text-2xl font-bold">{A.pageTitle}</h1>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/">Найти рефералки</Link>
+            <Link href="/">{A.findVacancies}</Link>
           </Button>
         </div>
 
         {applications.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center gap-4 py-10">
-              <p className="text-muted-foreground">У вас пока нет заявок</p>
+              <p className="text-muted-foreground">{A.emptyTitle}</p>
               <Button asChild>
-                <Link href="/">Смотреть рефералки</Link>
+                <Link href="/">{A.browseVacancies}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -70,7 +57,7 @@ export default async function ApplicationsPage() {
         {active.length > 0 && (
           <section className="flex flex-col gap-3">
             <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-              Активные ({active.length})
+              {A.activeSection(active.length)}
             </h2>
             {active.map((app) => (
               <Card key={app.id}>
@@ -86,7 +73,7 @@ export default async function ApplicationsPage() {
                 <CardContent className="flex flex-col gap-3 pb-4">
                   {app.paymentDeadline ? (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Оплатить до:{" "}
+                      {A.payUntil}{" "}
                       {new Date(app.paymentDeadline).toLocaleDateString("ru-RU", {
                         day: "2-digit",
                         month: "long",
@@ -97,7 +84,7 @@ export default async function ApplicationsPage() {
                   ) : null}
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/dashboard/applications/${app.id}`}>Подробнее</Link>
+                      <Link href={`/dashboard/applications/${app.id}`}>{ru.common.moreDetails}</Link>
                     </Button>
                     <ApplicationActionsPanel applicationId={app.id} status={app.status} />
                   </div>
@@ -110,7 +97,7 @@ export default async function ApplicationsPage() {
         {closed.length > 0 && (
           <section className="flex flex-col gap-3">
             <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-              Завершённые ({closed.length})
+              {A.closedSection(closed.length)}
             </h2>
             {closed.map((app) => (
               <Card key={app.id} className="opacity-80">

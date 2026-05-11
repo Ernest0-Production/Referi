@@ -3,6 +3,7 @@
 import { HandCoins, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { ru } from "@/locales";
 
 import { REFERRER_COMPENSATION_TOOLTIP } from "@/lib/vacancyTooltipMessages";
 
@@ -15,6 +16,8 @@ export function ReferrerCompensationPanel({
   amountText,
   className,
 }: ReferrerCompensationPanelProps) {
+  const T = ru.vacancies.tooltips;
+  const title = ru.vacancies.compensationTitle;
   return (
     <div
       className={cn(
@@ -25,7 +28,7 @@ export function ReferrerCompensationPanel({
       <div className="flex items-start justify-between gap-2">
         <p className="flex min-w-0 flex-1 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
           <HandCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
-          <span className="min-w-0 leading-snug break-words">Компенсация за рекомендацию</span>
+          <span className="min-w-0 leading-snug break-words">{title}</span>
         </p>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -36,7 +39,7 @@ export function ReferrerCompensationPanel({
                 "ring-offset-background -m-1 shrink-0 rounded-md p-1 outline-none",
                 "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
               )}
-              aria-label="Что такое компенсация за рекомендацию"
+              aria-label={T.compensationAria}
             >
               <Info className="size-4" aria-hidden />
             </button>

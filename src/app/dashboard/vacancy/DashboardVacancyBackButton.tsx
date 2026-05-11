@@ -12,6 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useVacancyDashboardFormDirtyContext } from "./VacancyDashboardFormDirtyContext";
+import { ru } from "@/locales";
+
+const V = ru.dashboard.vacancy;
 
 const DASHBOARD_HOME = "/";
 
@@ -64,15 +67,15 @@ export function DashboardVacancyBackButton({ label }: { label: string }) {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent showCloseButton>
           <DialogHeader>
-            <DialogTitle>Отменить изменения?</DialogTitle>
-            <DialogDescription>Есть несохранённые правки. Выйти без сохранения?</DialogDescription>
+            <DialogTitle>{V.dirtyTitle}</DialogTitle>
+            <DialogDescription>{V.dirtyDescription}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-              Остаться
+              {V.stay}
             </Button>
             <Button type="button" variant="destructive" onClick={confirmLeave}>
-              Выйти
+              {V.leave}
             </Button>
           </DialogFooter>
         </DialogContent>

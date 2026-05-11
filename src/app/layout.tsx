@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { ru } from "@/locales";
 import { TRPCProvider } from "@/trpc/provider";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -18,9 +19,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Referi — реферальный найм разработчиков",
-  description:
-    "Платформа для безопасного реферального найма: эскроу-защита вознаграждения, прозрачный процесс, честные рефералы.",
+  title: ru.site.metadata.title,
+  description: ru.site.metadata.description,
 };
 
 export default function RootLayout({

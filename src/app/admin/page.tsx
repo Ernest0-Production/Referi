@@ -1,19 +1,19 @@
 import { trpc } from "@/trpc/server";
+import { ru } from "@/locales";
 import { ResolveDisputeButtons } from "./ResolveDisputeButtons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default async function AdminDisputesPage() {
   const cases = await trpc.moderation.openCases();
+  const a = ru.admin;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-foreground text-2xl font-bold">Открытые споры</h1>
+        <h1 className="text-foreground text-2xl font-bold">{a.disputesTitle}</h1>
         <p className="text-muted-foreground text-sm">
-          {cases.length === 0
-            ? "Нет открытых споров."
-            : `${cases.length} спор(ов) ожидают решения.`}
+          {cases.length === 0 ? a.disputesEmpty : a.disputesCount(cases.length)}
         </p>
       </div>
 
@@ -25,14 +25,14 @@ export default async function AdminDisputesPage() {
                 {c.application.vacancy.title} — {c.application.vacancy.companyName}
               </p>
               <p className="text-muted-foreground text-sm">
-                Соискатель: {c.application.seeker.displayName ?? c.application.seeker.id}
+                {a.seeker} {c.application.seeker.displayName ?? c.application.seeker.id}
               </p>
               <p className="text-muted-foreground text-xs">
-                Заявка:{" "}
+                {a.application}{" "}
                 <code className="bg-muted rounded px-1 font-mono text-xs">{c.application.id}</code>
               </p>
               <p className="text-muted-foreground text-xs">
-                Спор открыт:{" "}
+                {a.disputeOpened}{" "}
                 {new Date(c.createdAt).toLocaleDateString("ru-RU", {
                   day: "2-digit",
                   month: "long",

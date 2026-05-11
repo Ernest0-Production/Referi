@@ -16,6 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ru } from "@/locales";
+
+const NV = ru.vacancies.newVacancy;
 
 const CATALOG_HREF = "/";
 
@@ -43,12 +46,12 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
   const backControl =
     showForm && dirty ? (
       <Button type="button" variant="ghost" size="sm" className="w-fit" onClick={handleBackClick}>
-        ← К рефералкам
+        {NV.backToCatalog}
       </Button>
     ) : (
       <Button variant="ghost" size="sm" className="w-fit" asChild>
         <Link href={CATALOG_HREF} onClick={() => clearVacancyCreateDraft()}>
-            ← К рефералкам
+          {NV.backToCatalog}
         </Link>
       </Button>
     );
@@ -65,7 +68,7 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
           {backControl}
           <Card>
             <CardHeader>
-              <CardTitle>Новая рефералка</CardTitle>
+              <CardTitle>{NV.cardTitle}</CardTitle>
               {cardDescription ? <CardDescription>{cardDescription}</CardDescription> : null}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -75,14 +78,12 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
           <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <DialogContent showCloseButton>
               <DialogHeader>
-                <DialogTitle>Выйти без сохранения?</DialogTitle>
-                <DialogDescription>
-                  Есть несохранённые данные. Вернуться в каталог без публикации?
-                </DialogDescription>
+                <DialogTitle>{NV.discardTitle}</DialogTitle>
+                <DialogDescription>{NV.discardDescription}</DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-                  Остаться
+                  {NV.stay}
                 </Button>
                 <Button
                   type="button"
@@ -92,7 +93,7 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
                     leave();
                   }}
                 >
-                  Выйти
+                  {NV.leave}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -102,12 +103,12 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
         <>
           <Button variant="ghost" size="sm" className="w-fit" asChild>
             <Link href={CATALOG_HREF} onClick={() => clearVacancyCreateDraft()}>
-                ← К рефералкам
+              {NV.backToCatalog}
             </Link>
           </Button>
           <Card>
             <CardHeader>
-                <CardTitle>Новая рефералка</CardTitle>
+                <CardTitle>{NV.cardTitle}</CardTitle>
               {cardDescription ? <CardDescription>{cardDescription}</CardDescription> : null}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">{props.emptyState}</CardContent>

@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ru } from "@/locales";
+
+const PF = ru.dashboard.profileForm;
 
 interface Props {
   currentName: string;
@@ -46,21 +49,21 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
 
         const trimmedName = name.trim();
         if (trimmedName.length < 2) {
-          setNameError("Имя — минимум 2 символа.");
+          setNameError(PF.nameMin);
           return;
         }
         if (trimmedName.length > 100) {
-          setNameError("Не более 100 символов.");
+          setNameError(PF.nameMax);
           return;
         }
 
         if (contactInfo.length > 500) {
-          setContactError("Не более 500 символов.");
+          setContactError(PF.contactMax);
           return;
         }
 
         if (bio.length > 1000) {
-          setBioError("Не более 1000 символов.");
+          setBioError(PF.bioMax);
           return;
         }
 
@@ -73,7 +76,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
     >
       <FieldGroup>
         <Field data-invalid={nameError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-name">Имя / псевдоним</FieldLabel>
+          <FieldLabel htmlFor="profile-name">{PF.nameLabel}</FieldLabel>
           <Input
             id="profile-name"
             type="text"
@@ -85,20 +88,18 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
               setNameError(null);
               setName(e.target.value);
             }}
-            placeholder="Отображаемое имя"
+            placeholder={PF.namePlaceholder}
           />
           <FieldDescription
             id="profile-name-desc"
             className={nameError ? "text-destructive" : undefined}
           >
-            {nameError ?? "Минимум 2 символа, не более 100."}
+            {nameError ?? PF.nameHint}
           </FieldDescription>
         </Field>
 
         <Field data-invalid={contactError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-contact">
-            Контактная информация (мессенджер, email, ссылка)
-          </FieldLabel>
+          <FieldLabel htmlFor="profile-contact">{PF.contactLabel}</FieldLabel>
           <Input
             id="profile-contact"
             type="text"
@@ -110,18 +111,18 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
               setContactError(null);
               setContactInfo(e.target.value);
             }}
-            placeholder="@username / email / ссылка"
+            placeholder={PF.contactPlaceholder}
           />
           <FieldDescription
             id="profile-contact-desc"
             className={contactError ? "text-destructive" : undefined}
           >
-            {contactError ?? "Необязательно, не более 500 символов."}
+            {contactError ?? PF.contactHint}
           </FieldDescription>
         </Field>
 
         <Field data-invalid={bioError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-bio">Краткая биография</FieldLabel>
+          <FieldLabel htmlFor="profile-bio">{PF.bioLabel}</FieldLabel>
           <Textarea
             id="profile-bio"
             value={bio}
@@ -133,21 +134,21 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
               setBioError(null);
               setBio(e.target.value);
             }}
-            placeholder="Кратко о вашем опыте"
+            placeholder={PF.bioPlaceholder}
           />
           <FieldDescription
             id="profile-bio-desc"
             className={bioError ? "text-destructive" : undefined}
           >
-            {bioError ?? "Необязательно, не более 1000 символов."}
+            {bioError ?? PF.bioHint}
           </FieldDescription>
         </Field>
 
         <div className="flex flex-col gap-2">
           <Button type="submit" disabled={update.isPending}>
-            {update.isPending ? "Сохранение…" : "Сохранить"}
+            {update.isPending ? PF.savePending : PF.save}
           </Button>
-          {saved ? <p className="text-muted-foreground text-xs">Сохранено</p> : null}
+          {saved ? <p className="text-muted-foreground text-xs">{PF.saved}</p> : null}
           {error ? (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>

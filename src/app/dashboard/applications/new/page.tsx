@@ -7,6 +7,7 @@ import { trpc } from "@/trpc/server";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ru } from "@/locales";
 
 interface PageProps {
   searchParams: Promise<{
@@ -57,11 +58,11 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6 md:p-8">
         <Button variant="ghost" size="sm" className="w-fit" asChild>
-          <Link href={`/vacancies/${vacancyId}`}>← Рефералка</Link>
+          <Link href={`/vacancies/${vacancyId}`}>{ru.applications.newRequestBackLink}</Link>
         </Button>
 
         <div className="flex flex-col gap-1">
-          <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>
+          <h1 className="text-foreground text-2xl font-bold">{ru.applications.newRequestTitle}</h1>
           <p className="text-muted-foreground text-sm">
             {vacancy.title} · {vacancy.companyName}
           </p>

@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
+import { ru } from "@/locales";
 import { ApplicationDetailActions } from "./ApplicationDetailActions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,30 +12,10 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  SUBMITTED: "Подана",
-  AWAITING_PAYMENT: "Ожидает оплаты",
-  AWAITING_RESUME_HANDOFF: "Передача резюме",
-  SEEKER_CANCEL_REQUESTED: "Запрошена отмена",
-  AWAITING_COMPANY_DECISION: "На рассмотрении в компании",
-  OFFER_ACCEPTED: "Оффер принят",
-  REJECTED_BY_REFERRER: "Отклонена реферальщиком",
-  REJECTED_BY_COMPANY: "Отказ компании",
-  CANCELLED: "Отменена",
-  DISPUTED: "Открыт спор",
-  REFUNDED_BY_CANCEL_ACK: "Возврат (подтверждена отмена)",
-  REFUNDED_BY_SLA: "Возврат (SLA)",
-  REFUNDED_BY_CANCEL_AUTO: "Автоматический возврат",
-  REFUNDED_BY_VACANCY_DELETED: "Возврат (рефералка удалена)",
-  REFUNDED_BY_MODERATOR: "Возврат по решению модератора",
-};
+const STATUS_LABELS: Record<string, string> = { ...ru.applications.statusDetail };
+const ACTOR_LABELS: Record<string, string> = { ...ru.applications.auditActors };
 
-const ACTOR_LABELS: Record<string, string> = {
-  SEEKER: "Соискатель",
-  REFERRER: "Реферальщик",
-  SYSTEM: "Система",
-  MODERATOR: "Модератор",
-};
+const A = ru.applications;
 
 export default async function ApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -56,7 +37,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     <main className="flex-1">
       <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
         <Button variant="ghost" size="sm" className="w-fit" asChild>
-          <Link href="/dashboard/applications">← Мои заявки</Link>
+          <Link href="/dashboard/applications">{A.detailBack}</Link>
         </Button>
 
         <Card>
@@ -73,18 +54,18 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             <div className="flex flex-col gap-1 text-sm">
               {application.paymentDeadline ? (
                 <p className="text-amber-600 dark:text-amber-400">
-                  Оплатить до: {new Date(application.paymentDeadline).toLocaleString("ru-RU")}
+                  {A.payUntil} {new Date(application.paymentDeadline).toLocaleString("ru-RU")}
                 </p>
               ) : null}
               {application.resumeHandoffDeadline ? (
                 <p className="text-primary">
-                  Передача резюме до:{" "}
+                  {A.resumeHandoffUntil}{" "}
                   {new Date(application.resumeHandoffDeadline).toLocaleString("ru-RU")}
                 </p>
               ) : null}
               {application.companyDecisionDeadline ? (
                 <p className="text-muted-foreground">
-                  Решение компании до:{" "}
+                  {A.companyDecisionUntil}{" "}
                   {new Date(application.companyDecisionDeadline).toLocaleString("ru-RU")}
                 </p>
               ) : null}
@@ -92,14 +73,14 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
 
             {application.content?.contactInfo ? (
               <div className="border-border bg-muted/50 rounded-xl border p-3">
-                <p className="text-muted-foreground text-xs font-medium">Контакты соискателя</p>
+                <p className="text-muted-foreground text-xs font-medium">{A.seekerContacts}</p>
                 <p className="text-foreground mt-0.5 text-sm">{application.content.contactInfo}</p>
               </div>
             ) : null}
 
             {isSeeker && application.content?.bio ? (
               <div className="flex flex-col gap-1">
-                <p className="text-muted-foreground text-xs font-medium">О себе</p>
+                <p className="text-muted-foreground text-xs font-medium">{A.aboutSeeker}</p>
                 <p className="text-foreground text-sm whitespace-pre-wrap">
                   {application.content.bio}
                 </p>
@@ -113,7 +94,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
         {auditLog.length > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">История изменений</CardTitle>
+              <CardTitle className="text-base">{A.auditTitle}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {auditLog.map((entry) => (

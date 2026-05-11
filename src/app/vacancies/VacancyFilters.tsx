@@ -70,10 +70,11 @@ import {
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
 import { cn } from "@/lib/utils";
+import { ru } from "@/locales";
 
 function duplicateVacancyPresetDisplayName(sourceName: string): string {
-  const base = sourceName.trim() || "Фильтр";
-  const suffix = " (копия)";
+  const base = sourceName.trim() || ru.vacancies.filters.defaultFilterName;
+  const suffix = ru.vacancies.filters.copySuffix;
   const max = 80;
   if (base.length + suffix.length <= max) return `${base}${suffix}`;
   const headLen = max - suffix.length;
@@ -82,31 +83,25 @@ function duplicateVacancyPresetDisplayName(sourceName: string): string {
 
 const SPECIALTY_SELECT_ANY = "__any__";
 const SPECIALTY_SELECT_MULTI = "__multi__";
-const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; label: string }[] = [
-  { value: "FRONTEND", label: "Frontend" },
-  { value: "BACKEND", label: "Backend" },
-  { value: "FULLSTACK", label: "Fullstack" },
-  { value: "IOS_MOBILE", label: "iOS" },
-  { value: "ANDROID_MOBILE", label: "Android" },
-  { value: "DEVOPS", label: "DevOps" },
-  { value: "QA", label: "QA" },
-  { value: "DATA", label: "Data" },
-  { value: "ML_AI", label: "ML / AI" },
-  { value: "SECURITY", label: "Security" },
-];
+const SPECIALTIES: { value: (typeof VACANCY_LIST_SPECIALTY_VALUES)[number]; label: string }[] =
+  VACANCY_LIST_SPECIALTY_VALUES.map((value) => ({
+    value,
+    label:
+      ru.vacancies.specialtyLabels[value as keyof typeof ru.vacancies.specialtyLabels] ?? value,
+  }));
 
-const GRADES: { value: (typeof VACANCY_LIST_GRADE_VALUES)[number]; label: string }[] = [
-  { value: "JUNIOR", label: "Junior" },
-  { value: "MIDDLE", label: "Middle" },
-  { value: "SENIOR", label: "Senior" },
-  { value: "LEAD", label: "Lead" },
-];
+const GRADES: { value: (typeof VACANCY_LIST_GRADE_VALUES)[number]; label: string }[] =
+  VACANCY_LIST_GRADE_VALUES.map((value) => ({
+    value,
+    label: ru.vacancies.gradeLabels[value as keyof typeof ru.vacancies.gradeLabels] ?? value,
+  }));
 
-const FORMATS: { value: (typeof VACANCY_LIST_WORK_FORMAT_VALUES)[number]; label: string }[] = [
-  { value: "REMOTE", label: "Удалённо" },
-  { value: "HYBRID", label: "Гибрид" },
-  { value: "OFFICE", label: "Офис" },
-];
+const FORMATS: { value: (typeof VACANCY_LIST_WORK_FORMAT_VALUES)[number]; label: string }[] =
+  VACANCY_LIST_WORK_FORMAT_VALUES.map((value) => ({
+    value,
+    label:
+      ru.vacancies.workFormatLabels[value as keyof typeof ru.vacancies.workFormatLabels] ?? value,
+  }));
 
 function VacancyFilterSalaryBlock({
   committedSalary,
@@ -117,6 +112,7 @@ function VacancyFilterSalaryBlock({
   committedSalaryCurrency: string | undefined;
   apply: (patch: Partial<VacancyListFlatSearchParams>) => void;
 }) {
+  const F = ru.vacancies.filters;
   const selectValueFromCommitted: VacancySalaryCurrency =
     committedSalaryCurrency && isVacancySalaryCurrency(committedSalaryCurrency)
       ? committedSalaryCurrency
@@ -143,7 +139,7 @@ function VacancyFilterSalaryBlock({
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor="salary-from" className="text-sm font-medium">
-        Зарплата не ниже
+        {F.salaryFrom}
       </Label>
       <InputGroup className="border-border bg-card h-9 w-full min-w-0 rounded-lg shadow-sm">
         <InputGroupInput
@@ -154,7 +150,7 @@ function VacancyFilterSalaryBlock({
           value={formatRuMoneyIntegerDisplay(salaryFrom)}
           onChange={(e) => setSalaryFrom(sanitizeMoneyIntegerDigits(e.target.value))}
           onBlur={() => commit(salaryFrom || undefined, salaryCurrencySelect)}
-          placeholder="Минимум"
+          placeholder={F.salaryMinPlaceholder}
           className="h-9 min-h-9 min-w-0 text-base tabular-nums md:text-sm"
         />
         <InputGroupAddon align="inline-end" className="shrink-0 pr-1">
@@ -163,7 +159,7 @@ function VacancyFilterSalaryBlock({
               <InputGroupButton
                 variant="ghost"
                 type="button"
-                aria-label="Валюта зарплаты"
+                aria-label={F.salaryCurrencyAria}
                 className="h-9 min-h-9 w-fit max-w-full min-w-0 shrink-0 gap-1.5 rounded-lg px-2 font-medium tabular-nums"
               >
                 <SalaryCurrencyIcon code={salaryCurrencySelect} className="size-3.5" />
@@ -183,7 +179,7 @@ function VacancyFilterSalaryBlock({
                 {VACANCY_SALARY_CURRENCY_VALUES.map((c) => (
                   <DropdownMenuRadioItem key={c} value={c} className="gap-2">
                     <SalaryCurrencyIcon code={c} className="size-3.5" />
-                    {c}
+                    {ru.vacancies.salaryCurrencyLabels[c]}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
@@ -237,6 +233,8 @@ export function VacancyFilters({
   onApplyFilters,
   onVacancySearchPresetCreated,
 }: Props) {
+  const L = ru.vacancies.filters;
+  const C = ru.common;
   const router = useRouter();
   const [saveOpen, setSaveOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -256,7 +254,7 @@ export function VacancyFilters({
 
   const createPreset = trpcReact.vacancySearchPresets.create.useMutation({
     onSuccess: async (data) => {
-      toast.success("Фильтр сохранён");
+      toast.success(L.toastSaved);
       setSaveOpen(false);
       setPresetName("");
       setPresetNameInvalid(false);
@@ -265,33 +263,33 @@ export function VacancyFilters({
       await router.refresh();
       onVacancySearchPresetCreated?.({ id: data.id, params: data.params });
     },
-    onError: (e) => toast.error(e.message || "Не удалось сохранить"),
+    onError: (e) => toast.error(e.message || L.toastSaveError),
   });
 
   const updatePreset = trpcReact.vacancySearchPresets.update.useMutation({
     onSuccess: async (_data, variables) => {
       if (variables.name !== undefined && variables.params === undefined) {
-        toast.success("Название сохранено");
+        toast.success(L.toastNameSaved);
       } else if (variables.params !== undefined) {
-        toast.success("Параметры фильтра сохранены");
+        toast.success(L.toastParamsSaved);
       } else {
-        toast.success("Фильтр обновлён");
+        toast.success(L.toastUpdated);
       }
       await utils.vacancySearchPresets.list.invalidate();
       router.refresh();
     },
-    onError: (e) => toast.error(e.message || "Не удалось обновить"),
+    onError: (e) => toast.error(e.message || L.toastUpdateError),
   });
 
   const deletePreset = trpcReact.vacancySearchPresets.delete.useMutation({
     onSuccess: async () => {
-      toast.success("Фильтр удалён");
+      toast.success(L.toastDeleted);
       setDeleteConfirmOpen(false);
       setPresetIdPendingDelete(null);
       await utils.vacancySearchPresets.list.invalidate();
       router.refresh();
     },
-    onError: (e) => toast.error(e.message || "Не удалось удалить"),
+    onError: (e) => toast.error(e.message || L.toastDeleteError),
   });
 
   function apply(patch: Partial<VacancyListFlatSearchParams>) {
@@ -390,7 +388,7 @@ export function VacancyFilters({
         size="icon"
         className="size-10 shrink-0 rounded-full"
         onClick={() => onReset()}
-        aria-label="Сбросить фильтры"
+        aria-label={L.resetAria}
       >
         <RotateCcw />
       </Button>
@@ -404,7 +402,7 @@ export function VacancyFilters({
                 variant="outline"
                 size="icon"
                 className="size-10 shrink-0 rounded-full"
-                aria-label="Действия с сохранённым фильтром"
+                aria-label={L.presetActionsAria}
               >
                 <MoreVertical className="size-4" aria-hidden />
               </Button>
@@ -419,7 +417,7 @@ export function VacancyFilters({
                 }}
               >
                 <Trash2 className="size-4 shrink-0" aria-hidden />
-                Удалить
+                {L.delete}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={createPreset.isPending || !resolvedPresetRow}
@@ -431,7 +429,7 @@ export function VacancyFilters({
                 }}
               >
                 <Copy className="size-4 shrink-0" aria-hidden />
-                Дублировать
+                {L.duplicate}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -444,7 +442,7 @@ export function VacancyFilters({
             onClick={handleSaveFiltersFooterAction}
           >
           <Save className="size-4 shrink-0" aria-hidden />
-          Сохранить
+          {L.save}
         </Button>
       )}
     </div>
@@ -462,7 +460,7 @@ export function VacancyFilters({
         <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-3">
           <SheetTitle className="flex min-w-0 flex-1 items-center gap-2 text-base font-semibold">
             <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
-            Фильтры
+            {L.sheetTitle}
           </SheetTitle>
           <SheetClose asChild>
             <Button
@@ -470,10 +468,10 @@ export function VacancyFilters({
               variant="ghost"
               size="icon-sm"
               className="shrink-0"
-              aria-label="Закрыть"
+              aria-label={C.close}
             >
               <XIcon />
-              <span className="sr-only">Закрыть</span>
+              <span className="sr-only">{C.close}</span>
             </Button>
           </SheetClose>
         </div>
@@ -481,7 +479,7 @@ export function VacancyFilters({
         <CardHeader className="px-5 pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <IconFilter className="size-5 shrink-0" aria-hidden stroke={1.75} />
-            Фильтры
+            {L.sheetTitle}
           </CardTitle>
         </CardHeader>
       )}
@@ -494,7 +492,7 @@ export function VacancyFilters({
         {resolvedPresetRow && resolvedPresetId ? (
           <div key={resolvedPresetId} className="flex flex-col gap-2">
             <Label htmlFor="vacancy-preset-name-display" className="text-sm font-medium">
-              Название фильтра
+              {L.filterName}
             </Label>
             <Input
               id="vacancy-preset-name-display"
@@ -505,7 +503,7 @@ export function VacancyFilters({
                 const raw = e.currentTarget.value;
                 const trimmed = raw.trim();
                 if (trimmed === "") {
-                  toast.error("Введите название фильтра");
+                  toast.error(L.enterFilterName);
                   e.currentTarget.value = resolvedPresetRow.name;
                   return;
                 }
@@ -518,7 +516,7 @@ export function VacancyFilters({
         ) : null}
 
         <div className="flex flex-col gap-2">
-          <Label className="text-sm font-medium">Специализация</Label>
+          <Label className="text-sm font-medium">{L.specialty}</Label>
           <Select
             value={specialtySelectValue}
             onValueChange={(next) => {
@@ -542,12 +540,12 @@ export function VacancyFilters({
               ) : (
                 <SpecialtyIcon specialty={specialtySelectValue} />
               )}
-              <SelectValue placeholder="Специализация" />
+              <SelectValue placeholder={L.specialtyPlaceholder} />
             </SelectTrigger>
             <SelectContent position="popper">
-              <SelectItem value={SPECIALTY_SELECT_ANY}>Любая</SelectItem>
+              <SelectItem value={SPECIALTY_SELECT_ANY}>{L.specialtyAny}</SelectItem>
               {specialtyValues.length > 1 ? (
-                <SelectItem value={SPECIALTY_SELECT_MULTI}>Несколько выбрано</SelectItem>
+                <SelectItem value={SPECIALTY_SELECT_MULTI}>{L.specialtyMulti}</SelectItem>
               ) : null}
               {SPECIALTIES.map((s) => (
                 <SelectItem key={s.value} value={s.value} textValue={s.label}>
@@ -564,7 +562,7 @@ export function VacancyFilters({
         <div className="flex flex-col gap-2">
           <Label className="flex items-center gap-2 text-sm font-medium">
             <GradeIcon className="size-4" />
-            Грейд
+            {L.grade}
           </Label>
           <ToggleGroup
             type="multiple"
@@ -584,7 +582,7 @@ export function VacancyFilters({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-sm font-medium">Формат работы</Label>
+          <Label className="text-sm font-medium">{L.workFormat}</Label>
           <ToggleGroup
             type="multiple"
             spacing={2}
@@ -594,16 +592,16 @@ export function VacancyFilters({
             }}
             className="flex flex-wrap justify-start"
           >
-            {FORMATS.map((f) => (
+            {FORMATS.map((fmt) => (
               <ToggleGroupItem
-                key={f.value}
-                value={f.value}
+                key={fmt.value}
+                value={fmt.value}
                 variant="outline"
                 size="sm"
                 className="gap-1.5"
               >
-                <WorkFormatIcon format={f.value} className="size-3.5 opacity-90" />
-                {f.label}
+                <WorkFormatIcon format={fmt.value} className="size-3.5 opacity-90" />
+                {fmt.label}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
@@ -635,15 +633,12 @@ export function VacancyFilters({
       >
         <DialogContent showCloseButton>
           <DialogHeader>
-            <DialogTitle>Удалить фильтр?</DialogTitle>
+            <DialogTitle>{L.deletePresetTitle}</DialogTitle>
             <DialogDescription>
               {pendingDeletePresetName ? (
-                <>
-                  Будет удалён сохранённый набор «{pendingDeletePresetName}». Текущие значения полей
-                  в каталоге останутся как есть.
-                </>
+                <>{L.deletePresetNamed(pendingDeletePresetName)}</>
               ) : (
-                "Будет удалён выбранный сохранённый набор фильтров."
+                L.deletePresetGeneric
               )}
             </DialogDescription>
           </DialogHeader>
@@ -656,7 +651,7 @@ export function VacancyFilters({
                 setPresetIdPendingDelete(null);
               }}
             >
-              Отмена
+              {C.cancel}
             </Button>
             <Button
               type="button"
@@ -668,7 +663,7 @@ export function VacancyFilters({
               }}
             >
               <Trash2 className="size-4 shrink-0" aria-hidden />
-              Удалить
+              {C.delete}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -684,11 +679,11 @@ export function VacancyFilters({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Сохранить фильтры</DialogTitle>
+            <DialogTitle>{L.saveFiltersTitle}</DialogTitle>
           </DialogHeader>
           <FieldGroup>
             <Field data-invalid={presetNameInvalid ? true : undefined}>
-              <FieldLabel htmlFor="preset-name">Название</FieldLabel>
+              <FieldLabel htmlFor="preset-name">{L.nameLabel}</FieldLabel>
               <Input
                 id="preset-name"
                 value={presetName}
@@ -697,7 +692,7 @@ export function VacancyFilters({
                   setPresetNameInvalid(false);
                 }}
                 maxLength={80}
-                placeholder="Например: Удалённый бэкенд"
+                placeholder={L.namePlaceholder}
                 className="h-9"
                 aria-invalid={presetNameInvalid}
                 aria-describedby="preset-name-desc"
@@ -706,13 +701,13 @@ export function VacancyFilters({
                 id="preset-name-desc"
                 className={presetNameInvalid ? "text-destructive" : undefined}
               >
-                {presetNameInvalid ? "Введите название" : "До 80 символов."}
+                {presetNameInvalid ? L.nameInvalid : L.nameHint}
               </FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter className="flex flex-row gap-2 sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setSaveOpen(false)}>
-              Отмена
+              {C.cancel}
             </Button>
             <Button
               type="button"
@@ -735,7 +730,7 @@ export function VacancyFilters({
               }}
               disabled={createPreset.isPending}
             >
-              Сохранить
+              {L.save}
             </Button>
           </DialogFooter>
         </DialogContent>

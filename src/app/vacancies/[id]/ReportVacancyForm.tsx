@@ -17,17 +17,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ru } from "@/locales";
 
-const REASONS = [
-  { value: "FAKE_VACANCY", label: "Подозрение в фейковой рефералке" },
-  { value: "INAPPROPRIATE_BEHAVIOR", label: "Неприемлемое поведение" },
-  { value: "FRAUD", label: "Мошенничество" },
-  { value: "OTHER", label: "Другое" },
-] as const;
+const R = ru.vacancies.report;
+const REASON_VALUES = ["FAKE_VACANCY", "INAPPROPRIATE_BEHAVIOR", "FRAUD", "OTHER"] as const;
+type ReportReason = (typeof REASON_VALUES)[number];
+
+const reasonOptions: { value: ReportReason; label: string }[] = REASON_VALUES.map((value) => ({
+  value,
+  label: R.reasons[value],
+}));
 
 export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState<(typeof REASONS)[number]["value"]>("FAKE_VACANCY");
+  const [reason, setReason] = useState<ReportReason>("FAKE_VACANCY");
   const [comment, setComment] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -48,14 +51,14 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
         <div className="flex w-full justify-end">
           <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
             <IconFlag data-icon="inline-start" className="size-4 shrink-0" aria-hidden />
-            Пожаловаться
+            {R.trigger}
           </Button>
         </div>
         {msg === "registered" ? (
           <Alert className="w-full">
-            <AlertTitle>Жалоба зарегистрирована</AlertTitle>
+            <AlertTitle>{R.successTitle}</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
-              <span>Модераторы увидят её в системе.</span>
+              <span>{R.successBody}</span>
               <ModerationContactLink />
             </AlertDescription>
           </Alert>
@@ -70,24 +73,24 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
   return (
     <Card className="w-full border-dashed">
       <CardHeader>
-        <CardTitle className="text-base">Жалоба на рефералку</CardTitle>
+        <CardTitle className="text-base">{R.cardTitle}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="report-reason">Причина</FieldLabel>
+            <FieldLabel htmlFor="report-reason">{R.reasonLabel}</FieldLabel>
             <Select
               value={reason}
-              onValueChange={(v) => setReason(v as (typeof REASONS)[number]["value"])}
+              onValueChange={(v) => setReason(v as ReportReason)}
             >
               <SelectTrigger id="report-reason" className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 <SelectGroup>
-                  {REASONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>
-                      {r.label}
+                  {reasonOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -95,7 +98,7 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
             </Select>
           </Field>
           <Field>
-            <FieldLabel htmlFor="report-comment">Комментарий (необязательно)</FieldLabel>
+            <FieldLabel htmlFor="report-comment">{R.commentLabel}</FieldLabel>
             <Textarea
               id="report-comment"
               value={comment}
@@ -112,16 +115,16 @@ export function ReportVacancyForm({ vacancyId }: { vacancyId: string }) {
                 submit.mutate({ vacancyId, reason, comment: comment.trim() || undefined })
               }
             >
-              Отправить
+              {R.submit}
             </Button>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Отмена
+              {R.cancel}
             </Button>
           </div>
         </FieldGroup>
         {msg === "registered" ? (
           <div className="text-muted-foreground flex flex-col gap-2 border-t pt-3 text-sm">
-            <span className="text-foreground">Жалоба зарегистрирована.</span>
+            <span className="text-foreground">{R.successInline}</span>
             <ModerationContactLink />
           </div>
         ) : null}

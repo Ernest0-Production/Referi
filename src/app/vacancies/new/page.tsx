@@ -4,6 +4,9 @@ import { trpc } from "@/trpc/server";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { NewVacancyComposeWithBack } from "@/app/vacancies/new/NewVacancyComposeWithBack";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ru } from "@/locales";
+
+const NP = ru.vacancies.newPage;
 
 export default async function NewVacancyPage() {
   const session = await auth();
@@ -23,23 +26,20 @@ export default async function NewVacancyPage() {
           <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
             {me.availableAttempts > 0 ? (
               <NewVacancyComposeWithBack
-                title="Разместить рефералку"
-                subtitle={`Доступных попыток: ${me.availableAttempts} из 3`}
-                cardDescription="Заполните поля и нажмите «Опубликовать рефералку»."
+                title={NP.title}
+                subtitle={NP.attemptsSubtitle(me.availableAttempts)}
+                cardDescription={NP.cardDescription}
                 showForm
               />
             ) : (
               <NewVacancyComposeWithBack
-                  title="Разместить рефералку"
-                subtitle={`Доступных попыток: ${me.availableAttempts} из 3`}
+                title={NP.title}
+                subtitle={NP.attemptsSubtitle(me.availableAttempts)}
                 showForm={false}
                 emptyState={
                   <Alert>
-                    <AlertTitle>Нет попыток</AlertTitle>
-                    <AlertDescription>
-                      Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60
-                      дней.
-                    </AlertDescription>
+                    <AlertTitle>{NP.noAttemptsTitle}</AlertTitle>
+                    <AlertDescription>{NP.noAttemptsBody}</AlertDescription>
                   </Alert>
                 }
               />
@@ -55,7 +55,7 @@ export default async function NewVacancyPage() {
       <PublicHeaderNav session={null} />
       <main className="flex-1">
         <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
-          <NewVacancyComposeWithBack title="Разместить рефералку" showForm />
+          <NewVacancyComposeWithBack title={NP.title} showForm />
         </div>
       </main>
     </div>

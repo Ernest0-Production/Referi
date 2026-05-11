@@ -21,6 +21,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ru } from "@/locales";
+
+const V = ru.dashboard.vacancy;
+const C = ru.common;
 
 type VacancyOwnerActionsProps = {
   vacancyId: string;
@@ -67,7 +71,7 @@ export function VacancyOwnerActions({
           className="min-w-0 flex-1 rounded-none rounded-l-md"
           asChild
         >
-          <Link href={editHref}>Редактировать</Link>
+          <Link href={editHref}>{V.ownerEdit}</Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -75,7 +79,7 @@ export function VacancyOwnerActions({
               type="button"
               variant="default"
               size="icon-lg"
-              aria-label="Дополнительные действия"
+              aria-label={V.ownerMoreAria}
               className="border-primary-foreground/20 rounded-none rounded-r-md border-l"
             >
               <ChevronDown className="size-4" aria-hidden />
@@ -90,7 +94,7 @@ export function VacancyOwnerActions({
               }}
             >
               <IconTrash className="size-4" />
-              Удалить
+              {C.delete}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -99,16 +103,13 @@ export function VacancyOwnerActions({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent showCloseButton>
           <DialogHeader>
-            <DialogTitle>Удалить рефералку?</DialogTitle>
-            <DialogDescription>
-              Активные запросы будут отменены с возвратами по правилам платформы. Это действие
-              нельзя отменить.
-            </DialogDescription>
+            <DialogTitle>{V.deleteVacancyTitle}</DialogTitle>
+            <DialogDescription>{V.deleteVacancyDescription}</DialogDescription>
           </DialogHeader>
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-              Отмена
+              {C.cancel}
             </Button>
             <Button
               type="button"
@@ -117,7 +118,7 @@ export function VacancyOwnerActions({
               onClick={() => del.mutate({ id: vacancyId })}
             >
               <IconTrash className="size-4 shrink-0" aria-hidden />
-              {del.isPending ? "Удаление…" : "Удалить"}
+              {del.isPending ? V.deletePending : C.delete}
             </Button>
           </DialogFooter>
         </DialogContent>

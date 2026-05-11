@@ -9,6 +9,10 @@ import { DeleteAccountCard } from "@/app/dashboard/settings/DeleteAccountCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ru } from "@/locales";
+
+const S = ru.dashboard.settings;
+const C = ru.common;
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -42,8 +46,8 @@ export default async function SettingsPage() {
     <main className="flex-1">
       <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-foreground text-2xl font-bold">Настройки аккаунта</h1>
-          <p className="text-muted-foreground text-sm">Профиль и подписка</p>
+          <h1 className="text-foreground text-2xl font-bold">{S.title}</h1>
+          <p className="text-muted-foreground text-sm">{S.subtitle}</p>
         </div>
 
         <Card>
@@ -54,12 +58,12 @@ export default async function SettingsPage() {
                 aria-hidden
                 stroke={1.75}
               />
-              Профиль
+              {S.profileCard}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <p className="text-muted-foreground text-xs">GitHub аккаунт</p>
+              <p className="text-muted-foreground text-xs">{S.githubAccount}</p>
               {githubLogin ? (
                 <a
                   href={`https://github.com/${encodeURIComponent(githubLogin)}`}
@@ -70,7 +74,7 @@ export default async function SettingsPage() {
                   {githubLogin}
                 </a>
               ) : (
-                <p className="text-foreground text-sm">{session.user.name ?? "—"}</p>
+                <p className="text-foreground text-sm">{session.user.name ?? C.dash}</p>
               )}
             </div>
             <UpdateProfileForm
@@ -89,7 +93,7 @@ export default async function SettingsPage() {
                 aria-hidden
                 stroke={1.75}
               />
-              Подписка
+              {S.subscription}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
@@ -100,7 +104,7 @@ export default async function SettingsPage() {
                 </Badge>
                 {subscription.currentPeriodEnd ? (
                   <p className="text-muted-foreground text-sm">
-                    Действует до:{" "}
+                    {S.activeUntil}{" "}
                     {new Date(subscription.currentPeriodEnd).toLocaleDateString("ru-RU", {
                       day: "2-digit",
                       month: "long",
@@ -111,9 +115,9 @@ export default async function SettingsPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-muted-foreground text-sm">У вас нет активной подписки PRO.</p>
+                <p className="text-muted-foreground text-sm">{S.noPro}</p>
                 <Button asChild>
-                  <Link href="/subscribe">😎 Оформить PRO подписку</Link>
+                  <Link href="/subscribe">{S.subscribeCta}</Link>
                 </Button>
               </div>
             )}
@@ -129,14 +133,14 @@ export default async function SettingsPage() {
                   aria-hidden
                   stroke={1.75}
                 />
-                Связь с модерацией
+                {S.moderation.title}
               </CardTitle>
-              <CardDescription>Вопросы и дополнения к жалобам — вне приложения</CardDescription>
+              <CardDescription>{S.moderation.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild>
                 <a href={moderationContactUrl} target="_blank" rel="noopener noreferrer">
-                  Открыть контакт модерации
+                  {S.moderation.open}
                 </a>
               </Button>
             </CardContent>
@@ -146,7 +150,7 @@ export default async function SettingsPage() {
         {user.staffRoles.length > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle>Персонал</CardTitle>
+              <CardTitle>{S.staff}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">

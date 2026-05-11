@@ -1,10 +1,10 @@
-/** Цифры целой суммы для отображения и отправки (без разделителей). */
+/** Digits of a whole amount for display and submit (no separators). */
 export function sanitizeMoneyIntegerDigits(raw: string, maxDigits = 15): string {
   const d = raw.replace(/\D/g, "").slice(0, maxDigits);
   return d;
 }
 
-/** Группировка разрядов для ru-RU (узкий пробел между группами по локали). */
+/** Digit grouping for ru-RU (narrow space between groups per locale). */
 export function formatRuMoneyIntegerDisplay(digits: string): string {
   if (!digits) return "";
   try {

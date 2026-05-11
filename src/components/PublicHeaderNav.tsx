@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
+import { ru } from "@/locales";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -25,7 +26,7 @@ function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.email?.trim()) {
     return user.email.trim();
   }
-  return "Аккаунт";
+  return ru.common.accountFallback;
 }
 
 function initialsFromLabel(label: string): string {
@@ -69,7 +70,7 @@ export function PublicHeaderNav({ session }: { session: Session | null }) {
                 size="icon"
                 className="size-9 rounded-full"
                 title={sessionDisplayLabel(session.user)}
-                aria-label="Меню профиля"
+                aria-label={ru.common.profileMenuAria}
               >
                 <Avatar className="size-8">
                   {avatarUrl ? <AvatarImage src={avatarUrl} alt={profileLabel} /> : null}
@@ -84,7 +85,7 @@ export function PublicHeaderNav({ session }: { session: Session | null }) {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings" className="flex items-center gap-2">
                     <IconSettings className="size-4 shrink-0" aria-hidden />
-                    Настройки
+                    {ru.common.settings}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -94,7 +95,7 @@ export function PublicHeaderNav({ session }: { session: Session | null }) {
           </DropdownMenu>
         ) : (
           <Button asChild variant="default" size="sm" className="h-9">
-            <Link href="/login">Войти</Link>
+            <Link href="/login">{ru.common.signIn}</Link>
           </Button>
         )}
       </div>

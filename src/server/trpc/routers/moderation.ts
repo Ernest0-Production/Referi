@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client";
 
 import { refundEscrowOrThrow } from "@/server/services/paymentService";
 import { scheduleOfferAcceptedPayout } from "@/server/workers/paymentWorker";
+import { ru } from "@/locales";
 
 export const moderationRouter = router({
   openCases: moderatorProcedure.query(async ({ ctx }) => {
@@ -138,7 +139,7 @@ export const moderationRouter = router({
             amountKopecks: app.escrowTx.amountKopecks,
             netPayoutKopecks: app.escrowTx.netPayoutKopecks,
           },
-          description: "Возврат по решению модератора",
+          description: ru.server.moderation.refundModerator,
         });
       }
 

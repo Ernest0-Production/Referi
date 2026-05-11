@@ -4,6 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { startTransition, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ru } from "@/locales";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -39,7 +40,7 @@ export function ThemeToggle() {
       size="icon"
       className="size-9 shrink-0"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Включить светлую тему" : "Включить тёмную тему"}
+      aria-label={isDark ? ru.common.themeLightAria : ru.common.themeDarkAria}
     >
       {isDark ? <Sun /> : <Moon />}
     </Button>

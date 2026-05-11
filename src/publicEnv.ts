@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 /**
- * Только публичные переменные для клиентского бандла.
- * Не импортировать сюда `src/env.ts` — там секреты и полная схема Node.
+ * Public env vars only (client bundle).
+ * Do not import `src/env.ts` here — secrets and full Node schema live there.
  */
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_MODERATION_CONTACT_URL: z

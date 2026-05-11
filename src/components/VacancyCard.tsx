@@ -19,32 +19,11 @@ import {
   SpecialtyIcon,
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
+import { ru } from "@/locales";
 
-const SPECIALTY_LABELS: Record<string, string> = {
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-  FULLSTACK: "Fullstack",
-  IOS_MOBILE: "iOS",
-  ANDROID_MOBILE: "Android",
-  DEVOPS: "DevOps",
-  QA: "QA",
-  DATA: "Data",
-  ML_AI: "ML/AI",
-  SECURITY: "Security",
-};
-
-const GRADE_LABELS: Record<string, string> = {
-  JUNIOR: "Junior",
-  MIDDLE: "Middle",
-  SENIOR: "Senior",
-  LEAD: "Lead",
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  OFFICE: "Офис",
-  HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
-};
+const SPECIALTY_LABELS: Record<string, string> = { ...ru.vacancies.specialtyLabels };
+const GRADE_LABELS: Record<string, string> = { ...ru.vacancies.gradeLabels };
+const FORMAT_LABELS: Record<string, string> = { ...ru.vacancies.workFormatLabels };
 
 interface Vacancy {
   id: string;
@@ -64,12 +43,13 @@ interface Vacancy {
 
 function formatUpdatedRelative(updatedAt: Date): string {
   const rtf = new Intl.RelativeTimeFormat("ru", { numeric: "auto" });
+  const { updatedJustNow, updatedPrefix } = ru.vacancies.card;
   const diffSec = Math.round((updatedAt.getTime() - Date.now()) / 1000);
   const abs = Math.abs(diffSec);
-  if (abs < 45) return "обновлено только что";
-  if (abs < 3600) return `обновлено ${rtf.format(Math.round(diffSec / 60), "minute")}`;
-  if (abs < 86400) return `обновлено ${rtf.format(Math.round(diffSec / 3600), "hour")}`;
-  return `обновлено ${rtf.format(Math.round(diffSec / 86400), "day")}`;
+  if (abs < 45) return updatedJustNow;
+  if (abs < 3600) return `${updatedPrefix} ${rtf.format(Math.round(diffSec / 60), "minute")}`;
+  if (abs < 86400) return `${updatedPrefix} ${rtf.format(Math.round(diffSec / 3600), "hour")}`;
+  return `${updatedPrefix} ${rtf.format(Math.round(diffSec / 86400), "day")}`;
 }
 
 export function VacancyCard({
@@ -80,9 +60,10 @@ export function VacancyCard({
 }: {
   vacancy: Vacancy;
   hasActiveSeekerApplication?: boolean;
-    isViewed?: boolean;
+  isViewed?: boolean;
   detailHref?: string;
 }) {
+  const c = ru.vacancies.card;
   const salary = formatVacancySalaryRange(
     vacancy.salaryFromKopecks,
     vacancy.salaryToKopecks,
@@ -124,9 +105,9 @@ export function VacancyCard({
                   {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                Специализация
-              </TooltipContent>
+                <TooltipContent side="top" sideOffset={4}>
+                  {c.specialtyTooltip}
+                </TooltipContent>
             </Tooltip>
             {salary ? (
               <Tooltip>
@@ -142,7 +123,7 @@ export function VacancyCard({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
-                  Зарплата
+                  {c.salaryTooltip}
                 </TooltipContent>
               </Tooltip>
             ) : null}
@@ -199,7 +180,7 @@ export function VacancyCard({
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={4}>
-                Формат работы
+                {c.workFormatTooltip}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -210,7 +191,7 @@ export function VacancyCard({
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={4}>
-                Грейд
+                {c.gradeTooltip}
               </TooltipContent>
             </Tooltip>
             {hasActiveSeekerApplication ? (
@@ -220,7 +201,7 @@ export function VacancyCard({
                     variant="secondary"
                     className="bg-primary/15 text-primary dark:bg-primary/25 border-transparent font-medium"
                   >
-                    Активная заявка
+                    {c.activeApplication}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent
@@ -228,7 +209,7 @@ export function VacancyCard({
                   sideOffset={4}
                   className="max-w-xs text-left leading-snug"
                 >
-                  У вас уже есть активная заявка по этой рефералке
+                  {c.activeApplicationTooltip}
                 </TooltipContent>
               </Tooltip>
             ) : null}

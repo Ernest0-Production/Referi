@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ru } from "@/locales";
 
 interface Props {
   vacancyId: string;
@@ -24,6 +25,9 @@ export function SubmitApplicationForm({
   defaultBio,
 }: Props) {
   const router = useRouter();
+  const F = ru.applications.form;
+  const E = F.errors;
+  const c = ru.common;
   const [form, setForm] = useState({
     contactInfo: defaultContactInfo ?? "",
     bio: defaultBio ?? "",
@@ -42,17 +46,15 @@ export function SubmitApplicationForm({
     onError(err) {
       const msg = err.message;
       if (msg === "ACTIVE_APPLICATION_LIMIT_REACHED") {
-        setError(
-          "Достигнут лимит активных запросов по рефералкам. Купите дополнительный токен или дождитесь завершения заявки.",
-        );
+        setError(E.activeLimit);
       } else if (msg === "DUPLICATE_APPLICATION") {
-        setError("Вы уже просили эту рефералку.");
+        setError(E.duplicate);
       } else if (msg === "CANNOT_APPLY_TO_OWN_VACANCY") {
-        setError("Нельзя попросить собственную рефералку.");
+        setError(E.ownVacancy);
       } else if (msg === "VACANCY_NOT_ACTIVE") {
-        setError("Рефералка больше не активна.");
+        setError(E.vacancyInactive);
       } else if (msg.startsWith("PAID_TOKEN_")) {
-        setError("Токен запроса недействителен. Купите новый токен для этой рефералки.");
+        setError(E.paidToken);
       } else {
         setError(err.message);
       }
@@ -80,26 +82,26 @@ export function SubmitApplicationForm({
 
     const contact = form.contactInfo.trim();
     if (contact.length < 1) {
-      setContactError("Укажите контакт (минимум 1 символ).");
+      setContactError(F.contactMin);
       return;
     }
     if (contact.length > 500) {
-      setContactError("Не больше 500 символов.");
+      setContactError(F.contactMax);
       return;
     }
 
     const bio = form.bio.trim();
     if (bio.length < 10) {
-      setBioError(`Минимум 10 символов. Сейчас: ${bio.length}.`);
+      setBioError(F.bioMin(bio.length));
       return;
     }
     if (bio.length > 1000) {
-      setBioError("Не больше 1000 символов.");
+      setBioError(F.bioMax);
       return;
     }
 
     if (form.coverLetter.length > 300) {
-      setCoverError("Не больше 300 символов.");
+      setCoverError(F.coverMax);
       return;
     }
 
@@ -116,7 +118,7 @@ export function SubmitApplicationForm({
     <form noValidate onSubmit={handleSubmit}>
       <FieldGroup>
         <Field data-invalid={contactError ? "true" : undefined}>
-          <FieldLabel htmlFor="app-contact">Контактная информация *</FieldLabel>
+          <FieldLabel htmlFor="app-contact">{F.contactLabel}</FieldLabel>
           <Input
             id="app-contact"
             maxLength={500}
@@ -127,18 +129,18 @@ export function SubmitApplicationForm({
               setContactError(null);
               setForm((f) => ({ ...f, contactInfo: e.target.value }));
             }}
-            placeholder="мессенджер, email или ссылка"
+            placeholder={F.contactPlaceholder}
           />
           <FieldDescription
             id="app-contact-desc"
             className={contactError ? "text-destructive" : undefined}
           >
-            {contactError ?? "Обязательное поле. До 500 символов."}
+            {contactError ?? F.contactHint}
           </FieldDescription>
         </Field>
 
         <Field data-invalid={bioError ? "true" : undefined}>
-          <FieldLabel htmlFor="app-bio">О себе *</FieldLabel>
+          <FieldLabel htmlFor="app-bio">{F.bioLabel}</FieldLabel>
           <Textarea
             id="app-bio"
             rows={5}
@@ -150,15 +152,15 @@ export function SubmitApplicationForm({
               setBioError(null);
               setForm((f) => ({ ...f, bio: e.target.value }));
             }}
-            placeholder="Опыт, стек, достижения"
+            placeholder={F.bioPlaceholder}
           />
           <FieldDescription id="app-bio-desc" className={bioError ? "text-destructive" : undefined}>
-            {bioError ?? "Минимум 10 символов, не более 1000."}
+            {bioError ?? F.bioHint}
           </FieldDescription>
         </Field>
 
         <Field data-invalid={coverError ? "true" : undefined}>
-          <FieldLabel htmlFor="app-cover">Сопроводительное письмо (необязательно)</FieldLabel>
+          <FieldLabel htmlFor="app-cover">{F.coverLabel}</FieldLabel>
           <Textarea
             id="app-cover"
             maxLength={300}
@@ -170,26 +172,24 @@ export function SubmitApplicationForm({
               setCoverError(null);
               setForm((f) => ({ ...f, coverLetter: e.target.value }));
             }}
-            placeholder="Почему именно эта рефералка?"
+            placeholder={F.coverPlaceholder}
           />
           <FieldDescription
             id="app-cover-desc"
             className={coverError ? "text-destructive" : undefined}
           >
-            {coverError ?? "Необязательно, не более 300 символов."}
+            {coverError ?? F.coverHint}
           </FieldDescription>
         </Field>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Разовый токен запроса (199 ₽)</CardTitle>
-            <CardDescription>
-              Если бесплатный лимит активных запросов исчерпан, купите токен для этой рефералки.
-            </CardDescription>
+            <CardTitle className="text-base">{F.tokenCardTitle}</CardTitle>
+            <CardDescription>{F.tokenCardDescription}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {tokenId ? (
-              <p className="text-muted-foreground text-xs">Токен активирован для текущей заявки.</p>
+              <p className="text-muted-foreground text-xs">{F.tokenActive}</p>
             ) : (
               <Button
                 type="button"
@@ -198,7 +198,7 @@ export function SubmitApplicationForm({
                 disabled={buyToken.isPending}
                 onClick={() => buyToken.mutate({ vacancyId })}
               >
-                {buyToken.isPending ? "Переход к оплате…" : "Купить токен"}
+                {buyToken.isPending ? F.buyTokenPending : F.buyToken}
               </Button>
             )}
           </CardContent>
@@ -211,7 +211,7 @@ export function SubmitApplicationForm({
         ) : null}
 
         <Button type="submit" disabled={submit.isPending} className="w-full">
-          {submit.isPending ? "Отправка…" : "Отправить запрос"}
+          {submit.isPending ? F.submitPending : F.submit}
         </Button>
       </FieldGroup>
     </form>

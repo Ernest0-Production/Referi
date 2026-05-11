@@ -6,6 +6,7 @@ import { paymentProvider } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { kopecksToString } from "@/shared/utils/money";
 import { randomUuid } from "@/lib/randomUuid";
+import { ru } from "@/locales";
 
 export const paymentsRouter = router({
   initiateEscrow: protectedProcedure
@@ -67,7 +68,7 @@ export const paymentsRouter = router({
 
       const deal = await paymentProvider.createSafeDeal({
         idempotencyKey: idDeal,
-        description: `Сделка Referi по заявке ${app.id}`,
+        description: ru.server.payments.deal(app.id),
         metadata: { applicationId: app.id, type: "escrow" },
       });
 
@@ -76,7 +77,7 @@ export const paymentsRouter = router({
         dealId: deal.dealId,
         amountKopecks: chargeAmount,
         payoutSettlementKopecks: netPayout,
-        description: `Заявка на рефералку "${app.vacancy.title}" в ${app.vacancy.companyName}`,
+        description: ru.server.payments.application(app.vacancy.title, app.vacancy.companyName),
         metadata: { applicationId: app.id, type: "escrow" },
         returnUrl,
       });
@@ -141,7 +142,7 @@ export const paymentsRouter = router({
       const payment = await paymentProvider.createPayment({
         idempotencyKey,
         amountKopecks: BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP,
-        description: `Дополнительный запрос на рефералку «${vacancy.title}»`,
+        description: ru.server.payments.extraRequest(vacancy.title),
         metadata: {
           type: "paid_token",
           tokenId: token.id,

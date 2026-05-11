@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { randomUuid } from "@/lib/randomUuid";
 import { env } from "@/env";
 import { paymentProvider, refundEscrowOrThrow } from "@/server/services/paymentService";
+import { ru } from "@/locales";
 
 async function referrerPayoutDestination(db: PrismaClient, referrerId: string): Promise<string> {
   const u = await db.user.findUnique({
@@ -43,7 +44,7 @@ export async function syncEscrowFinancialsBeforeAccountDeletion(
         idempotencyKey,
         dealId: tx.yookassaDealId,
         amountKopecks: tx.netPayoutKopecks,
-        description: `Реферальное вознаграждение по заявке ${applicationId}`,
+        description: ru.server.accountDeletion.reward(applicationId),
         yooMoneyWallet: dest,
         metadata: { referrerId: app.vacancy.referrerId, applicationId },
       });
@@ -68,7 +69,7 @@ export async function syncEscrowFinancialsBeforeAccountDeletion(
         amountKopecks: tx.amountKopecks,
         netPayoutKopecks: tx.netPayoutKopecks,
       },
-      description: `Возврат при удалении аккаунта по заявке ${applicationId}`,
+      description: ru.server.accountDeletion.refundApplication(applicationId),
     });
 
     await db.escrowTransaction.update({
@@ -95,7 +96,7 @@ export async function syncPaidTokenRefundBeforeAccountDeletion(
     idempotencyKey,
     paymentId: tok.yookassaPaymentId,
     amountKopecks: tok.amountKopecks,
-    description: `Возврат токена при удалении аккаунта ${tokenId}`,
+    description: ru.server.accountDeletion.refundToken(tokenId),
   });
 
   await db.paidApplicationToken.update({

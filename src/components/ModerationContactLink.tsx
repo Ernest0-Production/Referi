@@ -2,13 +2,14 @@
 
 import type { ReactNode } from "react";
 import { publicEnv } from "@/publicEnv";
+import { ru } from "@/locales";
 
 /**
- * Публичная ссылка для связи с модерацией (NEXT_PUBLIC_MODERATION_CONTACT_URL).
+ * Public link for moderation contact (`NEXT_PUBLIC_MODERATION_CONTACT_URL`).
  */
 export function ModerationContactLink({
   className = "text-sm font-medium text-blue-600 hover:underline",
-  children = "Связаться с модерацией" as ReactNode,
+  children = ru.payAuth.moderationLinkDefault as ReactNode,
 }: {
   className?: string;
   children?: ReactNode;

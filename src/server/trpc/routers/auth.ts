@@ -7,6 +7,7 @@ import { paymentProvider } from "@/server/services/paymentService";
 import { randomUuid } from "@/lib/randomUuid";
 import { deleteAccountAndAllData } from "@/server/commands/deleteAccount";
 import { BusinessError } from "@/server/commands/submitApplication";
+import { ru } from "@/locales";
 
 function handleAuthBusinessError(err: unknown): never {
   if (err instanceof BusinessError) {
@@ -134,7 +135,7 @@ export const authRouter = router({
       const payment = await paymentProvider.createPayment({
         idempotencyKey,
         amountKopecks: feeKopecks,
-        description: "Регистрационный сбор Referi",
+        description: ru.server.auth.registrationFee,
         metadata: { userId: input.userId, type: "registration" },
         capture: true,
         returnUrl,

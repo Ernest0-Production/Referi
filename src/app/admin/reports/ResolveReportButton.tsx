@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ru } from "@/locales";
 
 interface Props {
   reportId: string;
@@ -20,6 +21,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
   const [blockVacancy, setBlockVacancy] = useState(false);
   const [resolved, setResolved] = useState(false);
   const utils = trpcReact.useUtils();
+  const rr = ru.admin.resolveReport;
 
   const resolve = trpcReact.moderation.resolveAbuseReport.useMutation({
     onSuccess: () => {
@@ -29,17 +31,17 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
   });
 
   if (resolved) {
-    return <p className="text-muted-foreground text-sm font-medium">Жалоба закрыта.</p>;
+    return <p className="text-muted-foreground text-sm font-medium">{rr.closed}</p>;
   }
 
   return (
     <FieldGroup>
       <Field data-invalid={resolutionError ? "true" : undefined}>
-        <FieldLabel htmlFor="report-resolution">Решение (обязательно)</FieldLabel>
+        <FieldLabel htmlFor="report-resolution">{rr.resolutionLabel}</FieldLabel>
         <Textarea
           id="report-resolution"
           rows={2}
-          placeholder="Решение (обязательно)"
+          placeholder={rr.resolutionPlaceholder}
           value={resolution}
           aria-invalid={resolutionError ? true : undefined}
           aria-describedby="report-resolution-desc"
@@ -53,7 +55,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
           id="report-resolution-desc"
           className={resolutionError ? "text-destructive" : undefined}
         >
-          {resolutionError ?? "Обязательное поле."}
+          {resolutionError ?? rr.required}
         </FieldDescription>
       </Field>
       {vacancyId ? (
@@ -65,7 +67,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
             disabled={resolve.isPending}
           />
           <Label htmlFor="block-vacancy" className="text-muted-foreground text-sm font-normal">
-            Заблокировать рефералку
+            {rr.blockVacancy}
           </Label>
         </div>
       ) : null}
@@ -74,7 +76,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
         disabled={resolve.isPending}
         onClick={() => {
           if (!resolution.trim()) {
-            setResolutionError("Укажите текст решения.");
+            setResolutionError(rr.resolutionMissing);
             return;
           }
           setResolutionError(null);
@@ -85,7 +87,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
           });
         }}
       >
-        Закрыть жалобу
+        {rr.close}
       </Button>
       {resolve.error ? (
         <Alert variant="destructive">

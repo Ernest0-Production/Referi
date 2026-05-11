@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { ru } from "@/locales";
 
 interface Props {
   caseId: string;
@@ -31,10 +32,12 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
     },
   });
 
+  const r = ru.admin.resolveDispute;
+
   if (resolved) {
     return (
       <p className="text-muted-foreground text-sm font-medium">
-        Спор закрыт. Обновите страницу для актуального списка.
+        {r.closedHint}
       </p>
     );
   }
@@ -45,11 +48,11 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
   return (
     <FieldGroup>
       <Field>
-        <FieldLabel htmlFor="mod-notes">Примечание модератора (необязательно)</FieldLabel>
+        <FieldLabel htmlFor="mod-notes">{r.notesLabel}</FieldLabel>
         <Textarea
           id="mod-notes"
           rows={2}
-          placeholder="Примечание модератора (необязательно)"
+          placeholder={r.notesPlaceholder}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           disabled={isPending}
@@ -61,7 +64,7 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
           disabled={isPending}
           onClick={() => forReferrer.mutate({ caseId, notes: notes || undefined })}
         >
-          Решить в пользу реферальщика
+          {r.forReferrer}
         </Button>
         <Button
           type="button"
@@ -69,7 +72,7 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
           disabled={isPending}
           onClick={() => forSeeker.mutate({ caseId, notes: notes || undefined })}
         >
-          Решить в пользу соискателя
+          {r.forSeeker}
         </Button>
       </div>
       {errMsg ? (
@@ -78,7 +81,8 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
         </Alert>
       ) : null}
       <p className="text-muted-foreground text-xs">
-        Заявка: <code className="bg-muted rounded px-1 font-mono">{applicationId}</code>
+        {r.applicationLine}{" "}
+        <code className="bg-muted rounded px-1 font-mono">{applicationId}</code>
       </p>
     </FieldGroup>
   );

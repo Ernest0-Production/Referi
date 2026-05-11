@@ -8,6 +8,9 @@ import {
   VACANCY_SPECIALTY_LABELS,
   VACANCY_WORK_FORMAT_LABELS,
 } from "../vacancyPublicFieldLabels";
+import { ru } from "@/locales";
+
+const M = ru.vacancies.meta;
 
 type VacancyDetailMetaBadgesProps = {
   specialty: string;
@@ -30,7 +33,7 @@ export function VacancyDetailMetaBadges({
           </Badge>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          Специализация
+          {M.specialty}
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -41,7 +44,7 @@ export function VacancyDetailMetaBadges({
           </Badge>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          Грейд
+          {M.grade}
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -52,7 +55,7 @@ export function VacancyDetailMetaBadges({
           </Badge>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          Формат работы
+          {M.workFormat}
         </TooltipContent>
       </Tooltip>
     </div>

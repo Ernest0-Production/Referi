@@ -20,6 +20,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { formatVacancyReferralRequestFooterHint } from "@/lib/vacancyReferralRequestFooterHint";
 import { cn } from "@/lib/utils";
+import { ru } from "@/locales";
+
+const D = ru.vacancies.detail;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -97,7 +100,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                     >
                       <p className="flex min-w-0 items-start gap-1.5 text-sm text-emerald-800/90 dark:text-emerald-200/90">
                         <IconCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
-                        <span className="min-w-0 leading-snug break-words">Зарплата</span>
+                        <span className="min-w-0 leading-snug break-words">{D.salary}</span>
                       </p>
                       <p className="font-semibold break-words text-emerald-950 dark:text-emerald-50">
                         {salaryLine}
@@ -115,7 +118,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               ) : null}
 
               <div className="flex flex-col gap-2">
-                <h2 className="text-foreground font-semibold">Описание</h2>
+                <h2 className="text-foreground font-semibold">{D.description}</h2>
                 <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
                   {vacancy.description}
                 </p>
@@ -134,7 +137,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                     <Button asChild size="lg" className="w-full sm:w-auto">
                       <Link href={`/dashboard/applications/new?vacancyId=${vacancy.id}`}>
                         <ApplicationCountIcon data-icon="inline-start" className="text-current" />
-                        Попросить рефералку
+                        {D.requestCta}
                       </Link>
                     </Button>
                     <p
@@ -149,7 +152,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                 <div className="flex flex-col gap-2">
                   <Button asChild size="lg" className="w-full sm:w-auto">
                     <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>
-                      Войти, чтобы попросить рефералку
+                      {D.loginToRequest}
                     </Link>
                   </Button>
                   <p className="text-muted-foreground text-left text-xs leading-snug" role="status">

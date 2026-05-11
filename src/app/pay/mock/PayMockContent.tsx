@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ru } from "@/locales";
 
 export function PayMockContent() {
   const search = useSearchParams();
@@ -12,10 +13,12 @@ export function PayMockContent() {
   const paymentId = search.get("paymentId") ?? "";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const m = ru.payAuth.mock;
+  const c = ru.common;
 
   const complete = useCallback(async () => {
     if (!paymentId) {
-      setError("Нет paymentId в ссылке");
+      setError(m.noPaymentId);
       return;
     }
     setLoading(true);
@@ -28,7 +31,7 @@ export function PayMockContent() {
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; type?: string };
       if (!res.ok) {
-        setError(data.error ?? `Ошибка ${res.status}`);
+        setError(data.error ?? m.httpError(res.status));
         return;
       }
       if (data.type === "registration") {
@@ -37,7 +40,7 @@ export function PayMockContent() {
       }
       router.push("/dashboard/applications");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Сеть");
+      setError(e instanceof Error ? e.message : c.networkError);
     } finally {
       setLoading(false);
     }
@@ -46,9 +49,9 @@ export function PayMockContent() {
   return (
     <Card className="w-full max-w-md shadow-sm">
       <CardHeader>
-        <CardTitle>Тестовая оплата (mock)</CardTitle>
+        <CardTitle>{m.title}</CardTitle>
         <CardDescription>
-          Нажмите кнопку, чтобы зачислить тестовый платёж и перейти дальше. Доступно при{" "}
+          {m.descriptionIntro}{" "}
           <code className="bg-muted rounded px-1 font-mono text-xs">
             FEATURE_REAL_PAYMENTS=false
           </code>
@@ -62,11 +65,11 @@ export function PayMockContent() {
           </p>
         ) : null}
         <Button type="button" disabled={loading || !paymentId} onClick={() => void complete()}>
-          {loading ? "…" : "Зачислить тестовый платёж"}
+          {loading ? c.ellipsis : m.credit}
         </Button>
         {error ? (
           <Alert variant="destructive">
-            <AlertTitle>Ошибка</AlertTitle>
+            <AlertTitle>{c.errorTitle}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}

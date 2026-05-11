@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { Badge } from "@/components/ui/badge";
 import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
+import { ru } from "@/locales";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -27,7 +28,7 @@ function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.email?.trim()) {
     return user.email.trim();
   }
-  return "Аккаунт";
+  return ru.common.accountFallback;
 }
 
 function initialsFromLabel(label: string): string {
@@ -66,14 +67,14 @@ export function AdminHeaderNav({ session }: { session: Session }) {
           <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
             <Link href="/admin">
               <Shield data-icon="inline-start" />
-              Споры
+              {ru.admin.nav.disputes}
             </Link>
           </Button>
           <Button variant="ghost" className="text-muted-foreground h-9 gap-2 font-normal" asChild>
-            <Link href="/admin/reports">Жалобы</Link>
+            <Link href="/admin/reports">{ru.admin.nav.reports}</Link>
           </Button>
           <Button variant="ghost" className="text-muted-foreground h-9 font-normal" asChild>
-            <Link href="/">Кабинет</Link>
+            <Link href="/">{ru.admin.nav.cabinet}</Link>
           </Button>
         </div>
       </div>
@@ -81,11 +82,11 @@ export function AdminHeaderNav({ session }: { session: Session }) {
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <ThemeToggle />
         <Button variant="outline" size="sm" className="md:hidden" asChild>
-          <Link href="/admin/reports">Жалобы</Link>
+          <Link href="/admin/reports">{ru.admin.nav.reports}</Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-9 rounded-full" aria-label="Меню">
+            <Button variant="ghost" size="icon" className="size-9 rounded-full" aria-label={ru.admin.nav.menuAria}>
               <Avatar className="size-8">
                 {avatarUrl ? <AvatarImage src={avatarUrl} alt={profileLabel} /> : null}
                 <AvatarFallback className="text-xs font-medium">
@@ -99,7 +100,7 @@ export function AdminHeaderNav({ session }: { session: Session }) {
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings" className="flex items-center gap-2">
                   <IconSettings className="size-4 shrink-0" aria-hidden />
-                  Настройки
+                  {ru.common.settings}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { VACANCY_SALARY_CURRENCY_VALUES } from "@/lib/vacancySalaryCurrency";
 import { router, protectedProcedure } from "../trpc";
+import { ru } from "@/locales";
 
 const presetParamsSchema = z
   .object({
@@ -60,7 +61,7 @@ export const vacancySearchPresetsRouter = router({
           if (val.params === undefined && val.name === undefined) {
             ctx.addIssue({
               code: "custom",
-              message: "Укажите параметры или название фильтра",
+              message: ru.server.vacancySearchPresets.paramsOrName,
               path: [],
             });
           }

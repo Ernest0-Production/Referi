@@ -4,33 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradeIcon, SpecialtyIcon, WorkFormatIcon } from "@/components/vacancy/VacancyFieldIcons";
 import { VacancyOwnerActions } from "./VacancyOwnerActions";
+import { ru } from "@/locales";
 
-const SPECIALTY_LABELS: Record<string, string> = {
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-  FULLSTACK: "Fullstack",
-  IOS_MOBILE: "iOS",
-  ANDROID_MOBILE: "Android",
-  DEVOPS: "DevOps",
-  QA: "QA",
-  DATA: "Data",
-  ML_AI: "ML/AI",
-  SECURITY: "Security",
-};
-
-const GRADE_LABELS: Record<string, string> = {
-  JUNIOR: "Junior",
-  MIDDLE: "Middle",
-  SENIOR: "Senior",
-  LEAD: "Lead",
-  PRINCIPAL: "Principal",
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  OFFICE: "Офис",
-  HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
-};
+const SL = ru.vacancies.specialtyLabels;
+const GL = ru.vacancies.gradeLabels;
+const WF = ru.vacancies.workFormatLabels;
+const V = ru.dashboard.vacancy;
 
 interface Vacancy {
   id: string;
@@ -54,22 +33,22 @@ export function ManageVacancyPanel({ vacancy }: { vacancy: Vacancy }) {
           <p className="text-muted-foreground text-sm">{vacancy.companyName}</p>
         </div>
         <Badge variant={vacancy.status === "ACTIVE" ? "default" : "secondary"}>
-          {vacancy.status === "ACTIVE" ? "Активна" : "Заморожена"}
+          {vacancy.status === "ACTIVE" ? V.panelActive : V.panelFrozen}
         </Badge>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">
             <SpecialtyIcon specialty={vacancy.specialty} className="text-current" />
-            {SPECIALTY_LABELS[vacancy.specialty] ?? vacancy.specialty}
+            {SL[vacancy.specialty as keyof typeof SL] ?? vacancy.specialty}
           </Badge>
           <Badge variant="secondary">
             <GradeIcon className="text-current" />
-            {GRADE_LABELS[vacancy.grade] ?? vacancy.grade}
+            {GL[vacancy.grade as keyof typeof GL] ?? vacancy.grade}
           </Badge>
           <Badge variant="secondary">
             <WorkFormatIcon format={vacancy.workFormat} className="text-current" />
-            {FORMAT_LABELS[vacancy.workFormat] ?? vacancy.workFormat}
+            {WF[vacancy.workFormat as keyof typeof WF] ?? vacancy.workFormat}
           </Badge>
         </div>
 

@@ -4,11 +4,14 @@ import { useState } from "react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ru } from "@/locales";
 
 interface Props {
   userId: string;
   feeDisplay: string;
 }
+
+const R = ru.payAuth.registration;
 
 export function PayRegistrationButton({ userId, feeDisplay }: Props) {
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +33,7 @@ export function PayRegistrationButton({ userId, feeDisplay }: Props) {
         disabled={initiate.isPending}
         onClick={() => initiate.mutate({ userId })}
       >
-        {initiate.isPending ? "Создание платежа…" : `Оплатить ${feeDisplay} и зарегистрироваться`}
+        {initiate.isPending ? R.payPending : R.payCta(feeDisplay)}
       </Button>
       {error ? (
         <Alert variant="destructive">

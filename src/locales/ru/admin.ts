@@ -1,0 +1,38 @@
+export const admin = {
+  disputesTitle: "Открытые споры",
+  disputesEmpty: "Нет открытых споров.",
+  disputesCount: (n: number) => `${n} спор(ов) ожидают решения.`,
+  seeker: "Соискатель:",
+  application: "Заявка:",
+  disputeOpened: "Спор открыт:",
+  resolveDispute: {
+    closedHint: "Спор закрыт. Обновите страницу для актуального списка.",
+    notesLabel: "Примечание модератора (необязательно)",
+    notesPlaceholder: "Примечание модератора (необязательно)",
+    forReferrer: "Решить в пользу реферальщика",
+    forSeeker: "Решить в пользу соискателя",
+    applicationLine: "Заявка:",
+  },
+  reports: {
+    title: "Жалобы",
+    empty: "Нет нерассмотренных жалоб.",
+    count: (n: number) => `${n} жалоб(а) ожидают рассмотрения.`,
+    from: "От:",
+    badgeNew: "Новая",
+  },
+  resolveReport: {
+    closed: "Жалоба закрыта.",
+    resolutionLabel: "Решение (обязательно)",
+    resolutionPlaceholder: "Решение (обязательно)",
+    required: "Обязательное поле.",
+    blockVacancy: "Заблокировать рефералку",
+    resolutionMissing: "Укажите текст решения.",
+    close: "Закрыть жалобу",
+  },
+  nav: {
+    disputes: "Споры",
+    reports: "Жалобы",
+    cabinet: "Кабинет",
+    menuAria: "Меню",
+  },
+} as const;

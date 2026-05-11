@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { formatRubles } from "@/shared/utils/money";
+import { ru } from "@/locales";
 import { PayRegistrationButton } from "./PayRegistrationButton";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,6 +11,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 interface PageProps {
   searchParams: Promise<{ uid?: string }>;
 }
+
+const R = ru.payAuth.registration;
 
 export default async function AgeGatePage({ searchParams }: PageProps) {
   const { uid } = await searchParams;
@@ -24,21 +27,21 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
             <div className="text-4xl" aria-hidden>
               🔒
             </div>
-            <CardTitle>Аккаунт GitHub слишком новый</CardTitle>
+            <CardTitle>{R.githubTooNewTitle}</CardTitle>
             <p className="text-muted-foreground text-sm">
-              Для защиты от спама и фейков требуется, чтобы ваш GitHub аккаунт существовал минимум{" "}
+              {R.githubTooNewBody}{" "}
               <strong className="text-foreground">
-                {BUSINESS_RULES.GITHUB_ACCOUNT_MIN_AGE_DAYS} дней
+                {BUSINESS_RULES.GITHUB_ACCOUNT_MIN_AGE_DAYS} {R.daysWord}
               </strong>
               .
             </p>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
             <Alert>
-              <AlertTitle>Альтернатива: платная регистрация</AlertTitle>
+              <AlertTitle>{R.paidTitle}</AlertTitle>
               <AlertDescription>
-                Вы можете зарегистрироваться сейчас, оплатив разовый сбор в размере{" "}
-                <strong>{feeDisplay}</strong>. Этот сбор не возвращается.
+                {R.paidBodyBefore} <strong>{feeDisplay}</strong>
+                {R.paidBodyAfter}
               </AlertDescription>
             </Alert>
 
@@ -46,15 +49,13 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
               {uid ? (
                 <PayRegistrationButton userId={uid} feeDisplay={feeDisplay} />
               ) : (
-                <p className="text-muted-foreground text-center text-xs">
-                  Сессия не найдена. Вернитесь на страницу входа и попробуйте снова.
-                </p>
+                <p className="text-muted-foreground text-center text-xs">{R.sessionMissing}</p>
               )}
             </div>
           </CardContent>
           <CardFooter className="justify-center">
             <Button variant="link" asChild>
-              <Link href="/login">← Вернуться к входу</Link>
+              <Link href="/login">{R.backToLogin}</Link>
             </Button>
           </CardFooter>
         </Card>

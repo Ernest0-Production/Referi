@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ru } from "@/locales";
 
 interface LoginPageProps {
   searchParams: Promise<{ callbackUrl?: string | string[] }>;
@@ -38,17 +39,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <Card className="w-full max-w-md shadow-sm">
           <CardHeader className="flex flex-col gap-1 text-center">
             <CardTitle className="text-2xl">Referi</CardTitle>
-            <CardDescription>Реферальная платформа для разработчиков</CardDescription>
+            <CardDescription>{ru.payAuth.login.cardDescription}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-muted-foreground text-center text-sm">
-              Войдите через GitHub, чтобы продолжить
+              {ru.payAuth.login.hint}
             </p>
             <LoginButton callbackUrl={callbackAfterAuth} />
           </CardContent>
           <CardFooter>
             <p className="text-muted-foreground w-full text-center text-xs">
-              Для регистрации требуется GitHub аккаунт старше 1 года
+              {ru.payAuth.login.registrationNote}
             </p>
           </CardFooter>
         </Card>

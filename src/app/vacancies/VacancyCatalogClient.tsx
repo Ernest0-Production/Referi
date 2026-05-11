@@ -32,6 +32,7 @@ import {
   vacancyFlatToTrpcListInput,
   vacancyListInputStableKey,
 } from "./vacancyFlatToTrpcListInput";
+import { ru } from "@/locales";
 
 type ListOut = inferRouterOutputs<AppRouter>["vacancies"]["list"];
 type MyActiveOut = inferRouterOutputs<AppRouter>["vacancies"]["myActive"];
@@ -42,7 +43,7 @@ type VacancyFiltersProps = ComponentProps<typeof VacancyFilters>;
 
 function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
   const [open, setOpen] = useState(false);
-
+  const Cat = ru.vacancies.catalog;
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -58,7 +59,7 @@ function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
         type="button"
         variant="default"
         size="icon"
-        aria-label="Открыть фильтры"
+        aria-label={Cat.openFiltersAria}
         className={cn(
           "fixed right-5 bottom-6 z-40 h-14 w-14 rounded-full shadow-lg",
           open && "pointer-events-none opacity-0",
@@ -90,6 +91,9 @@ export function VacancyCatalogClient({
   employerVacancyPreview: MyActiveOut;
   resumeVacancyPresetSave?: boolean;
 }) {
+  const Cat = ru.vacancies.catalog;
+  const com = ru.common;
+
   const router = useRouter();
   const resumeUrlCleanupDone = useRef(false);
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
@@ -254,8 +258,8 @@ export function VacancyCatalogClient({
 
         {items.length === 0 ? (
           <div className="border-border bg-card rounded-2xl border p-8 text-center">
-            <p className="text-muted-foreground">Рефералки не найдены</p>
-            <p className="text-muted-foreground mt-1 text-sm">Попробуйте изменить фильтры</p>
+            <p className="text-muted-foreground">{Cat.notFoundTitle}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{Cat.notFoundHint}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -279,11 +283,11 @@ export function VacancyCatalogClient({
                 className="border-border bg-card text-foreground hover:bg-muted h-auto rounded-lg border px-4 py-2 text-sm font-medium"
                 onClick={() => applyPatch({ page: String(page - 1) })}
               >
-                Назад
+                {com.back}
               </Button>
             ) : null}
             <span className="text-muted-foreground text-sm">
-              Страница {page} из {totalPages}
+              {Cat.pageOf(page, totalPages)}
             </span>
             {page < totalPages ? (
               <Button
@@ -292,7 +296,7 @@ export function VacancyCatalogClient({
                 className="border-border bg-card text-foreground hover:bg-muted h-auto rounded-lg border px-4 py-2 text-sm font-medium"
                 onClick={() => applyPatch({ page: String(page + 1) })}
               >
-                Вперёд
+                {com.forward}
               </Button>
             ) : null}
           </div>

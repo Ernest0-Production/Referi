@@ -6,6 +6,7 @@ import { paymentProvider } from "@/server/services/paymentService";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { kopecksToString } from "@/shared/utils/money";
 import { randomUuid } from "@/lib/randomUuid";
+import { ru } from "@/locales";
 
 export const subscriptionsRouter = router({
   /**
@@ -47,7 +48,7 @@ export const subscriptionsRouter = router({
       const payment = await paymentProvider.createPayment({
         idempotencyKey,
         amountKopecks: BUSINESS_RULES.PRO_SUBSCRIPTION_PRICE_KOP,
-        description: "Подписка Referi PRO на 1 месяц",
+        description: ru.server.subscriptions.proMonthly,
         metadata: { userId: ctx.userId, type: "subscription" },
         capture: true,
         returnUrl,

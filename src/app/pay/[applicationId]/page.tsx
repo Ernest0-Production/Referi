@@ -9,6 +9,7 @@ import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ru } from "@/locales";
 
 interface PageProps {
   params: Promise<{ applicationId: string }>;
@@ -34,13 +35,15 @@ export default async function PayPage({ params }: PageProps) {
   const reward = BigInt(application.vacancy.rewardKopecks);
   const chargeAmount = reward === 0n ? BUSINESS_RULES.PAID_APPLICATION_PRICE_KOP : reward;
 
+  const P = ru.payAuth.application;
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
       <PublicHeaderNav session={session} />
       <main className="flex flex-1 flex-col items-center justify-center p-6">
         <Card className="w-full max-w-lg shadow-sm">
           <CardHeader className="flex flex-col gap-1">
-            <CardTitle>Оплата заявки</CardTitle>
+            <CardTitle>{P.title}</CardTitle>
             <p className="text-muted-foreground text-sm">
               {application.vacancy.title} · {application.vacancy.companyName}
             </p>
@@ -48,18 +51,16 @@ export default async function PayPage({ params }: PageProps) {
           <CardContent className="flex flex-col gap-4">
             <div className="border-border bg-muted/50 flex flex-col gap-2 rounded-xl border p-4">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Сумма эскроу</span>
+                <span className="text-muted-foreground">{P.escrowAmount}</span>
                 <span className="text-foreground font-semibold">{formatRubles(chargeAmount)}</span>
               </div>
-              <p className="text-muted-foreground text-xs">
-                Средства замораживаются до получения оффера. При отмене — полный возврат.
-              </p>
+              <p className="text-muted-foreground text-xs">{P.escrowHint}</p>
             </div>
 
             {escrow?.amountKopecks ? (
               <Alert>
-                <AlertTitle>Платёж уже создан</AlertTitle>
-                <AlertDescription>Продолжите оплату через кнопку ниже.</AlertDescription>
+                <AlertTitle>{P.paymentExistsTitle}</AlertTitle>
+                <AlertDescription>{P.paymentExistsDescription}</AlertDescription>
               </Alert>
             ) : null}
 
@@ -67,7 +68,7 @@ export default async function PayPage({ params }: PageProps) {
           </CardContent>
           <CardFooter className="justify-center">
             <Button variant="link" asChild>
-              <Link href={`/dashboard/applications/${applicationId}`}>Вернуться к заявке</Link>
+              <Link href={`/dashboard/applications/${applicationId}`}>{P.backToApplication}</Link>
             </Button>
           </CardFooter>
         </Card>
