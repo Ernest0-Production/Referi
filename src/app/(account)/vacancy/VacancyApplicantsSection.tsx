@@ -31,7 +31,9 @@ export async function VacancyApplicantsSection({ vacancyId }: { vacancyId: strin
     <section id="candidates" className="flex scroll-mt-24 flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-xl font-semibold">Кандидаты</h2>
-        <p className="text-muted-foreground text-sm">{formatApplicationCountLabel(applicants.length)}</p>
+        <p className="text-muted-foreground text-sm">
+          {formatApplicationCountLabel(applicants.length)}
+        </p>
       </div>
 
       {applicants.length === 0 ? (

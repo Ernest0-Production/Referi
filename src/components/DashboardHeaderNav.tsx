@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
+import { ModerationContactMenuItem } from "@/components/ModerationContactMenuItem";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
   if (user.githubLogin?.trim()) {
@@ -77,7 +78,7 @@ export function DashboardHeaderNav({ session }: { session: Session }) {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link href="/settings" className="flex items-center gap-2">
@@ -85,6 +86,7 @@ export function DashboardHeaderNav({ session }: { session: Session }) {
                   Настройки
                 </Link>
               </DropdownMenuItem>
+              <ModerationContactMenuItem />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />

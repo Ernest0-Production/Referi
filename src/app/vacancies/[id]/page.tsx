@@ -170,10 +170,7 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
           </Card>
           {session?.user && !isAuthor ? <ReportVacancyForm vacancyId={vacancy.id} /> : null}
           {session?.user && isAuthor ? (
-            <VacancyAuthorManageSection
-              vacancyId={vacancy.id}
-              applicationId={applicationIdParam}
-            />
+            <VacancyAuthorManageSection vacancyId={vacancy.id} applicationId={applicationIdParam} />
           ) : null}
         </div>
       </div>

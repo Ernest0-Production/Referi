@@ -1,22 +1,20 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { IconBrandGithub, IconCreditCard, IconHeadset, IconUser } from "@tabler/icons-react";
+import { IconBrandGithub, IconCreditCard, IconUser } from "@tabler/icons-react";
 import { auth } from "@/lib/auth";
-import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileForm } from "@/app/(account)/profile/UpdateProfileForm";
 import { DeleteAccountCard } from "@/app/(account)/settings/DeleteAccountCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const userId = session.user.id;
-  const moderationContactUrl = env.NEXT_PUBLIC_MODERATION_CONTACT_URL || null;
 
   const [user, subscription] = await Promise.all([
     prisma.user.findUnique({
@@ -68,11 +66,7 @@ export default async function SettingsPage() {
                   rel="noopener noreferrer"
                   className="text-foreground flex w-fit items-center gap-1.5 text-sm underline-offset-2 hover:underline"
                 >
-                  <IconBrandGithub
-                    className="size-4 shrink-0"
-                    aria-hidden
-                    stroke={1.75}
-                  />
+                  <IconBrandGithub className="size-4 shrink-0" aria-hidden stroke={1.75} />
                   {githubLogin}
                 </a>
               ) : (
@@ -125,29 +119,6 @@ export default async function SettingsPage() {
             )}
           </CardContent>
         </Card>
-
-        {moderationContactUrl ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <IconHeadset
-                  className="text-muted-foreground size-5 shrink-0"
-                  aria-hidden
-                  stroke={1.75}
-                />
-                Связь с модерацией
-              </CardTitle>
-              <CardDescription>Вопросы и дополнения к жалобам — вне приложения</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild>
-                <a href={moderationContactUrl} target="_blank" rel="noopener noreferrer">
-                  Связаться
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
 
         {user.staffRoles.length > 0 ? (
           <Card>

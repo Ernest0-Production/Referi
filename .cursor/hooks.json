@@ -3,7 +3,9 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "node scripts/cursor-after-file-edit-format-eslint.mjs"
+        "command": "node scripts/cursor-after-file-edit-format-eslint.mjs",
+        "timeout": 900,
+        "failClosed": true
       }
     ]
   }

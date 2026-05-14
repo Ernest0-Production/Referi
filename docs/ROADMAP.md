@@ -247,7 +247,7 @@ flowchart LR
 | `moderation.resolveForSeeker`           | `[MOD]` | refund → закрыть `ModeratorCase`                                                         |
 | Страница `/applications/[id]` | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                                                |
 | Блокировка пользователя / рефералки      | `[MOD]` | `moderation.blockUser`; рефералка — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
-| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` в настройках (`/settings`)    |
+| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL`: меню профиля в шапке, при необходимости блоки в кабинете (например заявка) |
 
 
 ### Definition of Done
@@ -269,7 +269,7 @@ flowchart LR
 | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Rate limiting (tRPC)           | `[CORE]` | `FEATURE_RATE_LIMITING` + Redis в `src/lib/rateLimiter.ts`, проверка в `src/app/api/trpc/[trpc]/route.ts` (см. spec-design-api §4.10) |
 | Полировка UI                   | `[CORE]` | Единый UI shell (шапки, `--app-page-surface`, shadcn); адаптивность, accessibility (Lighthouse ≥ 95), темизация                       |
-| Страница настроек пользователя | `[CORE]` | Профиль, подписка; опционально блок «Связь с модерацией» по `NEXT_PUBLIC_MODERATION_CONTACT_URL`                                      |
+| Страница настроек пользователя | `[CORE]` | Профиль, подписка                                                                                                                      |
 | Дашборд соискателя             | `[CORE]` | Все активные заявки с дедлайнами и действиями                                                                                         |
 | Дашборд реферальщика           | `[CORE]` | Рефералка, список кандидатов, пул попыток                                                                                              |
 | E2E-тесты Playwright           | `[CORE]` | Сценарии: регистрация, создание рефералки, полный цикл заявки, спор                                                                    |

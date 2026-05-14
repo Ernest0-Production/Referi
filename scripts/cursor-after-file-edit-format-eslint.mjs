@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const input = JSON.parse(readFileSync(0, "utf8"));
-const filePath = input.file_path;
+const filePath = input.file_path ?? input.path;
 if (!filePath || typeof filePath !== "string") {
   process.exit(0);
 }
@@ -21,6 +21,19 @@ if (!relFromRoot || (resolved !== rootResolved && !resolved.startsWith(rootResol
   process.exit(0);
 }
 
+const segments = relFromRoot.split(path.sep).filter(Boolean);
+const top = segments[0] ?? "";
+if (
+  top === "node_modules" ||
+  top === ".next" ||
+  top === ".git" ||
+  top === "coverage" ||
+  top === "playwright-report" ||
+  top === "test-results"
+) {
+  process.exit(0);
+}
+
 const skipPrettier = /\.(png|jpe?g|gif|webp|ico|woff2?|ttf|eot|pdf|zip)$/i;
 const targetAbs = path.isAbsolute(norm) ? norm : path.join(root, relFromRoot);
 
@@ -29,16 +42,50 @@ const eslintBin = path.join(root, "node_modules", ".bin", "eslint");
 
 const run = (bin, args) => {
   const r = spawnSync(bin, args, { cwd: root, stdio: "inherit" });
-  return !r.error;
+  return !r.error && r.status === 0;
 };
 
 if (!skipPrettier.test(norm)) {
-  run(prettierBin, ["--write", targetAbs]);
+  if (!run(prettierBin, ["--write", targetAbs])) {
+    process.exit(1);
+  }
 }
 
 const eslintExt = /\.(mjs|cjs|js|jsx|ts|tsx|mts|cts)$/i;
 if (eslintExt.test(norm)) {
-  run(eslintBin, [relFromRoot, "--fix"]);
+  if (!run(eslintBin, [relFromRoot, "--fix"])) {
+    process.exit(1);
+  }
+}
+
+const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
+
+const runNpm = (args) => {
+  const r = spawnSync(npmBin, args, {
+    cwd: root,
+    stdio: "inherit",
+    env: process.env,
+  });
+  return !r.error && r.status === 0;
+};
+
+console.error(
+  "\n[cursor hook] CI parity: prisma generate → typecheck → format:check → lint → vitest\n",
+);
+
+const ciSteps = [
+  ["run", "db:generate"],
+  ["run", "typecheck"],
+  ["run", "format:check"],
+  ["run", "lint"],
+  ["test"],
+];
+
+for (const args of ciSteps) {
+  if (!runNpm(args)) {
+    console.error(`\n[cursor hook] failed: npm ${args.join(" ")}`);
+    process.exit(1);
+  }
 }
 
 process.exit(0);

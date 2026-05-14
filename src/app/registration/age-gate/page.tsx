@@ -28,7 +28,8 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
               </div>
               <CardTitle>Аккаунт GitHub слишком новый</CardTitle>
               <p className="text-muted-foreground text-sm">
-                Для защиты от спама и фейков требуется, чтобы твой GitHub-аккаунт существовал минимум{" "}
+                Для защиты от спама и фейков требуется, чтобы твой GitHub-аккаунт существовал
+                минимум{" "}
                 <strong className="text-foreground">
                   {BUSINESS_RULES.GITHUB_ACCOUNT_MIN_AGE_DAYS} дней
                 </strong>
