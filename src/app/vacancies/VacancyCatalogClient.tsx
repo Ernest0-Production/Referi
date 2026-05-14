@@ -12,6 +12,7 @@ import {
   isVacancyCatalogFlatBaseline,
   mergeVacancyListFlat,
   presetParamsFromJson,
+  vacancyCatalogHasPresetSaveFields,
   vacancyListFlatToSearchParams,
   type VacancyListFlatSearchParams,
 } from "@/lib/vacancyListQuery";
@@ -50,7 +51,7 @@ type VacancyFiltersProps = ComponentProps<typeof VacancyFilters>;
 
 function VacancyCatalogMobileFiltersPanel(props: VacancyFiltersProps) {
   const [open, setOpen] = useState(false);
-  const filtersActive = !isVacancyCatalogFlatBaseline(props.currentParams);
+  const filtersActive = vacancyCatalogHasPresetSaveFields(props.currentParams);
 
   return (
     <>
@@ -105,6 +106,8 @@ export function VacancyCatalogClient({
 }) {
   const router = useRouter();
   const resumeUrlCleanupDone = useRef(false);
+  const catalogMainScrollAnchorRef = useRef<HTMLDivElement>(null);
+  const pageScrollSkipMountRef = useRef(true);
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
   const [activeVacancyPresetId, setActiveVacancyPresetId] = useState<string | undefined>(undefined);
   const [vacancyPresetSidebarCleared, setVacancyPresetSidebarCleared] = useState(false);
@@ -153,6 +156,14 @@ export function VacancyCatalogClient({
   );
 
   const listInput = useMemo(() => vacancyFlatToTrpcListInput(params), [params]);
+
+  useLayoutEffect(() => {
+    if (pageScrollSkipMountRef.current) {
+      pageScrollSkipMountRef.current = false;
+      return;
+    }
+    catalogMainScrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [listInput.page]);
 
   const listQuery = trpcReact.vacancies.list.useQuery(listInput, {
     placeholderData: keepPreviousData,
@@ -243,7 +254,11 @@ export function VacancyCatalogClient({
         <VacancyCatalogMobileFiltersPanel {...vacancyFilterProps} />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col gap-6" data-vacancy-catalog-main>
+      <div
+        ref={catalogMainScrollAnchorRef}
+        className="flex min-w-0 flex-1 flex-col gap-6"
+        data-vacancy-catalog-main
+      >
         <EmployerHomeVacancySection
           employerVacancyPreview={employerVacancyPreview}
           isLoggedIn={isLoggedIn}

@@ -195,9 +195,14 @@ export function flatParamsForPresetSave(flat: VacancyListFlatSearchParams): Reco
   return out;
 }
 
+/** Есть ненулевые поля, входящие в сохраняемый пресет (фильтры, поиск, сортировка). Страница пагинации не учитывается. */
+export function vacancyCatalogHasPresetSaveFields(flat: VacancyListFlatSearchParams): boolean {
+  return Object.keys(flatParamsForPresetSave(flat)).length > 0;
+}
+
 /** Параметры каталога без привязанного пресета: «как после полного сброса» (первая страница, нет полей пресета). */
 export function isVacancyCatalogFlatBaseline(flat: VacancyListFlatSearchParams): boolean {
-  if (Object.keys(flatParamsForPresetSave(flat)).length > 0) return false;
+  if (vacancyCatalogHasPresetSaveFields(flat)) return false;
   const page = flat.page?.trim();
   if (page && page !== "1") return false;
   return true;
