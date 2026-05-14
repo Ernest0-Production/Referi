@@ -18,6 +18,13 @@ import {
 import { trpcReact } from "@/trpc/client";
 import { VacancyCard } from "@/components/VacancyCard";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useMdUp } from "@/hooks/useMdUp";
@@ -279,31 +286,39 @@ export function VacancyCatalogClient({
         )}
 
         {totalPages > 1 ? (
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            {page > 1 ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="border-border bg-card text-foreground hover:bg-muted h-auto rounded-lg border px-4 py-2 text-sm font-medium"
-                onClick={() => applyPatch({ page: String(page - 1) })}
-              >
-                Назад
-              </Button>
-            ) : null}
-            <span className="text-muted-foreground text-sm">
-              Страница {page} из {totalPages}
-            </span>
-            {page < totalPages ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="border-border bg-card text-foreground hover:bg-muted h-auto rounded-lg border px-4 py-2 text-sm font-medium"
-                onClick={() => applyPatch({ page: String(page + 1) })}
-              >
-                Вперёд
-              </Button>
-            ) : null}
-          </div>
+          <Pagination className="pt-2">
+            <PaginationContent className="flex-wrap gap-2">
+              {page > 1 ? (
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    text="Назад"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      applyPatch({ page: String(page - 1) });
+                    }}
+                  />
+                </PaginationItem>
+              ) : null}
+              <PaginationItem>
+                <span className="text-muted-foreground flex h-8 items-center px-2 text-sm">
+                  Страница {page} из {totalPages}
+                </span>
+              </PaginationItem>
+              {page < totalPages ? (
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    text="Вперёд"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      applyPatch({ page: String(page + 1) });
+                    }}
+                  />
+                </PaginationItem>
+              ) : null}
+            </PaginationContent>
+          </Pagination>
         ) : null}
       </div>
     </>
