@@ -48,7 +48,7 @@ export function ReferrerCompensationPanel({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="flex min-w-0 flex-1 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
+        <div className="flex min-w-0 flex-1 items-start gap-1.5 text-sm text-red-800/90 dark:text-red-200/90">
           <HandCoins className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />
           <div ref={labelSlotRef} className="relative min-w-0 flex-1">
             <span
@@ -67,7 +67,7 @@ export function ReferrerCompensationPanel({
               {useShortLabel ? REFERRER_COMPENSATION_LABEL_SHORT : REFERRER_COMPENSATION_LABEL_FULL}
             </span>
           </div>
-        </p>
+        </div>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
