@@ -25,9 +25,11 @@ function CreateVacancyHomeCta({ href }: { href: string }) {
 export function EmployerHomeVacancySection({
   employerVacancyPreview,
   isLoggedIn,
+  onBeforeNavigateToDetail,
 }: {
   employerVacancyPreview: MyActiveOut;
   isLoggedIn: boolean;
+  onBeforeNavigateToDetail?: () => void;
 }) {
   const myActiveQuery = trpcReact.vacancies.myActive.useQuery(undefined, {
     enabled: isLoggedIn,
@@ -48,7 +50,11 @@ export function EmployerHomeVacancySection({
         <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
           Ваша рефералка
         </h2>
-        <VacancyCard vacancy={vacancy} detailHref={detailHref} />
+        <VacancyCard
+          vacancy={vacancy}
+          detailHref={detailHref}
+          onBeforeNavigateToDetail={onBeforeNavigateToDetail}
+        />
       </section>
     );
   }

@@ -60,7 +60,7 @@ export function AppNavBreadcrumb({
       stack.scheduleBreadcrumbTruncateAfterNavigation(crumbIndex);
     }
     onBeforeNavigate?.();
-    router.push(href);
+    router.push(href, { scroll: false });
   }
 
   function confirmLeave() {
@@ -113,7 +113,7 @@ export function AppNavBreadcrumb({
                               e.preventDefault();
                               stack.scheduleBreadcrumbTruncateAfterNavigation(i);
                               onBeforeNavigate?.();
-                              router.push(seg.href!);
+                              router.push(seg.href!, { scroll: false });
                               return;
                             }
                             onBeforeNavigate?.();

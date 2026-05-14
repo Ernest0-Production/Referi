@@ -77,11 +77,13 @@ export function VacancyCard({
   hasActiveSeekerApplication = false,
   isViewed = false,
   detailHref,
+  onBeforeNavigateToDetail,
 }: {
   vacancy: Vacancy;
   hasActiveSeekerApplication?: boolean;
   isViewed?: boolean;
   detailHref?: string;
+  onBeforeNavigateToDetail?: () => void;
 }) {
   const salary = formatVacancySalaryRange(
     vacancy.salaryFromKopecks,
@@ -92,7 +94,13 @@ export function VacancyCard({
   const href = detailHref ?? `/vacancies/${vacancy.id}`;
 
   return (
-    <Link href={href} className="group block transition-shadow hover:shadow-md">
+    <Link
+      href={href}
+      className="group block transition-shadow hover:shadow-md"
+      onClick={() => {
+        onBeforeNavigateToDetail?.();
+      }}
+    >
       <Card className="border-border bg-card relative overflow-hidden shadow-sm transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25">
         <CardHeader className="flex w-full min-w-0 flex-col gap-2 space-y-0">
           <div className="flex w-full min-w-0 items-start justify-between gap-2 sm:gap-3">

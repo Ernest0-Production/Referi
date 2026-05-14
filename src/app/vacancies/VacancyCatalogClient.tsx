@@ -41,6 +41,10 @@ import {
   vacancyFlatToTrpcListInput,
   vacancyListInputStableKey,
 } from "./vacancyFlatToTrpcListInput";
+import {
+  consumeVacancyCatalogScrollPosition,
+  rememberVacancyCatalogScrollPosition,
+} from "@/lib/vacancyCatalogScrollRestore";
 
 type ListOut = inferRouterOutputs<AppRouter>["vacancies"]["list"];
 type MyActiveOut = inferRouterOutputs<AppRouter>["vacancies"]["myActive"];
@@ -119,6 +123,13 @@ export function VacancyCatalogClient({
     () => findMatchingVacancySearchPresetId(params, presets),
     [params, presets],
   );
+
+  useLayoutEffect(() => {
+    const y = consumeVacancyCatalogScrollPosition();
+    if (y != null) {
+      window.scrollTo(0, y);
+    }
+  }, []);
 
   useLayoutEffect(() => {
     if (matchedVacancyPresetId != null) {
@@ -265,6 +276,7 @@ export function VacancyCatalogClient({
         <EmployerHomeVacancySection
           employerVacancyPreview={employerVacancyPreview}
           isLoggedIn={isLoggedIn}
+          onBeforeNavigateToDetail={rememberVacancyCatalogScrollPosition}
         />
         <Separator />
         {isLoggedIn && presets.length > 0 ? (
@@ -298,6 +310,7 @@ export function VacancyCatalogClient({
                 vacancy={vacancy}
                 hasActiveSeekerApplication={activeSeekerVacancyIds.has(vacancy.id)}
                 isViewed={viewedVacancyIdSet.has(vacancy.id)}
+                onBeforeNavigateToDetail={rememberVacancyCatalogScrollPosition}
               />
             ))}
           </div>
