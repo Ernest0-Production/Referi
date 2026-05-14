@@ -115,11 +115,13 @@ export function NavBreadcrumbStackProvider({ children }: { children: React.React
   return (
     <NavBreadcrumbStackContext.Provider value={value}>
       {children}
-      <BreadcrumbPendingTruncateFlush
-        pendingRef={pendingBreadcrumbTruncateIndexRef}
-        trailRef={trailRef}
-        setTrailAndRef={setTrailAndRef}
-      />
+      <React.Suspense fallback={null}>
+        <BreadcrumbPendingTruncateFlush
+          pendingRef={pendingBreadcrumbTruncateIndexRef}
+          trailRef={trailRef}
+          setTrailAndRef={setTrailAndRef}
+        />
+      </React.Suspense>
     </NavBreadcrumbStackContext.Provider>
   );
 }
