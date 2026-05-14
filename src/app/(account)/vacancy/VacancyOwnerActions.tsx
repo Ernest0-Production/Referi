@@ -33,7 +33,7 @@ type VacancyOwnerActionsProps = {
 
 export function VacancyOwnerActions({
   vacancyId,
-  editHref = "/dashboard/vacancy?edit=1",
+  editHref = "/vacancy?edit=1",
   redirectAfterDelete,
   className,
 }: VacancyOwnerActionsProps) {

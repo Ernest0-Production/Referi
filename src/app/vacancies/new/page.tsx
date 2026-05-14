@@ -12,7 +12,7 @@ export default async function NewVacancyPage() {
   if (session?.user?.id) {
     const vacancy = await trpc.vacancies.myActive();
     if (vacancy) {
-      redirect("/dashboard/vacancy");
+      redirect("/vacancy");
     }
 
     const me = await trpc.auth.me();

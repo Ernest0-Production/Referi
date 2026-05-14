@@ -5,6 +5,7 @@ import { firstQueryParam } from "@/lib/searchParams";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationNewTrail } from "@/lib/navBreadcrumbTrail";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
+import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,7 +52,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
   }
 
   if (v.isMine) {
-    redirect("/dashboard/vacancy");
+    redirect("/vacancy");
   }
 
   const vacancy = { ...v, me };
@@ -61,13 +62,14 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
   return (
     <main className="flex-1">
       <div className={PAGE_COLUMN_CLASS}>
-        <AppNavBreadcrumb
-          segments={dashboardApplicationNewTrail(
+        <BreadcrumbSeedPort
+          seed={dashboardApplicationNewTrail(
             vacancyId,
             vacancy.title,
             openedFromPublicVacancyDetail,
           )}
         />
+        <AppNavBreadcrumb />
 
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>

@@ -23,9 +23,12 @@ import {
 import { DialogHotkeyKbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import type { NavBreadcrumbSegment } from "@/lib/navBreadcrumbTrail";
+import { useOptionalNavBreadcrumbStack } from "@/components/navigation/NavBreadcrumbStack";
 
 export type AppNavBreadcrumbProps = {
-  segments: NavBreadcrumbSegment[];
+  /** Статичные крошки без стека (например age-gate). */
+  variant?: "stacked" | "static";
+  segments?: NavBreadcrumbSegment[];
   className?: string;
   leaveGuard?: boolean;
   leaveDialogTitle?: string;
@@ -35,7 +38,8 @@ export type AppNavBreadcrumbProps = {
 };
 
 export function AppNavBreadcrumb({
-  segments,
+  variant = "stacked",
+  segments = [],
   className,
   leaveGuard = false,
   leaveDialogTitle = "Отменить изменения?",
@@ -43,10 +47,18 @@ export function AppNavBreadcrumb({
   onBeforeNavigate,
 }: AppNavBreadcrumbProps) {
   const router = useRouter();
+  const stack = useOptionalNavBreadcrumbStack();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingHref, setPendingHref] = React.useState<string | null>(null);
+  const [pendingCrumbIndex, setPendingCrumbIndex] = React.useState<number | null>(null);
 
-  function runNavigate(href: string) {
+  const useStack = variant === "stacked" && stack != null;
+  const effectiveSegments = useStack ? stack.trail : segments;
+
+  function runNavigate(href: string, crumbIndex: number | null) {
+    if (useStack && crumbIndex !== null) {
+      stack.scheduleBreadcrumbTruncateAfterNavigation(crumbIndex);
+    }
     onBeforeNavigate?.();
     router.push(href);
   }
@@ -54,13 +66,15 @@ export function AppNavBreadcrumb({
   function confirmLeave() {
     setConfirmOpen(false);
     const href = pendingHref;
+    const idx = pendingCrumbIndex;
     setPendingHref(null);
-    if (href) {
-      runNavigate(href);
+    setPendingCrumbIndex(null);
+    if (href != null) {
+      runNavigate(href, idx);
     }
   }
 
-  if (segments.length === 0) {
+  if (effectiveSegments.length === 0) {
     return null;
   }
 
@@ -74,8 +88,8 @@ export function AppNavBreadcrumb({
       >
         <Breadcrumb>
           <BreadcrumbList>
-            {segments.map((seg, i) => {
-              const isLast = i === segments.length - 1;
+            {effectiveSegments.map((seg, i) => {
+              const isLast = i === effectiveSegments.length - 1;
               const hasHref = Boolean(seg.href) && !isLast;
 
               return (
@@ -91,7 +105,15 @@ export function AppNavBreadcrumb({
                             if (leaveGuard) {
                               e.preventDefault();
                               setPendingHref(seg.href!);
+                              setPendingCrumbIndex(useStack ? i : null);
                               setConfirmOpen(true);
+                              return;
+                            }
+                            if (useStack) {
+                              e.preventDefault();
+                              stack.scheduleBreadcrumbTruncateAfterNavigation(i);
+                              onBeforeNavigate?.();
+                              router.push(seg.href!);
                               return;
                             }
                             onBeforeNavigate?.();
@@ -122,6 +144,7 @@ export function AppNavBreadcrumb({
             setConfirmOpen(open);
             if (!open) {
               setPendingHref(null);
+              setPendingCrumbIndex(null);
             }
           }}
         >
@@ -137,6 +160,7 @@ export function AppNavBreadcrumb({
                 onClick={() => {
                   setConfirmOpen(false);
                   setPendingHref(null);
+                  setPendingCrumbIndex(null);
                 }}
               >
                 Остаться

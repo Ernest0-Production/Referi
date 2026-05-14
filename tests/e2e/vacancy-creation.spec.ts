@@ -31,14 +31,14 @@ test.describe("Vacancy creation flow (requires auth)", () => {
     }
   });
 
-  test("user can view vacancy dashboard", async ({ page }) => {
-    await page.goto("/dashboard/vacancy");
+  test("user can view vacancy account page", async ({ page }) => {
+    await page.goto("/vacancy");
     await expect(page).not.toHaveURL(/login/);
     await expect(page.locator("h1")).toBeVisible();
   });
 
   test("user can view attempts pool", async ({ page }) => {
-    await page.goto("/dashboard/attempts");
+    await page.goto("/attempts");
     await expect(page).not.toHaveURL(/login/);
     await expect(page.getByText(/Пул попыток/i)).toBeVisible();
   });

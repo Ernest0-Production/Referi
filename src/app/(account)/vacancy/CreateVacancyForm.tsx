@@ -357,7 +357,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
     onSuccess() {
       clearVacancyCreateDraft();
       if (pathname === "/vacancies/new") {
-        router.replace("/dashboard/vacancy");
+        router.replace("/vacancy");
       } else {
         router.refresh();
       }
@@ -369,7 +369,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
   const update = trpcReact.vacancies.update.useMutation({
     onSuccess() {
-      router.replace("/dashboard/vacancy");
+      router.replace("/vacancy");
       router.refresh();
     },
     onError(err) {
@@ -452,7 +452,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           referrerBonusRubles: form.referrerBonusRubles,
         });
         setAuthRedirectPending(true);
-        void signIn("github", { callbackUrl: "/dashboard/vacancy" });
+        void signIn("github", { callbackUrl: "/vacancy" });
         return;
       }
     }

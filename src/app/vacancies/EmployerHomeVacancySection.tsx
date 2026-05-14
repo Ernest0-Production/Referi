@@ -41,8 +41,7 @@ export function EmployerHomeVacancySection({
   const vacancy = myActiveQuery.data;
 
   if (vacancy) {
-    const detailHref =
-      vacancy.status === "ACTIVE" ? `/vacancies/${vacancy.id}` : "/dashboard/vacancy";
+    const detailHref = vacancy.status === "ACTIVE" ? `/vacancies/${vacancy.id}` : "/vacancy";
 
     return (
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">
@@ -51,7 +50,7 @@ export function EmployerHomeVacancySection({
             Ваша рефералка
           </h2>
           <Button variant="link" className="text-primary h-auto px-0 py-0 text-sm" asChild>
-            <Link href="/dashboard/vacancy">Управление</Link>
+            <Link href="/vacancy">Управление</Link>
           </Button>
         </div>
         <VacancyCard vacancy={vacancy} detailHref={detailHref} />
@@ -59,5 +58,5 @@ export function EmployerHomeVacancySection({
     );
   }
 
-  return <CreateVacancyHomeCta href="/dashboard/vacancy" />;
+  return <CreateVacancyHomeCta href="/vacancy" />;
 }

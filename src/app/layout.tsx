@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { TRPCProvider } from "@/trpc/provider";
+import { NavBreadcrumbStackProvider } from "@/components/navigation/NavBreadcrumbStack";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -43,10 +44,12 @@ export default function RootLayout({
         >
           <AuthSessionProvider>
             <TRPCProvider>
-              <TooltipProvider delayDuration={200}>
-                {children}
-                <Toaster position="top-center" richColors />
-              </TooltipProvider>
+              <NavBreadcrumbStackProvider>
+                <TooltipProvider delayDuration={200}>
+                  {children}
+                  <Toaster position="top-center" richColors />
+                </TooltipProvider>
+              </NavBreadcrumbStackProvider>
             </TRPCProvider>
           </AuthSessionProvider>
         </ThemeProvider>

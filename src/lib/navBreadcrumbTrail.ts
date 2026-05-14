@@ -3,9 +3,8 @@ export type NavBreadcrumbSegment = {
   href?: string;
 };
 
-const DASHBOARD_ROOT = "/dashboard";
 const PUBLIC_CATALOG_ROOT = "/";
-const DASHBOARD_VACANCY_BASE = "/dashboard/vacancy";
+const ACCOUNT_VACANCY_BASE = "/vacancy";
 
 /**
  * Публичная карточка рефералки: фиксированная иерархия без HTTP Referer
@@ -15,17 +14,17 @@ export function publicVacancyDetailTrail(vacancyTitle: string): NavBreadcrumbSeg
   return [{ label: "Рефералки", href: PUBLIC_CATALOG_ROOT }, { label: vacancyTitle }];
 }
 
-/** Кабинет: экран «Моя рефералка» или «Создание рефералки» — только маршрут, без Referer. */
+/** Экран «Моя рефералка» / «Создание рефералки» — один текущий сегмент; родители приходят из стека навигации. */
 export function dashboardVacancyTrail(
   currentTitle: "Моя рефералка" | "Создание рефералки",
 ): NavBreadcrumbSegment[] {
-  return [{ label: "Кабинет", href: DASHBOARD_ROOT }, { label: currentTitle }];
+  return [{ label: currentTitle }];
 }
 
 /**
  * Режим правки в кабинете.
  * Публичный контекст — только при **`fromVacancy`** в URL (= id рефералки), см. ссылки с публичной карточки.
- * Иначе цепочка кабинета: Просмотр → та же страница без `edit`.
+ * Иначе: «Моя рефералка» (ссылка на просмотр без правки) → «Редактирование».
  */
 export function dashboardVacancyEditTrail(
   vacancyId: string,
@@ -40,11 +39,7 @@ export function dashboardVacancyEditTrail(
       { label: "Редактирование" },
     ];
   }
-  return [
-    { label: "Кабинет", href: DASHBOARD_ROOT },
-    { label: "Просмотр", href: DASHBOARD_VACANCY_BASE },
-    { label: "Редактирование" },
-  ];
+  return [{ label: "Моя рефералка", href: ACCOUNT_VACANCY_BASE }, { label: "Редактирование" }];
 }
 
 export function newPublicVacancyTrail(): NavBreadcrumbSegment[] {
@@ -66,15 +61,11 @@ export function dashboardApplicationNewTrail(
       { label: "Попросить рефералку" },
     ];
   }
-  return [{ label: "Кабинет", href: DASHBOARD_ROOT }, middle, { label: "Попросить рефералку" }];
+  return [middle, { label: "Попросить рефералку" }];
 }
 
 export function dashboardApplicationDetailTrail(): NavBreadcrumbSegment[] {
-  return [
-    { label: "Кабинет", href: DASHBOARD_ROOT },
-    { label: "Мои заявки", href: "/dashboard/applications" },
-    { label: "Заявка" },
-  ];
+  return [{ label: "Мои заявки", href: "/applications" }, { label: "Заявка" }];
 }
 
 export function registrationAgeGateTrail(): NavBreadcrumbSegment[] {

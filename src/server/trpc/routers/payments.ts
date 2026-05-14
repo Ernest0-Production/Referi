@@ -60,7 +60,7 @@ export const paymentsRouter = router({
       }
       const chargeAmount = amountKopecks;
 
-      const returnUrl = `${env.NEXT_PUBLIC_URL}/dashboard/applications/${app.id}`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}/applications/${app.id}`;
 
       const { calculateCommission } = await import("@/shared/utils/money");
       const { commission, netPayout } = calculateCommission(chargeAmount);
@@ -136,7 +136,7 @@ export const paymentsRouter = router({
         },
       });
 
-      const returnUrl = `${env.NEXT_PUBLIC_URL}/dashboard/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}&fromVacancy=${input.vacancyId}`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}/applications/new?vacancyId=${input.vacancyId}&paidTokenId=${token.id}&fromVacancy=${input.vacancyId}`;
 
       const payment = await paymentProvider.createPayment({
         idempotencyKey,

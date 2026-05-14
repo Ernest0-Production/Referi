@@ -35,7 +35,7 @@ export function PayMockContent() {
         router.push("/login?registered=1");
         return;
       }
-      router.push("/dashboard/applications");
+      router.push("/applications");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Сеть");
     } finally {

@@ -2,9 +2,10 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { CreateVacancyForm } from "@/app/dashboard/vacancy/CreateVacancyForm";
+import { CreateVacancyForm } from "@/app/(account)/vacancy/CreateVacancyForm";
 import { clearVacancyCreateDraft } from "@/lib/vacancyCreateDraftStorage";
 import { newPublicVacancyTrail } from "@/lib/navBreadcrumbTrail";
+import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -21,8 +22,8 @@ export function NewVacancyComposeWithBack(props: NewVacancyComposeWithBackProps)
 
   return (
     <div className="flex flex-col gap-4">
+      <BreadcrumbSeedPort seed={newPublicVacancyTrail()} />
       <AppNavBreadcrumb
-        segments={newPublicVacancyTrail()}
         leaveGuard={leaveGuard}
         leaveDialogTitle="Выйти без сохранения?"
         leaveDialogDescription="Есть несохранённые данные. Вернуться в каталог без публикации?"

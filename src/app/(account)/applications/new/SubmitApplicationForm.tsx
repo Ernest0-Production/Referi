@@ -37,7 +37,7 @@ export function SubmitApplicationForm({
 
   const submit = trpcReact.applications.submit.useMutation({
     onSuccess() {
-      router.push("/dashboard/applications");
+      router.push("/applications");
     },
     onError(err) {
       const msg = err.message;

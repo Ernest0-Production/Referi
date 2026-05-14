@@ -97,7 +97,7 @@ export default async function ApplicationsPage() {
                   ) : null}
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/dashboard/applications/${app.id}`}>Подробнее</Link>
+                      <Link href={`/applications/${app.id}`}>Подробнее</Link>
                     </Button>
                     <ApplicationActionsPanel applicationId={app.id} status={app.status} />
                   </div>

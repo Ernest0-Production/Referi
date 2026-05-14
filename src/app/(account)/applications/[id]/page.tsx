@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationDetailTrail } from "@/lib/navBreadcrumbTrail";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
+import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { ApplicationDetailActions } from "./ApplicationDetailActions";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +57,8 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
   return (
     <main className="flex-1">
       <div className={PAGE_COLUMN_CLASS}>
-        <AppNavBreadcrumb segments={dashboardApplicationDetailTrail()} />
+        <BreadcrumbSeedPort seed={dashboardApplicationDetailTrail()} />
+        <AppNavBreadcrumb />
 
         <Card>
           <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">

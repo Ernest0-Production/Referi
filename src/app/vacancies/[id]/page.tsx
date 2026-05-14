@@ -3,10 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { publicVacancyDetailTrail } from "@/lib/navBreadcrumbTrail";
-import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
+import { VacancyPublicBreadcrumbShell } from "../VacancyPublicBreadcrumbShell";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
-import { VacancyOwnerActions } from "@/app/dashboard/vacancy/VacancyOwnerActions";
+import { VacancyOwnerActions } from "@/app/(account)/vacancy/VacancyOwnerActions";
 import { ReportVacancyForm } from "./ReportVacancyForm";
 import { ReferrerCompensationPanel } from "./ReferrerCompensationPanel";
 import { VacancyDetailMetaBadges } from "./VacancyDetailMetaBadges";
@@ -60,7 +60,7 @@ export default async function VacancyDetailPage({ params }: PageProps) {
       <PublicHeaderNav session={session} />
 
       <div className={PAGE_COLUMN_CLASS}>
-        <AppNavBreadcrumb segments={vacancyBreadcrumbSegments} />
+        <VacancyPublicBreadcrumbShell seed={vacancyBreadcrumbSegments} />
 
         <div className="flex flex-col gap-3">
           <Card>
@@ -122,14 +122,14 @@ export default async function VacancyDetailPage({ params }: PageProps) {
                 isAuthor ? (
                   <VacancyOwnerActions
                     vacancyId={vacancy.id}
-                    editHref={`/dashboard/vacancy?edit=1&fromVacancy=${vacancy.id}`}
+                    editHref={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}
                     redirectAfterDelete="/"
                   />
                 ) : (
                   <div className="flex flex-col gap-2">
                     <Button asChild size="lg" className="w-full sm:w-auto">
                       <Link
-                        href={`/dashboard/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
+                        href={`/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
                       >
                         <span
                           data-icon="inline-start"

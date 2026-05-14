@@ -11,6 +11,7 @@ import { ManageVacancyPanel } from "./ManageVacancyPanel";
 import { VacancyApplicantsSection } from "./VacancyApplicantsSection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 
 type PageProps = {
   searchParams: Promise<{ edit?: string; fromVacancy?: string | string[] }>;
@@ -40,7 +41,8 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
   return (
     <main className="flex-1">
       <DashboardVacancyPageShell>
-        <DashboardVacancyNav segments={breadcrumbSegments} />
+        <BreadcrumbSeedPort seed={breadcrumbSegments} />
+        <DashboardVacancyNav />
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">

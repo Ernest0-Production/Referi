@@ -42,7 +42,7 @@ export const subscriptionsRouter = router({
       }
 
       const idempotencyKey = randomUuid();
-      const returnUrl = input.returnUrl ?? `${env.NEXT_PUBLIC_URL}/dashboard/profile`;
+      const returnUrl = input.returnUrl ?? `${env.NEXT_PUBLIC_URL}/profile`;
 
       const payment = await paymentProvider.createPayment({
         idempotencyKey,

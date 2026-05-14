@@ -72,7 +72,7 @@ referi/
 │   ├── app/                         # Next.js App Router pages & layouts
 │   │   ├── (public)/                # Публичные маршруты (лента вакансий)
 │   │   ├── (auth)/                  # Страницы авторизации
-│   │   ├── dashboard/               # Личный кабинет (seeker / referrer)
+│   │   ├── (account)/               # Личный кабинет (seeker / referrer), плоские URL без префикса
 │   │   ├── admin/                   # Admin-панель (только модераторы/админы)
 │   │   └── api/
 │   │       ├── trpc/[trpc]/route.ts # tRPC handler

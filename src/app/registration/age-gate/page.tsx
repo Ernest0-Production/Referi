@@ -20,7 +20,7 @@ export default async function AgeGatePage({ searchParams }: PageProps) {
       <PublicHeaderNav session={null} />
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8">
         <div className="flex w-full max-w-lg flex-col gap-4">
-          <AppNavBreadcrumb segments={registrationAgeGateTrail()} />
+          <AppNavBreadcrumb variant="static" segments={registrationAgeGateTrail()} />
           <Card className="shadow-sm">
             <CardHeader className="flex flex-col gap-2 text-center">
               <div className="text-4xl" aria-hidden>

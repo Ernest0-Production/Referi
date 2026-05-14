@@ -36,8 +36,8 @@ test.describe("Authentication flow", () => {
     await expect(githubButton).toBeVisible();
   });
 
-  test("protected /dashboard redirects unauthenticated users to /login", async ({ page }) => {
-    await page.goto("/dashboard");
+  test("protected account route redirects unauthenticated users to /login", async ({ page }) => {
+    await page.goto("/settings");
     await expect(page).toHaveURL(/login/);
   });
 

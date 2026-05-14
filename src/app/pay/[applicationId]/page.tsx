@@ -27,7 +27,7 @@ export default async function PayPage({ params }: PageProps) {
   }
 
   if (application.status !== "AWAITING_PAYMENT") {
-    redirect(`/dashboard/applications/${applicationId}`);
+    redirect(`/applications/${applicationId}`);
   }
 
   const escrow = await trpc.payments.escrowStatus({ applicationId });
@@ -67,7 +67,7 @@ export default async function PayPage({ params }: PageProps) {
           </CardContent>
           <CardFooter className="justify-center">
             <Button variant="link" asChild>
-              <Link href={`/dashboard/applications/${applicationId}`}>Вернуться к заявке</Link>
+              <Link href={`/applications/${applicationId}`}>Вернуться к заявке</Link>
             </Button>
           </CardFooter>
         </Card>

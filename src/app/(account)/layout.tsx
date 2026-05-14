@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { DashboardHeaderNav } from "@/components/DashboardHeaderNav";
+import { AccountDefaultBreadcrumbSeed } from "@/components/navigation/NavBreadcrumbStack";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -12,6 +13,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
       <DashboardHeaderNav session={session} />
+      <AccountDefaultBreadcrumbSeed />
       {children}
     </div>
   );

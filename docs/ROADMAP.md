@@ -72,14 +72,14 @@ flowchart LR
 | Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                                    |
 | `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC **public** mutation `{ userId }`; ЮКасса / MockPaymentProvider |
 | Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`                     |
-| Профиль пользователя               | `[CORE]` | Страница `/dashboard/profile`; `auth.updateProfile` mutation        |
+| Профиль пользователя               | `[CORE]` | Страница `/profile`; `auth.updateProfile` mutation        |
 | Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                           |
 | `auth.me` query                    | `[CORE]` | Данные текущего пользователя + staff-флаги + попытки                |
 
 
 ### Definition of Done
 
-- Пользователь с GitHub аккаунтом > 1 года может войти и видит dashboard
+- Пользователь с GitHub аккаунтом > 1 года может войти и видит кабинет
 - Пользователь с GitHub аккаунтом < 1 года попадает на age-gate страницу
 - MockPaymentProvider позволяет «оплатить» сбор и войти
 - `GitHubProfile.accessToken` зашифрован в БД
@@ -104,7 +104,7 @@ flowchart LR
 | `vacancies.myActive` query      | `[CORE]` | Текущая рефералка реферальщика                                                                             |
 | Страница `/` — лента рефералок   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
 | Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница рефералки + кнопка «Попросить рефералку»                                                       |
-| Страница `/dashboard/vacancy`   | `[CORE]` | Реферальщик: управление своей рефералкой, редактирование (`?edit=1`), блок кандидатов (`#candidates`)                                                                   |
+| Страница `/vacancy`   | `[CORE]` | Реферальщик: управление своей рефералкой, редактирование (`?edit=1`), блок кандидатов (`#candidates`)                                                                   |
 | Страница `/vacancies/new`       | `[CORE]` | Оформление новой рефералки без входа; OAuth GitHub при публикации, черновик формы в `sessionStorage` до авторизации                                                      |
 | Форма создания рефералки         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
 | `ReferrerAttemptLedger` базовый | `[CORE]` | `getAvailableAttempts()` возвращает корректное значение                                                   |
@@ -144,9 +144,9 @@ flowchart LR
 | `AuditLog` запись при каждом переходе     | `[CORE]` | Все поля: from, to, actor, actorId, metadata         |
 | `applications.myList` query               | `[CORE]` | Список заявок соискателя с текущими статусами        |
 | `vacancies.update` mutation               | `[CORE]` | Реферальщик: обновление полей своей рефералки (ACTIVE / FROZEN)               |
-| `vacancies.applicants` query              | `[CORE]` | Список соискателей, отправивших запрос, для реферальщика (UI: секция на `/dashboard/vacancy#candidates`)               |
-| Страница `/dashboard/applications`        | `[CORE]` | Соискатель: мои заявки + действия                    |
-| Редирект `/dashboard/vacancy/applicants`  | `[CORE]` | На `/dashboard/vacancy#candidates` (старые закладки)                       |
+| `vacancies.applicants` query              | `[CORE]` | Список соискателей, отправивших запрос, для реферальщика (UI: секция на `/vacancy#candidates`)               |
+| Страница `/applications`        | `[CORE]` | Соискатель: мои заявки + действия                    |
+| Редирект `/vacancy/applicants`  | `[CORE]` | На `/vacancy#candidates` (старые закладки)                       |
 | Правила видимости контактов               | `[CORE]` | contactInfo только в активных статусах               |
 | Property-based тесты state machine        | `[CORE]` | fast-check, инварианты INV-001..007                  |
 
@@ -246,9 +246,9 @@ flowchart LR
 | `reports.submitAbuseReport`             | `[MOD]` | tRPC mutation; запись `AbuseReport`                                                      |
 | `moderation.resolveForReferrer`         | `[MOD]` | постановка выплаты по Safe deal (воркер) → закрыть `ModeratorCase`                       |
 | `moderation.resolveForSeeker`           | `[MOD]` | refund → закрыть `ModeratorCase`                                                         |
-| Страница `/dashboard/applications/[id]` | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                                                |
+| Страница `/applications/[id]` | `[MOD]` | История `AuditLog`; кнопка «Пожаловаться»                                                |
 | Блокировка пользователя / рефералки      | `[MOD]` | `moderation.blockUser`; рефералка — флаг `blockVacancy` в `moderation.resolveAbuseReport` |
-| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` в настройках (`/dashboard/settings`)    |
+| UI контакта модерации                   | `[MOD]` | Ссылка из `NEXT_PUBLIC_MODERATION_CONTACT_URL` в настройках (`/settings`)    |
 
 
 ### Definition of Done

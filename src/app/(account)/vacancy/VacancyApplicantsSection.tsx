@@ -75,7 +75,7 @@ export async function VacancyApplicantsSection({
                 ) : null}
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/applications/${app.id}`}>Подробнее</Link>
+                    <Link href={`/applications/${app.id}`}>Подробнее</Link>
                   </Button>
                 </div>
               </CardContent>

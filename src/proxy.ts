@@ -2,7 +2,14 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PATHS = ["/dashboard", "/admin"];
+const PROTECTED_PATHS = [
+  "/settings",
+  "/profile",
+  "/applications",
+  "/vacancy",
+  "/attempts",
+  "/admin",
+];
 
 // Re-export auth as proxy — Auth.js v5 HOC checks the JWT cookie and
 // populates req.auth without hitting the database.
