@@ -7,8 +7,6 @@ import { CreateVacancyForm } from "./CreateVacancyForm";
 import { DashboardVacancyNav } from "./DashboardVacancyNav";
 import { DashboardVacancyPageShell } from "./DashboardVacancyPageShell";
 import { EditVacancyCard } from "./EditVacancyCard";
-import { ManageVacancyPanel } from "./ManageVacancyPanel";
-import { VacancyApplicantsSection } from "./VacancyApplicantsSection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
@@ -28,6 +26,10 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
 
   const me = await trpc.auth.me();
   const vacancy = await trpc.vacancies.myActive();
+
+  if (vacancy && !editMode) {
+    redirect(`/vacancies/${vacancy.id}`);
+  }
 
   const openedFromPublicVacancyDetail = Boolean(
     vacancy && editMode && fromVacancyParam === vacancy.id,
@@ -49,37 +51,30 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
             <h1 className="text-foreground text-2xl font-bold">
               {vacancy ? "Моя рефералка" : "Создание рефералки"}
             </h1>
-            {vacancy && !editMode ? (
+            {vacancy && editMode ? (
               <p className="text-muted-foreground text-sm">
                 Доступных попыток: {me.availableAttempts} из 3
               </p>
             ) : null}
           </div>
 
-          {vacancy ? (
-            editMode ? (
-              <EditVacancyCard
-                vacancy={{
-                  id: vacancy.id,
-                  title: vacancy.title,
-                  companyName: vacancy.companyName,
-                  specialty: vacancy.specialty,
-                  grade: vacancy.grade,
-                  workFormat: vacancy.workFormat,
-                  salaryCurrency: vacancy.salaryCurrency,
-                  salaryFromKopecks: vacancy.salaryFromKopecks,
-                  salaryToKopecks: vacancy.salaryToKopecks,
-                  description: vacancy.description,
-                  rewardKopecks: vacancy.rewardKopecks,
-                }}
-              />
-            ) : (
-              <div className="flex flex-col gap-8">
-                <ManageVacancyPanel vacancy={vacancy} />
-                <VacancyApplicantsSection vacancyId={vacancy.id} vacancyTitle={vacancy.title} />
-              </div>
-            )
-          ) : (
+          {vacancy && editMode ? (
+            <EditVacancyCard
+              vacancy={{
+                id: vacancy.id,
+                title: vacancy.title,
+                companyName: vacancy.companyName,
+                specialty: vacancy.specialty,
+                grade: vacancy.grade,
+                workFormat: vacancy.workFormat,
+                salaryCurrency: vacancy.salaryCurrency,
+                salaryFromKopecks: vacancy.salaryFromKopecks,
+                salaryToKopecks: vacancy.salaryToKopecks,
+                description: vacancy.description,
+                rewardKopecks: vacancy.rewardKopecks,
+              }}
+            />
+          ) : !vacancy ? (
             <Card>
               <CardContent className="flex flex-col gap-4">
                 {me.availableAttempts > 0 ? (
@@ -95,7 +90,7 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
                 )}
               </CardContent>
             </Card>
-          )}
+          ) : null}
         </div>
       </DashboardVacancyPageShell>
     </main>

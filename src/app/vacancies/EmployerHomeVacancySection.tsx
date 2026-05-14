@@ -45,14 +45,9 @@ export function EmployerHomeVacancySection({
 
     return (
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">
-        <div className="flex flex-row items-center justify-between gap-2">
-          <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
-            Ваша рефералка
-          </h2>
-          <Button variant="link" className="text-primary h-auto px-0 py-0 text-sm" asChild>
-            <Link href="/vacancy">Управление</Link>
-          </Button>
-        </div>
+        <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
+          Ваша рефералка
+        </h2>
         <VacancyCard vacancy={vacancy} detailHref={detailHref} />
       </section>
     );

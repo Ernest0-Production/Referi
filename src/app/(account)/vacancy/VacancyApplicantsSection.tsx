@@ -19,16 +19,22 @@ const STATUS_LABELS: Record<string, string> = {
   REFUNDED_BY_CANCEL_ACK: "Возврат (отмена)",
   REFUNDED_BY_SLA: "Возврат (SLA)",
   REFUNDED_BY_VACANCY_DELETED: "Возврат (рефералка удалена)",
+  REFUNDED_BY_MODERATOR: "Возврат (модератор)",
+  REFUNDED_BY_CANCEL_AUTO: "Автовозврат (отмена)",
 };
 
 export async function VacancyApplicantsSection({
   vacancyId,
   vacancyTitle,
+  applicationHref,
 }: {
   vacancyId: string;
   vacancyTitle: string;
+  /** Ссылка на карточку заявки (по умолчанию — кабинет `/applications/:id`) */
+  applicationHref?: (applicationId: string) => string;
 }) {
   const applicants = await trpc.vacancies.applicants({ vacancyId });
+  const hrefFor = applicationHref ?? ((id: string) => `/applications/${id}`);
 
   return (
     <section id="candidates" className="flex scroll-mt-24 flex-col gap-4">
@@ -75,7 +81,7 @@ export async function VacancyApplicantsSection({
                 ) : null}
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/applications/${app.id}`}>Подробнее</Link>
+                    <Link href={hrefFor(app.id)}>Подробнее</Link>
                   </Button>
                 </div>
               </CardContent>

@@ -34,7 +34,12 @@ test.describe("Vacancy creation flow (requires auth)", () => {
   test("user can view vacancy account page", async ({ page }) => {
     await page.goto("/vacancy");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("h1")).toBeVisible();
+    const url = page.url();
+    if (url.includes("/vacancies/") && !url.includes("/vacancies/new")) {
+      await expect(page.getByRole("main")).toBeVisible();
+    } else {
+      await expect(page.locator("h1")).toBeVisible();
+    }
   });
 
   test("user can view attempts pool", async ({ page }) => {

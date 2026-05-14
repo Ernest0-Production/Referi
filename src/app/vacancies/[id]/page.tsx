@@ -16,14 +16,19 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { formatVacancyReferralRequestFooterHint } from "@/lib/vacancyReferralRequestFooterHint";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
+import { firstQueryParam } from "@/lib/searchParams";
 import { cn } from "@/lib/utils";
+import { VacancyAuthorManageSection } from "./VacancyAuthorManageSection";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ applicationId?: string | string[] }>;
 }
 
-export default async function VacancyDetailPage({ params }: PageProps) {
+export default async function VacancyDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const sp = await searchParams;
+  const applicationIdParam = firstQueryParam(sp.applicationId);
   const session = await auth();
 
   let vacancy: Awaited<ReturnType<typeof trpc.vacancies.getById>>;
@@ -163,7 +168,14 @@ export default async function VacancyDetailPage({ params }: PageProps) {
               )}
             </CardFooter>
           </Card>
-          {session?.user ? <ReportVacancyForm vacancyId={vacancy.id} /> : null}
+          {session?.user && !isAuthor ? <ReportVacancyForm vacancyId={vacancy.id} /> : null}
+          {session?.user && isAuthor ? (
+            <VacancyAuthorManageSection
+              vacancyId={vacancy.id}
+              vacancyTitle={vacancy.title}
+              applicationId={applicationIdParam}
+            />
+          ) : null}
         </div>
       </div>
     </main>

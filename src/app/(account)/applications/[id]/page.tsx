@@ -50,6 +50,10 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  if (application.vacancy.referrerId) {
+    redirect(`/vacancies/${application.vacancy.id}?applicationId=${encodeURIComponent(id)}`);
+  }
+
   const auditLog = await trpc.applications.getAuditLog({ applicationId: id });
 
   const isSeeker = application.content !== null;

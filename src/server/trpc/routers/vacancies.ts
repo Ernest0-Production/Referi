@@ -425,12 +425,12 @@ export const vacanciesRouter = router({
       if (vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
 
       const applications = await ctx.db.application.findMany({
-        where: { vacancyId: input.vacancyId, status: "SUBMITTED" },
+        where: { vacancyId: input.vacancyId },
         include: {
           content: true,
           seeker: { select: { id: true, displayName: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { updatedAt: "desc" },
       });
 
       return applications.map((app) => ({
