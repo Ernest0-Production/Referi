@@ -74,7 +74,7 @@ export function ResolveReportButton({ reportId, vacancyId }: Props) {
         disabled={resolve.isPending}
         onClick={() => {
           if (!resolution.trim()) {
-            setResolutionError("Укажите текст решения.");
+            setResolutionError("Укажи текст решения.");
             return;
           }
           setResolutionError(null);

@@ -68,7 +68,7 @@ flowchart LR
 | GitHub OAuth провайдер             | `[CORE]` | Auth.js + реальный GitHub OAuth App                                 |
 | Age-check в signIn callback        | `[CORE]` | `GET /user` → `created_at` → проверка 365 дней                      |
 | Полная Prisma schema               | `[CORE]` | Все модели из `spec-schema-database.md`; миграции                   |
-| Страница `/login`                  | `[CORE]` | Кнопка «Войти через GitHub», обработка ошибок                       |
+| Страница `/login`                  | `[CORE]` | Кнопка «Войди через GitHub», обработка ошибок                       |
 | Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                                    |
 | `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC **public** mutation `{ userId }`; ЮКасса / MockPaymentProvider |
 | Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`                     |

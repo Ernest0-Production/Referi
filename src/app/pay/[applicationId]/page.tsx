@@ -59,7 +59,7 @@ export default async function PayPage({ params }: PageProps) {
             {escrow?.amountKopecks ? (
               <Alert>
                 <AlertTitle>Платёж уже создан</AlertTitle>
-                <AlertDescription>Продолжите оплату через кнопку ниже.</AlertDescription>
+                <AlertDescription>Продолжи оплату через кнопку ниже.</AlertDescription>
               </Alert>
             ) : null}
 

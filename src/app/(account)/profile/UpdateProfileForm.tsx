@@ -73,7 +73,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
     >
       <FieldGroup>
         <Field data-invalid={nameError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-name">Имя / псевдоним</FieldLabel>
+          <FieldLabel htmlFor="profile-name">Как к тебе обращаться</FieldLabel>
           <Input
             id="profile-name"
             type="text"
@@ -113,31 +113,30 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
             id="profile-contact-desc"
             className={contactError ? "text-destructive" : undefined}
           >
-            {contactError ?? "Это нужно, чтобы реферальщик мог с вами связаться."}
+            {contactError ?? "Это нужно, чтобы реферальщик мог с тобой связаться."}
           </FieldDescription>
         </Field>
 
         <Field data-invalid={bioError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-bio">Краткая биография</FieldLabel>
+          <FieldLabel htmlFor="profile-bio">О себе</FieldLabel>
           <Textarea
             id="profile-bio"
             value={bio}
             maxLength={1000}
             rows={8}
             aria-invalid={bioError ? true : undefined}
-            aria-describedby="profile-bio-desc"
+            aria-describedby={bioError ? "profile-bio-desc" : undefined}
             onChange={(e) => {
               setBioError(null);
               setBio(e.target.value);
             }}
-            placeholder="Кратко о вашем опыте"
+            placeholder="Кратко о твоём опыте"
           />
-          <FieldDescription
-            id="profile-bio-desc"
-            className={bioError ? "text-destructive" : undefined}
-          >
-            {bioError ?? "Необязательно, не более 1000 символов."}
-          </FieldDescription>
+          {bioError ? (
+            <FieldDescription id="profile-bio-desc" className="text-destructive">
+              {bioError}
+            </FieldDescription>
+          ) : null}
         </Field>
 
         <div className="flex flex-col gap-2">

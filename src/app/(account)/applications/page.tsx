@@ -59,7 +59,7 @@ export default async function ApplicationsPage() {
         {applications.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center gap-4 py-10">
-              <p className="text-muted-foreground">У вас пока нет заявок</p>
+              <p className="text-muted-foreground">У тебя пока нет заявок</p>
               <Button asChild>
                 <Link href="/">Смотреть рефералки</Link>
               </Button>

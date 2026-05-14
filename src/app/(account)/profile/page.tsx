@@ -18,7 +18,7 @@ export default async function ProfilePage() {
       <div className={PAGE_COLUMN_CLASS}>
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground text-2xl font-bold">Профиль</h1>
-          <p className="text-muted-foreground text-sm">Управление вашими данными</p>
+          <p className="text-muted-foreground text-sm">Управление твоими данными</p>
         </div>
 
         <Card>

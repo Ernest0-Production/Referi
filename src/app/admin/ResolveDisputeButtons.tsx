@@ -34,7 +34,7 @@ export function ResolveDisputeButtons({ caseId, applicationId }: Props) {
   if (resolved) {
     return (
       <p className="text-muted-foreground text-sm font-medium">
-        Спор закрыт. Обновите страницу для актуального списка.
+        Спор закрыт. Обнови страницу для актуального списка.
       </p>
     );
   }

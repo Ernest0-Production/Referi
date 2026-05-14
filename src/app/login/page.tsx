@@ -42,7 +42,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-muted-foreground text-center text-sm">
-              Войдите через GitHub, чтобы продолжить
+              Войди через GitHub, чтобы продолжить
             </p>
             <LoginButton callbackUrl={callbackAfterAuth} />
           </CardContent>

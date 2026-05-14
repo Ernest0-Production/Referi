@@ -236,7 +236,7 @@ export function VacancyCard({
                   sideOffset={4}
                   className="max-w-xs text-left leading-snug"
                 >
-                  У вас уже есть активная заявка по этой рефералке
+                  У тебя уже есть активная заявка по этой рефералке
                 </TooltipContent>
               </Tooltip>
             ) : null}

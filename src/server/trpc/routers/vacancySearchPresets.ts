@@ -60,7 +60,7 @@ export const vacancySearchPresetsRouter = router({
           if (val.params === undefined && val.name === undefined) {
             ctx.addIssue({
               code: "custom",
-              message: "Укажите параметры или название фильтра",
+              message: "Укажи параметры или название фильтра",
               path: [],
             });
           }

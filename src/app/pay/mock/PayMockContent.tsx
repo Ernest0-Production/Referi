@@ -48,7 +48,7 @@ export function PayMockContent() {
       <CardHeader>
         <CardTitle>Тестовая оплата (mock)</CardTitle>
         <CardDescription>
-          Нажмите кнопку, чтобы зачислить тестовый платёж и перейти дальше. Доступно при{" "}
+          Нажми кнопку, чтобы зачислить тестовый платёж и перейти дальше. Доступно при{" "}
           <code className="bg-muted rounded px-1 font-mono text-xs">
             FEATURE_REAL_PAYMENTS=false
           </code>

@@ -22,7 +22,7 @@ export default async function NewVacancyPage() {
               <Card>
                 <CardContent className="flex flex-col gap-4 py-8">
                   <p className="text-muted-foreground text-sm">
-                    У вас уже есть активная рефералка. Публикация новой через эту форму недоступна,
+                    У тебя уже есть активная рефералка. Публикация новой через эту форму недоступна,
                     пока она действует.
                   </p>
                   <Button asChild className="w-fit">
@@ -47,7 +47,7 @@ export default async function NewVacancyPage() {
               <NewVacancyComposeWithBack
                 title="Разместить рефералку"
                 subtitle={`Доступных попыток: ${me.availableAttempts} из 3`}
-                cardDescription="Заполните поля и нажмите «Опубликовать рефералку»."
+                cardDescription="Заполни поля и нажми «Опубликовать рефералку»."
                 showForm
               />
             ) : (
@@ -59,7 +59,7 @@ export default async function NewVacancyPage() {
                   <Alert>
                     <AlertTitle>Нет попыток</AlertTitle>
                     <AlertDescription>
-                      Вы исчерпали все попытки. Попытки восстанавливаются автоматически через 60
+                      У тебя не осталось попыток. Они восстанавливаются автоматически через 60
                       дней.
                     </AlertDescription>
                   </Alert>

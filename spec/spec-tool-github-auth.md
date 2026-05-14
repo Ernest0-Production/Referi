@@ -62,7 +62,7 @@ sequenceDiagram
   participant B as Browser
   participant A as App NextAuth
   participant G as GitHub
-  U->>B: Войти через GitHub
+  U->>B: Войди через GitHub
   B->>A: GET /api/auth/signin/github
   A->>A: state, PKCE code_verifier
   A->>G: redirect authorize

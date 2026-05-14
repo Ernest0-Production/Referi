@@ -53,8 +53,8 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
               <p>Будет удалено:</p>
               <ul className="list-disc space-y-1 pl-5">
                 <li>профиль и связанные данные;</li>
-                <li>ваши рефералки;</li>
-                <li>заявки — в том числе заявки других пользователей на ваши рефералки;</li>
+                <li>твои рефералки;</li>
+                <li>заявки — в том числе заявки других пользователей на твои рефералки;</li>
                 <li>сохранённые пресеты поиска в каталоге;</li>
                 <li>подписка и прочие данные в сервисе.</li>
               </ul>
@@ -85,7 +85,7 @@ export function DeleteAccountCard({ allowDelete }: { allowDelete: boolean }) {
           <DialogHeader>
             <DialogTitle>Удалить аккаунт навсегда?</DialogTitle>
             <DialogDescription>
-              Это действие нельзя отменить. Все ваши данные в Referi будут удалены.
+              Это действие нельзя отменить. Все твои данные в Referi будут удалены.
             </DialogDescription>
           </DialogHeader>
           {error ? (

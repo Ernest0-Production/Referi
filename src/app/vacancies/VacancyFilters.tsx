@@ -109,7 +109,7 @@ function VacancyCatalogActivePresetNameRow({
         onBlur={(e) => {
           const trimmed = e.currentTarget.value.trim();
           if (trimmed === "") {
-            toast.error("Введите название фильтра");
+            toast.error("Введи название фильтра");
             setDraft(serverName);
             return;
           }
@@ -799,7 +799,7 @@ export function VacancyFilters({
           >
             <FieldGroup>
               <Field data-invalid={presetNameInvalid ? true : undefined}>
-                <FieldLabel htmlFor="preset-name">Введите название</FieldLabel>
+                <FieldLabel htmlFor="preset-name">Введи название</FieldLabel>
                 <Input
                   ref={presetNameSaveInputRef}
                   id="preset-name"
@@ -816,7 +816,7 @@ export function VacancyFilters({
                 />
                 {presetNameInvalid ? (
                   <FieldDescription id="preset-name-desc" className="text-destructive">
-                    Укажите непустое название
+                    Укажи непустое название
                   </FieldDescription>
                 ) : null}
               </Field>

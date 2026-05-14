@@ -126,7 +126,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
           <CardContent className="flex flex-col gap-4">
             <FieldGroup>
               <Field data-invalid={abuseDetailError ? "true" : undefined}>
-                <FieldLabel htmlFor="abuse-detail">Опишите ситуацию</FieldLabel>
+                <FieldLabel htmlFor="abuse-detail">Опиши ситуацию</FieldLabel>
                 <Textarea
                   id="abuse-detail"
                   rows={3}
@@ -137,7 +137,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
                     setAbuseDetailError(null);
                     setAbuseReason(e.target.value);
                   }}
-                  placeholder="Опишите, что произошло"
+                  placeholder="Опиши, что произошло"
                 />
                 <FieldDescription
                   id="abuse-detail-desc"
@@ -159,7 +159,7 @@ export function ApplicationDetailActions({ applicationId, status }: Props) {
                 onClick={() => {
                   setAbuseDetailError(null);
                   if (abuseReason.trim().length < 5) {
-                    setAbuseDetailError("Опишите ситуацию (минимум 5 символов).");
+                    setAbuseDetailError("Опиши ситуацию (минимум 5 символов).");
                     return;
                   }
                   abuseReportMutation.mutate({

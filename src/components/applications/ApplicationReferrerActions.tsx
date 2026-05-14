@@ -104,7 +104,7 @@ export function ApplicationReferrerActions({ applicationId, status }: Props) {
         ) : null}
 
         {status === "DISPUTED" ? (
-          <p className="text-muted-foreground text-sm">Спор передан модерации. Ожидайте решение.</p>
+          <p className="text-muted-foreground text-sm">Спор передан модерации. Жди решения.</p>
         ) : null}
       </div>
     </div>

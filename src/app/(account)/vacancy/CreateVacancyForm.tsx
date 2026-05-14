@@ -212,13 +212,13 @@ function validateSalaryRange(fromRaw: string, toRaw: string): SalaryRangeInvalid
 
   if (fromTouched && from === null) {
     return {
-      message: "В поле «Зарплата от» укажите целое неотрицательное число.",
+      message: "В поле «Зарплата от» укажи целое неотрицательное число.",
       focusId: "vac-sal-from",
     };
   }
   if (toTouched && to === null) {
     return {
-      message: "В поле «Зарплата до» укажите целое неотрицательное число.",
+      message: "В поле «Зарплата до» укажи целое неотрицательное число.",
       focusId: "vac-sal-to",
     };
   }
@@ -398,7 +398,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
     const titleTrim = form.title.trim();
     if (titleTrim.length < 3) {
-      flushSync(() => setTitleError("Введите название (минимум 3 символа)."));
+      flushSync(() => setTitleError("Введи название (минимум 3 символа)."));
       focusVacancyFormField("vac-title");
       return;
     }
@@ -410,7 +410,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
     const companyTrim = form.companyName.trim();
     if (companyTrim.length < 2) {
-      flushSync(() => setCompanyError("Введите компанию (минимум 2 символа)."));
+      flushSync(() => setCompanyError("Введи компанию (минимум 2 символа)."));
       focusVacancyFormField("vac-company");
       return;
     }

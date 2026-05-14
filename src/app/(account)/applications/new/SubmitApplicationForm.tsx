@@ -43,16 +43,16 @@ export function SubmitApplicationForm({
       const msg = err.message;
       if (msg === "ACTIVE_APPLICATION_LIMIT_REACHED") {
         setError(
-          "Достигнут лимит активных запросов по рефералкам. Купите дополнительный токен или дождитесь завершения заявки.",
+          "Достигнут лимит активных запросов по рефералкам. Купи дополнительный токен или дождись завершения заявки.",
         );
       } else if (msg === "DUPLICATE_APPLICATION") {
-        setError("Вы уже просили эту рефералку.");
+        setError("Запрос по этой рефералке от тебя уже отправлен.");
       } else if (msg === "CANNOT_APPLY_TO_OWN_VACANCY") {
         setError("Нельзя попросить собственную рефералку.");
       } else if (msg === "VACANCY_NOT_ACTIVE") {
         setError("Рефералка больше не активна.");
       } else if (msg.startsWith("PAID_TOKEN_")) {
-        setError("Токен запроса недействителен. Купите новый токен для этой рефералки.");
+        setError("Токен запроса недействителен. Купи новый токен для этой рефералки.");
       } else {
         setError(err.message);
       }
@@ -80,7 +80,7 @@ export function SubmitApplicationForm({
 
     const contact = form.contactInfo.trim();
     if (contact.length < 1) {
-      setContactError("Укажите контакт (минимум 1 символ).");
+      setContactError("Укажи контакт (минимум 1 символ).");
       return;
     }
     if (contact.length > 500) {
@@ -184,7 +184,7 @@ export function SubmitApplicationForm({
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Разовый токен запроса (199 ₽)</CardTitle>
             <CardDescription>
-              Если бесплатный лимит активных запросов исчерпан, купите токен для этой рефералки.
+              Если бесплатный лимит активных запросов исчерпан, купи токен для этой рефералки.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">

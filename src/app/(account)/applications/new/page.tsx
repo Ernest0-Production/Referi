@@ -79,7 +79,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
           <Card>
             <CardContent className="flex flex-col gap-4 p-6">
               <p className="text-muted-foreground text-sm">
-                Это ваша рефералка — запросить её у себя нельзя.
+                Это твоя рефералка — запросить её у себя нельзя.
               </p>
               <Button asChild className="w-fit">
                 <Link href={`/vacancies/${vacancyId}`}>Открыть страницу рефералки</Link>
