@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { IconCreditCard, IconHeadset, IconUser } from "@tabler/icons-react";
+import { IconBrandGithub, IconCreditCard, IconHeadset, IconUser } from "@tabler/icons-react";
 import { auth } from "@/lib/auth";
 import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
@@ -66,8 +66,13 @@ export default async function SettingsPage() {
                   href={`https://github.com/${encodeURIComponent(githubLogin)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground w-fit text-sm underline-offset-2 hover:underline"
+                  className="text-foreground flex w-fit items-center gap-1.5 text-sm underline-offset-2 hover:underline"
                 >
+                  <IconBrandGithub
+                    className="size-4 shrink-0"
+                    aria-hidden
+                    stroke={1.75}
+                  />
                   {githubLogin}
                 </a>
               ) : (
@@ -137,7 +142,7 @@ export default async function SettingsPage() {
             <CardContent>
               <Button asChild>
                 <a href={moderationContactUrl} target="_blank" rel="noopener noreferrer">
-                  Открыть контакт модерации
+                  Связаться
                 </a>
               </Button>
             </CardContent>

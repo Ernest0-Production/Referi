@@ -80,19 +80,18 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
             value={name}
             maxLength={100}
             aria-invalid={nameError ? true : undefined}
-            aria-describedby="profile-name-desc"
+            aria-describedby={nameError ? "profile-name-desc" : undefined}
             onChange={(e) => {
               setNameError(null);
               setName(e.target.value);
             }}
             placeholder="Отображаемое имя"
           />
-          <FieldDescription
-            id="profile-name-desc"
-            className={nameError ? "text-destructive" : undefined}
-          >
-            {nameError ?? "Минимум 2 символа, не более 100."}
-          </FieldDescription>
+          {nameError ? (
+            <FieldDescription id="profile-name-desc" className="text-destructive">
+              {nameError}
+            </FieldDescription>
+          ) : null}
         </Field>
 
         <Field data-invalid={contactError ? "true" : undefined}>
