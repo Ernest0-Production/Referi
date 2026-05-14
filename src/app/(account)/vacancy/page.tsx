@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { firstQueryParam } from "@/lib/searchParams";
@@ -8,6 +9,7 @@ import { DashboardVacancyNav } from "./DashboardVacancyNav";
 import { DashboardVacancyPageShell } from "./DashboardVacancyPageShell";
 import { EditVacancyCard } from "./EditVacancyCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 
@@ -26,10 +28,6 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
 
   const me = await trpc.auth.me();
   const vacancy = await trpc.vacancies.myActive();
-
-  if (vacancy && !editMode) {
-    redirect(`/vacancies/${vacancy.id}`);
-  }
 
   const openedFromPublicVacancyDetail = Boolean(
     vacancy && editMode && fromVacancyParam === vacancy.id,
@@ -74,6 +72,22 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
                 rewardKopecks: vacancy.rewardKopecks,
               }}
             />
+          ) : vacancy && !editMode ? (
+            <Card>
+              <CardContent className="flex flex-col gap-4 pt-6">
+                <p className="text-muted-foreground text-sm">
+                  Управление заявками и кандидатами — на публичной странице рефералки в каталоге.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild>
+                    <Link href={`/vacancies/${vacancy.id}`}>Открыть рефералку</Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}>Редактировать</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ) : !vacancy ? (
             <Card>
               <CardContent className="flex flex-col gap-4">

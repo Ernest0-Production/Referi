@@ -35,8 +35,6 @@ export async function VacancyAuthorManageSection({
   applicationId?: string;
 }) {
   const applicants = await trpc.vacancies.applicants({ vacancyId });
-  const applicationHref = (id: string) =>
-    `/vacancies/${vacancyId}?applicationId=${encodeURIComponent(id)}`;
 
   const selected =
     applicationIdParam && applicants.some((a) => a.id === applicationIdParam)
@@ -44,24 +42,12 @@ export async function VacancyAuthorManageSection({
       : undefined;
 
   if (!selected) {
-    return (
-      <VacancyApplicantsSection
-        vacancyId={vacancyId}
-        vacancyTitle={vacancyTitle}
-        applicationHref={applicationHref}
-      />
-    );
+    return <VacancyApplicantsSection vacancyId={vacancyId} vacancyTitle={vacancyTitle} />;
   }
 
   const application = await trpc.applications.getById({ applicationId: selected });
   if (application.vacancy.id !== vacancyId) {
-    return (
-      <VacancyApplicantsSection
-        vacancyId={vacancyId}
-        vacancyTitle={vacancyTitle}
-        applicationHref={applicationHref}
-      />
-    );
+    return <VacancyApplicantsSection vacancyId={vacancyId} vacancyTitle={vacancyTitle} />;
   }
 
   const auditLog = await trpc.applications.getAuditLog({ applicationId: selected });

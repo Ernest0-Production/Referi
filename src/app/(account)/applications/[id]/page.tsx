@@ -1,4 +1,4 @@
-import { redirect, notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationDetailTrail } from "@/lib/navBreadcrumbTrail";
@@ -48,10 +48,6 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     application = await trpc.applications.getById({ applicationId: id });
   } catch {
     notFound();
-  }
-
-  if (application.vacancy.referrerId) {
-    redirect(`/vacancies/${application.vacancy.id}?applicationId=${encodeURIComponent(id)}`);
   }
 
   const auditLog = await trpc.applications.getAuditLog({ applicationId: id });

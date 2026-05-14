@@ -41,7 +41,7 @@ export function EmployerHomeVacancySection({
   const vacancy = myActiveQuery.data;
 
   if (vacancy) {
-    const detailHref = vacancy.status === "ACTIVE" ? `/vacancies/${vacancy.id}` : "/vacancy";
+    const detailHref = `/vacancies/${vacancy.id}`;
 
     return (
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">

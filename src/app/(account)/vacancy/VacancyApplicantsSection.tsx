@@ -26,15 +26,12 @@ const STATUS_LABELS: Record<string, string> = {
 export async function VacancyApplicantsSection({
   vacancyId,
   vacancyTitle,
-  applicationHref,
 }: {
   vacancyId: string;
   vacancyTitle: string;
-  /** Ссылка на карточку заявки (по умолчанию — кабинет `/applications/:id`) */
-  applicationHref?: (applicationId: string) => string;
 }) {
   const applicants = await trpc.vacancies.applicants({ vacancyId });
-  const hrefFor = applicationHref ?? ((id: string) => `/applications/${id}`);
+  const hrefFor = (id: string) => `/vacancies/${vacancyId}?applicationId=${encodeURIComponent(id)}`;
 
   return (
     <section id="candidates" className="flex scroll-mt-24 flex-col gap-4">

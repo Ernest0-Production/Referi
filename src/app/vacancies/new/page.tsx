@@ -1,10 +1,12 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { NewVacancyComposeWithBack } from "@/app/vacancies/new/NewVacancyComposeWithBack";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function NewVacancyPage() {
   const session = await auth();
@@ -12,7 +14,26 @@ export default async function NewVacancyPage() {
   if (session?.user?.id) {
     const vacancy = await trpc.vacancies.myActive();
     if (vacancy) {
-      redirect("/vacancy");
+      return (
+        <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
+          <PublicHeaderNav session={session} />
+          <main className="flex-1">
+            <div className={PAGE_COLUMN_CLASS}>
+              <Card>
+                <CardContent className="flex flex-col gap-4 py-8">
+                  <p className="text-muted-foreground text-sm">
+                    У вас уже есть активная рефералка. Публикация новой через эту форму недоступна,
+                    пока она действует.
+                  </p>
+                  <Button asChild className="w-fit">
+                    <Link href={`/vacancies/${vacancy.id}`}>Открыть мою рефералку</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+        </div>
+      );
     }
 
     const me = await trpc.auth.me();

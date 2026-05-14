@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { TRPCError } from "@trpc/server";
 import { auth } from "@/lib/auth";
@@ -8,6 +9,7 @@ import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { SubmitApplicationForm } from "./SubmitApplicationForm";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PageProps {
@@ -52,7 +54,41 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
   }
 
   if (v.isMine) {
-    redirect("/vacancy");
+    const openedFromPublicVacancyDetail = fromVacancyParam === vacancyId;
+    const vacancy = { ...v, me };
+
+    return (
+      <main className="flex-1">
+        <div className={PAGE_COLUMN_CLASS}>
+          <BreadcrumbSeedPort
+            seed={dashboardApplicationNewTrail(
+              vacancyId,
+              vacancy.title,
+              openedFromPublicVacancyDetail,
+            )}
+          />
+          <AppNavBreadcrumb />
+
+          <div className="flex flex-col gap-1">
+            <h1 className="text-foreground text-2xl font-bold">Попросить рефералку</h1>
+            <p className="text-muted-foreground text-sm">
+              {vacancy.title} · {vacancy.companyName}
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="flex flex-col gap-4 p-6">
+              <p className="text-muted-foreground text-sm">
+                Это ваша рефералка — запросить её у себя нельзя.
+              </p>
+              <Button asChild className="w-fit">
+                <Link href={`/vacancies/${vacancyId}`}>Открыть страницу рефералки</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
   }
 
   const vacancy = { ...v, me };
