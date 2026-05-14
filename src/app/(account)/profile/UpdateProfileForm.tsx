@@ -95,9 +95,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
         </Field>
 
         <Field data-invalid={contactError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-contact">
-            Контактная информация (мессенджер, email, ссылка)
-          </FieldLabel>
+          <FieldLabel htmlFor="profile-contact">Контактная информация</FieldLabel>
           <Input
             id="profile-contact"
             type="text"
@@ -115,7 +113,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
             id="profile-contact-desc"
             className={contactError ? "text-destructive" : undefined}
           >
-            {contactError ?? "Необязательно, не более 500 символов."}
+            {contactError ?? "Это нужно, чтобы реферальщик мог с вами связаться."}
           </FieldDescription>
         </Field>
 
