@@ -183,9 +183,7 @@ describe("vacancy catalog filters & presets (vacancyListQuery)", () => {
     });
 
     it("isVacancyFlatMatchingPresetParams false when flat differs", () => {
-      expect(
-        isVacancyFlatMatchingPresetParams({ query: "a" }, { query: "b" }),
-      ).toBe(false);
+      expect(isVacancyFlatMatchingPresetParams({ query: "a" }, { query: "b" })).toBe(false);
     });
 
     it("findMatchingVacancySearchPresetId returns first id with equal normalized params", () => {
@@ -213,8 +211,7 @@ describe("vacancy catalog filters & presets (vacancyListQuery)", () => {
   describe("peelOpenVacancyPresetSaveFromSearchParamsInput", () => {
     it("detects truthy flags and strips key", () => {
       const raw = { openVacancyPresetSave: "1", query: "job" };
-      const { params, openVacancyPresetSave } =
-        peelOpenVacancyPresetSaveFromSearchParamsInput(raw);
+      const { params, openVacancyPresetSave } = peelOpenVacancyPresetSaveFromSearchParamsInput(raw);
       expect(openVacancyPresetSave).toBe(true);
       expect(params).toEqual({ query: "job" });
     });
@@ -224,9 +221,7 @@ describe("vacancy catalog filters & presets (vacancyListQuery)", () => {
         peelOpenVacancyPresetSaveFromSearchParamsInput({ openVacancyPresetSave: "0" })
           .openVacancyPresetSave,
       ).toBe(false);
-      expect(
-        peelOpenVacancyPresetSaveFromSearchParamsInput({}).openVacancyPresetSave,
-      ).toBe(false);
+      expect(peelOpenVacancyPresetSaveFromSearchParamsInput({}).openVacancyPresetSave).toBe(false);
     });
   });
 

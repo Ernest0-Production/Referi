@@ -94,9 +94,6 @@ describe("mergeBreadcrumbTrails", () => {
   it("same label different href with single-segment seed: appends (stack forward)", () => {
     const prev: NavBreadcrumbSegment[] = [{ label: "X", href: "/1" }];
     const seed: NavBreadcrumbSegment[] = [{ label: "X", href: "/2" }];
-    expect(mergeBreadcrumbTrails(prev, seed)).toEqual([
-      { label: "X", href: "/1" },
-      { label: "X" },
-    ]);
+    expect(mergeBreadcrumbTrails(prev, seed)).toEqual([{ label: "X", href: "/1" }, { label: "X" }]);
   });
 });

@@ -17,10 +17,7 @@ const relFromRoot = path.isAbsolute(norm) ? path.relative(root, norm) : norm;
 
 const resolved = path.resolve(root, relFromRoot);
 const rootResolved = path.resolve(root);
-if (
-  !relFromRoot ||
-  (resolved !== rootResolved && !resolved.startsWith(rootResolved + path.sep))
-) {
+if (!relFromRoot || (resolved !== rootResolved && !resolved.startsWith(rootResolved + path.sep))) {
   process.exit(0);
 }
 
