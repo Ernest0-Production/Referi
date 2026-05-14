@@ -73,7 +73,6 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  GradeIcon,
   SalaryCurrencyIcon,
   SpecialtyIcon,
   WorkFormatIcon,
@@ -485,6 +484,8 @@ export function VacancyFilters({
     createPreset.mutate({ name, params });
   }
 
+  const showFiltersFooter = !vacancyFiltersResetDisabled;
+
   const combinedFooter = (
     <div className="flex w-full min-w-0 items-center gap-2">
       <Tooltip>
@@ -492,22 +493,22 @@ export function VacancyFilters({
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="size-10 shrink-0 rounded-full"
+            size="sm"
+            className="h-10 w-1/2 min-w-0 shrink-0 justify-center gap-2 rounded-lg px-3"
             disabled={vacancyFiltersResetDisabled}
             onClick={() => {
               onReset();
               toast.success("Фильтр сброшен");
             }}
-            aria-label="Сбросить фильтры"
           >
-            <RotateCcw />
+            <RotateCcw className="size-4 shrink-0" aria-hidden />
+            Сбросить
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top">Сбросить фильтры</TooltipContent>
       </Tooltip>
-      <div className="min-w-0 flex-1" aria-hidden />
-      {resolvedPresetId ? (
+      <div className="flex min-w-0 flex-1 justify-end">
+        {resolvedPresetId ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -564,6 +565,7 @@ export function VacancyFilters({
           <TooltipContent side="top">Сохранить фильтр</TooltipContent>
         </Tooltip>
       ) : null}
+      </div>
     </div>
   );
 
@@ -585,8 +587,8 @@ export function VacancyFilters({
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
-              className="shrink-0"
+              size="icon"
+              className="min-h-11 min-w-11 shrink-0 touch-manipulation"
               aria-label="Закрыть"
             >
               <XIcon />
@@ -604,7 +606,10 @@ export function VacancyFilters({
       )}
       <CardContent
         className={cn(
-          "flex flex-col gap-5 px-5 pb-4",
+          "flex flex-col gap-5 px-5",
+          isSheet && !showFiltersFooter
+            ? "pb-[calc(1rem+1px+1rem+2.5rem+max(1rem,env(safe-area-inset-bottom,0px)))]"
+            : "pb-4",
           isSheet && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
         )}
       >
@@ -630,14 +635,14 @@ export function VacancyFilters({
               apply({ specialty: next });
             }}
           >
-            <SelectTrigger className="bg-card h-9 w-full gap-1.5 rounded-lg">
-              {specialtySelectValue === SPECIALTY_SELECT_ANY ? (
-                <IconFilter
-                  className="text-muted-foreground size-4 shrink-0"
-                  aria-hidden
-                  stroke={1.75}
-                />
-              ) : specialtySelectValue === SPECIALTY_SELECT_MULTI ? (
+            <SelectTrigger
+              className={cn(
+                "bg-card h-9 w-full gap-1.5 rounded-lg",
+                specialtySelectValue === SPECIALTY_SELECT_ANY &&
+                  "relative justify-center pl-2.5 pr-2 [&>svg]:absolute [&>svg]:top-1/2 [&>svg]:right-2 [&>svg]:-translate-y-1/2 [&_[data-slot=select-value]]:absolute [&_[data-slot=select-value]]:left-1/2 [&_[data-slot=select-value]]:top-1/2 [&_[data-slot=select-value]]:-translate-x-1/2 [&_[data-slot=select-value]]:-translate-y-1/2",
+              )}
+            >
+              {specialtySelectValue === SPECIALTY_SELECT_ANY ? null : specialtySelectValue === SPECIALTY_SELECT_MULTI ? (
                 <IconStack2 className="text-muted-foreground size-4 shrink-0" aria-hidden />
               ) : (
                 <SpecialtyIcon specialty={specialtySelectValue} />
@@ -662,10 +667,7 @@ export function VacancyFilters({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="flex items-center gap-2 text-sm font-medium">
-            <GradeIcon className="size-4" />
-            Грейд
-          </Label>
+          <Label className="text-sm font-medium">Грейд</Label>
           <ToggleGroup
             type="multiple"
             spacing={2}
@@ -717,14 +719,16 @@ export function VacancyFilters({
         />
       </CardContent>
       {isSheet ? (
-        <SheetFooter className="bg-card border-border mt-auto flex w-full shrink-0 flex-col gap-3 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:flex-col sm:justify-start">
-          {combinedFooter}
-        </SheetFooter>
-      ) : (
+        showFiltersFooter ? (
+          <SheetFooter className="bg-card border-border mt-auto flex w-full shrink-0 flex-col gap-3 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:flex-col sm:justify-start">
+            {combinedFooter}
+          </SheetFooter>
+        ) : null
+      ) : showFiltersFooter ? (
         <CardFooter className="border-border bg-card flex flex-col gap-3 border-t px-5 py-4">
           {combinedFooter}
         </CardFooter>
-      )}
+      ) : null}
 
       <Dialog
         open={deleteConfirmOpen}

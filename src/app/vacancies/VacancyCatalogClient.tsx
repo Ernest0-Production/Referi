@@ -293,7 +293,7 @@ export function VacancyCatalogClient({
                 value={savedPresetCarouselValue}
                 onValueChange={handleSavedPresetCarouselChange}
                 onReset={resetCatalog}
-                showReset={!isVacancyCatalogFlatBaseline(params)}
+                showReset={!isMdUp && !isVacancyCatalogFlatBaseline(params)}
               />
             ) : undefined
           }
