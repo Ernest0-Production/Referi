@@ -2,7 +2,7 @@
 
 import { IconClockHour4, IconCoins } from "@tabler/icons-react";
 import { Search } from "lucide-react";
-import { useState, useTransition } from "react";
+import { type ReactNode, useState, useTransition } from "react";
 import {
   Select,
   SelectContent,
@@ -20,17 +20,20 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatVacancyCatalogCountLabel } from "@/lib/vacancyCatalogCountLabel";
 import { type VacancyListFlatSearchParams } from "@/lib/vacancyListQuery";
+import { cn } from "@/lib/utils";
 
 export function VacancyListChrome({
   currentParams,
   onApplyPatch,
   total,
   listBusy,
+  savedPresetsFooter,
 }: {
   currentParams: VacancyListFlatSearchParams;
   onApplyPatch: (patch: Partial<VacancyListFlatSearchParams>) => void;
   total: number;
   listBusy: boolean;
+  savedPresetsFooter?: ReactNode;
 }) {
   const [queryDraft, setQueryDraft] = useState(currentParams.query ?? "");
   const [isPending, startTransition] = useTransition();
@@ -43,37 +46,53 @@ export function VacancyListChrome({
 
   const sortValue = currentParams.sort ?? "created_desc";
 
+  const searchInputGroup = (
+    <InputGroup
+      aria-busy={listBusy || isPending}
+      className={cn(
+        "h-11 w-full min-w-0 md:h-12",
+        savedPresetsFooter
+          ? "border-0 rounded-none bg-transparent shadow-none dark:bg-transparent"
+          : "border-border bg-card rounded-xl shadow-sm",
+      )}
+    >
+      <InputGroupInput
+        placeholder="Название рефералки или компании"
+        value={queryDraft}
+        onChange={(e) => setQueryDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            runSearch();
+          }
+        }}
+        className="h-full min-h-10 text-base md:text-sm"
+      />
+      <InputGroupAddon>{isPending ? <Spinner /> : <Search />}</InputGroupAddon>
+      <InputGroupAddon align="inline-end" className="gap-2 pr-2">
+        <InputGroupButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={isPending}
+          onClick={runSearch}
+        >
+          Искать
+        </InputGroupButton>
+      </InputGroupAddon>
+    </InputGroup>
+  );
+
   return (
     <div className="flex flex-col gap-3">
-      <InputGroup
-        aria-busy={listBusy || isPending}
-        className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12"
-      >
-        <InputGroupInput
-          placeholder="Название рефералки или компании"
-          value={queryDraft}
-          onChange={(e) => setQueryDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              runSearch();
-            }
-          }}
-          className="h-full min-h-10 text-base md:text-sm"
-        />
-        <InputGroupAddon>{isPending ? <Spinner /> : <Search />}</InputGroupAddon>
-        <InputGroupAddon align="inline-end" className="gap-2 pr-2">
-          <InputGroupButton
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={isPending}
-            onClick={runSearch}
-          >
-            Искать
-          </InputGroupButton>
-        </InputGroupAddon>
-      </InputGroup>
+      {savedPresetsFooter ? (
+        <div className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
+          {searchInputGroup}
+          <div className="border-border border-t">{savedPresetsFooter}</div>
+        </div>
+      ) : (
+        searchInputGroup
+      )}
 
       <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>

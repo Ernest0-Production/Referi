@@ -17,7 +17,7 @@ tags: moderation, ui, configuration
 
 | Переменная                           | Обязательная | Описание                                                                                                                                              |
 | ------------------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_MODERATION_CONTACT_URL` | Нет          | HTTPS- или другая ссылка на открытый контакт (например `https://t.me/username`). При заданном значении показывается пункт «Написать в поддержку» в меню профиля в шапке и ссылка в сценариях с жалобой (см. ниже). |
+| `NEXT_PUBLIC_MODERATION_CONTACT_URL` | Нет          | HTTPS- или другая ссылка на открытый контакт (например `https://t.me/username`). При заданном значении показывается пункт «Поддержка» в меню профиля в шапке и ссылка в сценариях с жалобой (см. ниже). |
 
 
 Ссылка попадает в клиентский бандл (`NEXT_PUBLIC_`*): не использовать для секретов. На клиенте значение читается через `[src/publicEnv.ts](../src/publicEnv.ts)` (без импорта полной схемы `src/env.ts`).
@@ -25,7 +25,7 @@ tags: moderation, ui, configuration
 ## Поведение в UI
 
 - После успешной отправки жалобы на рефералку пользователю показывается **toast** (Sonner) с подтверждением ([`src/app/vacancies/[id]/ReportVacancyForm.tsx`](../src/app/vacancies/[id]/ReportVacancyForm.tsx)).
-- При заданной переменной: пункт **«Написать в поддержку»** в выпадающем меню профиля в шапке ([`src/components/ModerationContactMenuItem.tsx`](../src/components/ModerationContactMenuItem.tsx), [`PublicHeaderNav`](../src/components/PublicHeaderNav.tsx) / [`DashboardHeaderNav`](../src/components/DashboardHeaderNav.tsx) / [`AdminHeaderNav`](../src/components/AdminHeaderNav.tsx)); опционально ссылка в блоке действий по заявке ([`ModerationContactLink`](../src/components/ModerationContactLink.tsx), потребитель — например [`ApplicationDetailActions`](../src/app/(account)/applications/[id]/ApplicationDetailActions.tsx)).
+- При заданной переменной: пункт **«Поддержка»** в выпадающем меню профиля в шапке ([`src/components/ModerationContactMenuItem.tsx`](../src/components/ModerationContactMenuItem.tsx), [`PublicHeaderNav`](../src/components/PublicHeaderNav.tsx) / [`DashboardHeaderNav`](../src/components/DashboardHeaderNav.tsx) / [`AdminHeaderNav`](../src/components/AdminHeaderNav.tsx)); опционально ссылка в блоке действий по заявке ([`ModerationContactLink`](../src/components/ModerationContactLink.tsx), потребитель — например [`ApplicationDetailActions`](../src/app/(account)/applications/[id]/ApplicationDetailActions.tsx)).
 
 ## Связанные документы
 

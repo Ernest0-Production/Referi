@@ -279,22 +279,24 @@ export function VacancyCatalogClient({
           onBeforeNavigateToDetail={rememberVacancyCatalogScrollPosition}
         />
         <Separator />
-        {isLoggedIn && presets.length > 0 ? (
-          <VacancySavedPresetsCarousel
-            key={`saved-preset-toggles-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
-            presets={presets}
-            value={savedPresetCarouselValue}
-            onValueChange={handleSavedPresetCarouselChange}
-            onReset={resetCatalog}
-            showReset={!isVacancyCatalogFlatBaseline(params)}
-          />
-        ) : null}
         <VacancyListChrome
           key={params.query?.trim() ? params.query.trim() : "__q_empty__"}
           currentParams={params}
           onApplyPatch={applyPatch}
           total={total}
           listBusy={listBusy}
+          savedPresetsFooter={
+            isLoggedIn && presets.length > 0 ? (
+              <VacancySavedPresetsCarousel
+                key={`saved-preset-toggles-${savedPresetSelectLayoutKey}-${vacancyPresetSidebarCleared ? "c" : "o"}`}
+                presets={presets}
+                value={savedPresetCarouselValue}
+                onValueChange={handleSavedPresetCarouselChange}
+                onReset={resetCatalog}
+                showReset={!isVacancyCatalogFlatBaseline(params)}
+              />
+            ) : undefined
+          }
         />
 
         {items.length === 0 ? (

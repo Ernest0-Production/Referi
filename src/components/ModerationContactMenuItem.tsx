@@ -11,7 +11,7 @@ export function ModerationContactMenuItem() {
     <DropdownMenuItem asChild>
       <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
         <IconHeadset className="size-4 shrink-0" aria-hidden />
-        Написать в поддержку
+        Поддержка
       </a>
     </DropdownMenuItem>
   );
