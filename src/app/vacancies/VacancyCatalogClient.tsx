@@ -107,7 +107,7 @@ export function VacancyCatalogClient({
   const router = useRouter();
   const resumeUrlCleanupDone = useRef(false);
   const catalogMainScrollAnchorRef = useRef<HTMLDivElement>(null);
-  const pageScrollSkipMountRef = useRef(true);
+  const listPageCommittedRef = useRef<number | undefined>(undefined);
   const [params, setParams] = useState<VacancyListFlatSearchParams>(initialParams);
   const [activeVacancyPresetId, setActiveVacancyPresetId] = useState<string | undefined>(undefined);
   const [vacancyPresetSidebarCleared, setVacancyPresetSidebarCleared] = useState(false);
@@ -158,10 +158,13 @@ export function VacancyCatalogClient({
   const listInput = useMemo(() => vacancyFlatToTrpcListInput(params), [params]);
 
   useLayoutEffect(() => {
-    if (pageScrollSkipMountRef.current) {
-      pageScrollSkipMountRef.current = false;
+    const page = listInput.page;
+    if (listPageCommittedRef.current === undefined) {
+      listPageCommittedRef.current = page;
       return;
     }
+    if (listPageCommittedRef.current === page) return;
+    listPageCommittedRef.current = page;
     catalogMainScrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [listInput.page]);
 
