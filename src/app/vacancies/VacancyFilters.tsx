@@ -552,7 +552,7 @@ export function VacancyFilters({
           <TooltipTrigger asChild>
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               size="icon"
               className="size-10 shrink-0 rounded-full"
               onClick={handleSaveFiltersFooterAction}
