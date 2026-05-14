@@ -154,7 +154,7 @@ const GRADES: { value: (typeof VACANCY_LIST_GRADE_VALUES)[number]; label: string
 ];
 
 const FORMATS: { value: (typeof VACANCY_LIST_WORK_FORMAT_VALUES)[number]; label: string }[] = [
-  { value: "REMOTE", label: "Удалённо" },
+  { value: "REMOTE", label: "Удалёнка" },
   { value: "HYBRID", label: "Гибрид" },
   { value: "OFFICE", label: "Офис" },
 ];

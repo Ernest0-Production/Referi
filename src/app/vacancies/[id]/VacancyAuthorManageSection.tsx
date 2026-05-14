@@ -27,11 +27,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 export async function VacancyAuthorManageSection({
   vacancyId,
-  vacancyTitle,
   applicationId: applicationIdParam,
 }: {
   vacancyId: string;
-  vacancyTitle: string;
   applicationId?: string;
 }) {
   const applicants = await trpc.vacancies.applicants({ vacancyId });
@@ -42,12 +40,12 @@ export async function VacancyAuthorManageSection({
       : undefined;
 
   if (!selected) {
-    return <VacancyApplicantsSection vacancyId={vacancyId} vacancyTitle={vacancyTitle} />;
+    return <VacancyApplicantsSection vacancyId={vacancyId} />;
   }
 
   const application = await trpc.applications.getById({ applicationId: selected });
   if (application.vacancy.id !== vacancyId) {
-    return <VacancyApplicantsSection vacancyId={vacancyId} vacancyTitle={vacancyTitle} />;
+    return <VacancyApplicantsSection vacancyId={vacancyId} />;
   }
 
   const auditLog = await trpc.applications.getAuditLog({ applicationId: selected });

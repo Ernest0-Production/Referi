@@ -104,7 +104,7 @@ const GRADE_LABELS: Record<(typeof GRADES)[number], string> = {
 const FORMAT_LABELS: Record<(typeof FORMATS)[number], string> = {
   OFFICE: "Офис",
   HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
+  REMOTE: "Удалёнка",
 };
 
 const REFERRER_BONUS_MAX_RUBLES = 100_000;

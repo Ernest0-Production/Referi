@@ -22,5 +22,5 @@ export const VACANCY_GRADE_LABELS: Record<string, string> = {
 export const VACANCY_WORK_FORMAT_LABELS: Record<string, string> = {
   OFFICE: "Офис",
   HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
+  REMOTE: "Удалёнка",
 };

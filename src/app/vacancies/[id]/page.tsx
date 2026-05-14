@@ -172,7 +172,6 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
           {session?.user && isAuthor ? (
             <VacancyAuthorManageSection
               vacancyId={vacancy.id}
-              vacancyTitle={vacancy.title}
               applicationId={applicationIdParam}
             />
           ) : null}

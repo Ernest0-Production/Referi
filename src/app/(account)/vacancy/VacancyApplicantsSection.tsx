@@ -23,13 +23,7 @@ const STATUS_LABELS: Record<string, string> = {
   REFUNDED_BY_CANCEL_AUTO: "Автовозврат (отмена)",
 };
 
-export async function VacancyApplicantsSection({
-  vacancyId,
-  vacancyTitle,
-}: {
-  vacancyId: string;
-  vacancyTitle: string;
-}) {
+export async function VacancyApplicantsSection({ vacancyId }: { vacancyId: string }) {
   const applicants = await trpc.vacancies.applicants({ vacancyId });
   const hrefFor = (id: string) => `/vacancies/${vacancyId}?applicationId=${encodeURIComponent(id)}`;
 
@@ -37,9 +31,7 @@ export async function VacancyApplicantsSection({
     <section id="candidates" className="flex scroll-mt-24 flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-xl font-semibold">Кандидаты</h2>
-        <p className="text-muted-foreground text-sm">
-          {vacancyTitle} · {formatApplicationCountLabel(applicants.length)}
-        </p>
+        <p className="text-muted-foreground text-sm">{formatApplicationCountLabel(applicants.length)}</p>
       </div>
 
       {applicants.length === 0 ? (

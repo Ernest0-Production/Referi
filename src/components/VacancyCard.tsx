@@ -43,7 +43,7 @@ const GRADE_LABELS: Record<string, string> = {
 const FORMAT_LABELS: Record<string, string> = {
   OFFICE: "Офис",
   HYBRID: "Гибрид",
-  REMOTE: "Удалённо",
+  REMOTE: "Удалёнка",
 };
 
 interface Vacancy {
