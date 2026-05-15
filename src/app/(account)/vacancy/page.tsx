@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
+import { VACANCY_EDIT_PRIMARY_LABEL } from "@/components/vacancies/VacancyEditPrimaryButton";
 
 type PageProps = {
   searchParams: Promise<{ edit?: string; fromVacancy?: string | string[] }>;
@@ -144,7 +145,9 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
                     <Link href={`/vacancies/${vacancy.id}`}>Открыть рефералку</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}>Редактировать</Link>
+                    <Link href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}>
+                      {VACANCY_EDIT_PRIMARY_LABEL}
+                    </Link>
                   </Button>
                 </div>
               </CardContent>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
@@ -22,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { VacancyEditPrimaryButton } from "@/components/vacancies/VacancyEditPrimaryButton";
 
 type VacancyOwnerActionsProps = {
   vacancyId: string;
@@ -62,14 +62,10 @@ export function VacancyOwnerActions({
         data-slot="button-group"
         className={`flex w-full min-w-0 overflow-hidden rounded-md ${className ?? ""}`}
       >
-        <Button
-          variant="default"
-          size="lg"
+        <VacancyEditPrimaryButton
+          href={editHref}
           className="min-w-0 flex-1 rounded-none rounded-l-md"
-          asChild
-        >
-          <Link href={editHref}>Редактировать</Link>
-        </Button>
+        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

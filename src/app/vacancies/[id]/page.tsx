@@ -19,6 +19,7 @@ import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { firstQueryParam } from "@/lib/searchParams";
 import { cn } from "@/lib/utils";
 import { VacancyAuthorManageSection } from "./VacancyAuthorManageSection";
+import { VacancyEditPrimaryButton } from "@/components/vacancies/VacancyEditPrimaryButton";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -134,12 +135,16 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
                 ) : isStaffAdmin ? (
                   <div className="flex flex-col gap-2">
                     <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
-                      <Button asChild size="lg" className="min-w-0 flex-1">
-                        <Link href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}>
-                          Редактирование
-                        </Link>
-                      </Button>
-                      <Button asChild size="lg" variant="outline" className="min-w-0 flex-1">
+                      <VacancyEditPrimaryButton
+                        href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}
+                        className="w-full min-w-0 sm:flex-1"
+                      />
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="outline"
+                        className="w-full min-w-0 sm:flex-1"
+                      >
                         <Link
                           href={`/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
                         >
