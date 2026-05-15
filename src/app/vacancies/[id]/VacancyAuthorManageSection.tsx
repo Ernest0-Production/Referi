@@ -28,9 +28,11 @@ const STATUS_LABELS: Record<string, string> = {
 export async function VacancyAuthorManageSection({
   vacancyId,
   applicationId: applicationIdParam,
+  referrerActions = true,
 }: {
   vacancyId: string;
   applicationId?: string;
+  referrerActions?: boolean;
 }) {
   const applicants = await trpc.vacancies.applicants({ vacancyId });
 
@@ -116,7 +118,9 @@ export async function VacancyAuthorManageSection({
 
           <ApplicationLifecycleFlowDiagram status={application.status} auditLogs={auditLog} />
 
-          <ApplicationReferrerActions applicationId={selected} status={application.status} />
+          {referrerActions ? (
+            <ApplicationReferrerActions applicationId={selected} status={application.status} />
+          ) : null}
         </CardContent>
       </Card>
     </section>

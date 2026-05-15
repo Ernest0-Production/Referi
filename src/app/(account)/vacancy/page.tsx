@@ -28,15 +28,55 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
 
   const me = await trpc.auth.me();
   const vacancy = await trpc.vacancies.myActive();
+  const isStaffAdmin = session.user.staffRoles.includes("ADMIN");
+
+  let adminEditVacancy: Awaited<ReturnType<typeof trpc.vacancies.adminVacancyForEdit>> | null =
+    null;
+  if (editMode && fromVacancyParam && isStaffAdmin) {
+    try {
+      adminEditVacancy = await trpc.vacancies.adminVacancyForEdit({ id: fromVacancyParam });
+    } catch {
+      adminEditVacancy = null;
+    }
+  }
+
+  const showOwnerEdit = Boolean(
+    vacancy && editMode && (!fromVacancyParam || fromVacancyParam === vacancy.id),
+  );
+
+  const showAdminStrangerEdit = Boolean(
+    isStaffAdmin &&
+    editMode &&
+    fromVacancyParam &&
+    adminEditVacancy &&
+    adminEditVacancy.id === fromVacancyParam &&
+    (!vacancy || vacancy.id !== fromVacancyParam),
+  );
+
+  const showAdminEditError = Boolean(
+    isStaffAdmin && editMode && fromVacancyParam && !adminEditVacancy && !showOwnerEdit,
+  );
+
+  const showForeignEditHint = Boolean(
+    editMode && fromVacancyParam && !showOwnerEdit && !showAdminStrangerEdit && !showAdminEditError,
+  );
 
   const openedFromPublicVacancyDetail = Boolean(
     vacancy && editMode && fromVacancyParam === vacancy.id,
   );
 
   const breadcrumbSegments =
-    vacancy && editMode
-      ? dashboardVacancyEditTrail(vacancy.id, vacancy.title, openedFromPublicVacancyDetail)
-      : dashboardVacancyTrail(vacancy ? "Моя рефералка" : "Создание рефералки");
+    showAdminStrangerEdit && adminEditVacancy
+      ? dashboardVacancyEditTrail(adminEditVacancy.id, adminEditVacancy.title, true)
+      : vacancy && editMode
+        ? dashboardVacancyEditTrail(vacancy.id, vacancy.title, openedFromPublicVacancyDetail)
+        : dashboardVacancyTrail(vacancy ? "Моя рефералка" : "Создание рефералки");
+
+  const editVacancyPayload = showOwnerEdit
+    ? vacancy
+    : showAdminStrangerEdit
+      ? adminEditVacancy
+      : null;
 
   return (
     <main className="flex-1">
@@ -47,29 +87,50 @@ export default async function DashboardVacancyPage({ searchParams }: PageProps) 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-foreground text-2xl font-bold">
-              {vacancy ? "Моя рефералка" : "Создание рефералки"}
+              {showAdminStrangerEdit
+                ? "Редактирование рефералки"
+                : vacancy
+                  ? "Моя рефералка"
+                  : "Создание рефералки"}
             </h1>
-            {vacancy && editMode ? (
+            {showAdminStrangerEdit && adminEditVacancy ? (
+              <p className="text-muted-foreground text-sm">{adminEditVacancy.title}</p>
+            ) : null}
+            {showOwnerEdit ? (
               <p className="text-muted-foreground text-sm">
                 Доступных попыток: {me.availableAttempts} из 3
               </p>
             ) : null}
           </div>
 
-          {vacancy && editMode ? (
+          {showAdminEditError || showForeignEditHint ? (
+            <Alert>
+              <AlertTitle>Не удалось открыть правку</AlertTitle>
+              <AlertDescription className="flex flex-col gap-3">
+                <p>
+                  {showAdminEditError
+                    ? "Рефералка не найдена, заморожена или у вас нет прав администратора."
+                    : "Проверьте ссылку или откройте правку из карточки рефералки в каталоге."}
+                </p>
+                <Button variant="outline" className="w-fit" asChild>
+                  <Link href="/">В каталог</Link>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : editVacancyPayload && editMode ? (
             <EditVacancyCard
               vacancy={{
-                id: vacancy.id,
-                title: vacancy.title,
-                companyName: vacancy.companyName,
-                specialty: vacancy.specialty,
-                grade: vacancy.grade,
-                workFormat: vacancy.workFormat,
-                salaryCurrency: vacancy.salaryCurrency,
-                salaryFromKopecks: vacancy.salaryFromKopecks,
-                salaryToKopecks: vacancy.salaryToKopecks,
-                description: vacancy.description,
-                rewardKopecks: vacancy.rewardKopecks,
+                id: editVacancyPayload.id,
+                title: editVacancyPayload.title,
+                companyName: editVacancyPayload.companyName,
+                specialty: editVacancyPayload.specialty,
+                grade: editVacancyPayload.grade,
+                workFormat: editVacancyPayload.workFormat,
+                salaryCurrency: editVacancyPayload.salaryCurrency,
+                salaryFromKopecks: editVacancyPayload.salaryFromKopecks,
+                salaryToKopecks: editVacancyPayload.salaryToKopecks,
+                description: editVacancyPayload.description,
+                rewardKopecks: editVacancyPayload.rewardKopecks,
               }}
             />
           ) : vacancy && !editMode ? (

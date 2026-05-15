@@ -39,6 +39,7 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
   }
 
   const isAuthor = vacancy.isMine;
+  const isStaffAdmin = session?.user?.staffRoles?.includes("ADMIN") ?? false;
 
   const salaryLine = formatVacancySalaryRange(
     vacancy.salaryFromKopecks,
@@ -130,6 +131,36 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
                     editHref={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}
                     redirectAfterDelete="/"
                   />
+                ) : isStaffAdmin ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
+                      <Button asChild size="lg" className="min-w-0 flex-1">
+                        <Link href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}>
+                          Редактирование
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline" className="min-w-0 flex-1">
+                        <Link
+                          href={`/applications/new?vacancyId=${vacancy.id}&fromVacancy=${vacancy.id}`}
+                        >
+                          <span
+                            data-icon="inline-start"
+                            className="shrink-0 text-base leading-none"
+                            aria-hidden
+                          >
+                            🙏
+                          </span>
+                          Попросить рефералку
+                        </Link>
+                      </Button>
+                    </div>
+                    <p
+                      className="text-muted-foreground text-left text-xs leading-snug"
+                      role="status"
+                    >
+                      {formatVacancyReferralRequestFooterHint(vacancy.applicationCount)}
+                    </p>
+                  </div>
                 ) : (
                   <div className="flex flex-col gap-2">
                     <Button asChild size="lg" className="w-full sm:w-auto">
@@ -168,9 +199,15 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
               )}
             </CardFooter>
           </Card>
-          {session?.user && !isAuthor ? <ReportVacancyForm vacancyId={vacancy.id} /> : null}
-          {session?.user && isAuthor ? (
-            <VacancyAuthorManageSection vacancyId={vacancy.id} applicationId={applicationIdParam} />
+          {session?.user && !isAuthor && !isStaffAdmin ? (
+            <ReportVacancyForm vacancyId={vacancy.id} />
+          ) : null}
+          {session?.user && (isAuthor || isStaffAdmin) ? (
+            <VacancyAuthorManageSection
+              vacancyId={vacancy.id}
+              applicationId={applicationIdParam}
+              referrerActions={isAuthor}
+            />
           ) : null}
         </div>
       </div>

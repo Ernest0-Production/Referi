@@ -18,6 +18,7 @@ function uuidFromInt(n: number): string {
 const REFERRER_ID = uuidFromInt(0x01);
 const DEMO_SEEKER_ID = uuidFromInt(0x02);
 const MODERATOR_ID = uuidFromInt(0x03);
+const ERNEST_ADMIN_ID = uuidFromInt(0x04);
 
 /** 25 фейковых соискателей — хватает на максимум откликов на одну вакансию без нарушения @@unique([seekerId, vacancyId]). */
 const FAKE_SEEKER_COUNT = 25;
@@ -526,6 +527,40 @@ function pickSeekersForVacancy(vacancyIndex: number, count: number, pool: string
   return Array.from({ length: count }, (_, j) => pool[(offset + j) % pool.length]!);
 }
 
+const ERNEST_GITHUB_LOGIN = "Ernest0-Production";
+
+async function fetchGitHubUserForSeed(login: string): Promise<{
+  id: number;
+  created_at?: string;
+} | null> {
+  try {
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "Referi-db-seed",
+      },
+    });
+    if (!res.ok) {
+      console.warn(
+        `GitHub API ответил ${res.status} для ${login} — пользователь-админ в сид не добавлен.`,
+      );
+      return null;
+    }
+    const body = (await res.json()) as { id?: unknown; created_at?: string };
+    const id = typeof body.id === "number" && Number.isFinite(body.id) ? body.id : NaN;
+    if (!Number.isFinite(id)) {
+      console.warn(
+        `В ответе GitHub нет числового id для ${login} — пользователь-админ в сид не добавлен.`,
+      );
+      return null;
+    }
+    return { id, created_at: body.created_at };
+  } catch (err) {
+    console.warn("Не удалось запросить api.github.com для сида админа:", err);
+    return null;
+  }
+}
+
 async function main() {
   console.log("🌱 Seeding database...");
 
@@ -590,6 +625,68 @@ async function main() {
       },
     },
   });
+
+  const ghErnest = await fetchGitHubUserForSeed(ERNEST_GITHUB_LOGIN);
+  const ernestAdmin = ghErnest
+    ? await (async () => {
+        const existingByGithub = await prisma.gitHubProfile.findUnique({
+          where: { githubId: ghErnest.id },
+          select: { userId: true },
+        });
+        if (existingByGithub) {
+          return prisma.user.update({
+            where: { id: existingByGithub.userId },
+            data: {
+              displayName: "Ernest0-Production (админ)",
+              staffRoles: ["ADMIN"],
+            },
+          });
+        }
+        return prisma.user.upsert({
+          where: { id: ERNEST_ADMIN_ID },
+          update: {
+            displayName: "Ernest0-Production (админ)",
+            staffRoles: ["ADMIN"],
+            githubProfile: {
+              upsert: {
+                create: {
+                  githubId: ghErnest.id,
+                  githubLogin: ERNEST_GITHUB_LOGIN,
+                  githubCreatedAt: ghErnest.created_at
+                    ? new Date(ghErnest.created_at)
+                    : new Date("2015-01-01"),
+                  accessToken: "mock_encrypted_token_ernest_admin",
+                  paidRegistration: false,
+                },
+                update: {
+                  githubId: ghErnest.id,
+                  githubLogin: ERNEST_GITHUB_LOGIN,
+                  githubCreatedAt: ghErnest.created_at ? new Date(ghErnest.created_at) : undefined,
+                  accessToken: "mock_encrypted_token_ernest_admin",
+                },
+              },
+            },
+          },
+          create: {
+            id: ERNEST_ADMIN_ID,
+            displayName: "Ernest0-Production (админ)",
+            email: "ernest0-production-admin@example.test",
+            staffRoles: ["ADMIN"],
+            githubProfile: {
+              create: {
+                githubId: ghErnest.id,
+                githubLogin: ERNEST_GITHUB_LOGIN,
+                githubCreatedAt: ghErnest.created_at
+                  ? new Date(ghErnest.created_at)
+                  : new Date("2015-01-01"),
+                accessToken: "mock_encrypted_token_ernest_admin",
+                paidRegistration: false,
+              },
+            },
+          },
+        });
+      })()
+    : null;
 
   for (let i = 0; i < FAKE_SEEKER_COUNT; i++) {
     const id = fakeSeekerIds[i]!;
@@ -719,7 +816,13 @@ async function main() {
     });
   }
 
-  console.log("✅ Created users:", referrer.id, seeker.id, moderator.id);
+  console.log(
+    "✅ Created users:",
+    referrer.id,
+    seeker.id,
+    moderator.id,
+    ernestAdmin ? ernestAdmin.id : "(Ernest0-Production admin skipped)",
+  );
   console.log(`✅ Upserted ${FAKE_SEEKER_COUNT} fake seekers`);
   console.log(`✅ Upserted ${VACANCY_ROWS.length} vacancies with varied applications`);
   console.log("🎉 Seed completed!");

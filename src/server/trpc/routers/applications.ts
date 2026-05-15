@@ -382,13 +382,23 @@ export const applicationsRouter = router({
       const isSeeker = app.seekerId === ctx.userId;
       const isReferrer = app.vacancy.referrerId === ctx.userId;
 
+      let isStaffAdmin = false;
       if (!isSeeker && !isReferrer) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+        const viewer = await ctx.db.user.findUnique({
+          where: { id: ctx.userId },
+          select: { staffRoles: true },
+        });
+        isStaffAdmin = Boolean(viewer?.staffRoles.includes("ADMIN"));
+        if (!isStaffAdmin) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
       }
 
-      // Referrers see contact info only for active applications
+      const isReferrerViewer = isReferrer || isStaffAdmin;
+
+      // Referrers (and staff ADMIN read-only) see contact info only for active applications
       const isActiveStatus = ACTIVE_STATUSES.includes(app.status);
-      const showContactInfo = isReferrer && isActiveStatus;
+      const showContactInfo = isReferrerViewer && isActiveStatus;
 
       return {
         id: app.id,
@@ -403,7 +413,7 @@ export const applicationsRouter = router({
           ...app.vacancy,
           rewardKopecks: app.vacancy.rewardKopecks.toString(),
           // Never expose referrerId to seekers
-          referrerId: isReferrer ? app.vacancy.referrerId : undefined,
+          referrerId: isReferrerViewer ? app.vacancy.referrerId : undefined,
         },
         content: isSeeker
           ? app.content
@@ -412,7 +422,7 @@ export const applicationsRouter = router({
               bio: app.content?.bio,
               coverLetter: app.content?.coverLetter,
             },
-        auditLogs: isReferrer || isSeeker ? app.auditLogs : [],
+        auditLogs: isReferrerViewer || isSeeker ? app.auditLogs : [],
       };
     }),
 

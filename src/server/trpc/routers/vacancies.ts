@@ -4,7 +4,7 @@ import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { createReferrerAttemptRepository } from "@/server/repositories/referrerAttemptRepository";
 import { cancelSLAJob } from "@/server/workers/slaWorker";
 import { scheduleRefundSeeker, scheduleRefundPaidToken } from "@/server/workers/paymentWorker";
-import { Prisma } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
 import { VACANCY_SALARY_CURRENCY_VALUES } from "@/lib/vacancySalaryCurrency";
 
@@ -96,6 +96,14 @@ function vacancyWithApplicationCount<
     ...serializeVacancy(rest),
     applicationCount: _count.applications,
   };
+}
+
+async function userIsStaffAdmin(db: PrismaClient, userId: string) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { staffRoles: true },
+  });
+  return Boolean(user?.staffRoles.includes("ADMIN"));
 }
 
 export const vacanciesRouter = router({
@@ -260,7 +268,9 @@ export const vacanciesRouter = router({
 
     const existing = await ctx.db.vacancy.findUnique({ where: { id } });
     if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
-    if (existing.referrerId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    const isOwner = existing.referrerId === userId;
+    const isAdmin = await userIsStaffAdmin(ctx.db, userId);
+    if (!isOwner && !isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
     if (!["ACTIVE", "FROZEN"].includes(existing.status)) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "VACANCY_NOT_EDITABLE" });
     }
@@ -415,6 +425,43 @@ export const vacanciesRouter = router({
     return vacancyWithApplicationCount(vacancy);
   }),
 
+  adminVacancyForEdit: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      if (!(await userIsStaffAdmin(ctx.db, ctx.userId))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const vacancy = await ctx.db.vacancy.findFirst({
+        where: {
+          id: input.id,
+          status: { in: ["ACTIVE", "FROZEN"] },
+        },
+        select: {
+          id: true,
+          title: true,
+          companyName: true,
+          specialty: true,
+          grade: true,
+          workFormat: true,
+          salaryCurrency: true,
+          salaryFromKopecks: true,
+          salaryToKopecks: true,
+          rewardKopecks: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          status: true,
+          _count: {
+            select: { applications: true },
+          },
+        },
+      });
+
+      if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
+      return vacancyWithApplicationCount(vacancy);
+    }),
+
   applicants: protectedProcedure
     .input(z.object({ vacancyId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
@@ -422,7 +469,9 @@ export const vacanciesRouter = router({
         where: { id: input.vacancyId },
       });
       if (!vacancy) throw new TRPCError({ code: "NOT_FOUND" });
-      if (vacancy.referrerId !== ctx.userId) throw new TRPCError({ code: "FORBIDDEN" });
+      const isOwner = vacancy.referrerId === ctx.userId;
+      const isAdmin = await userIsStaffAdmin(ctx.db, ctx.userId);
+      if (!isOwner && !isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
 
       const applications = await ctx.db.application.findMany({
         where: { vacancyId: input.vacancyId },
