@@ -31,6 +31,7 @@ import {
   sanitizeMoneyIntegerDigits,
   clampMoneyIntegerDigits,
 } from "@/lib/moneyIntegerInput";
+import { formatVacancyCatalogCountLabel } from "@/lib/vacancyCatalogCountLabel";
 import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
 import { trpcReact } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -279,6 +280,8 @@ interface Props {
   onApplyFilters?: () => void;
   /** После успешного создания пресета в диалоге — выбрать его в каталоге. */
   onVacancySearchPresetCreated?: (row: { id: string; params: unknown }) => void;
+  /** Совпадений в каталоге по текущим фильтрам; в футере sheet показывается «Найдено …». */
+  catalogTotal?: number;
 }
 
 export function VacancyFilters({
@@ -294,6 +297,7 @@ export function VacancyFilters({
   resumeVacancyPresetSave = false,
   onApplyFilters,
   onVacancySearchPresetCreated,
+  catalogTotal,
 }: Props) {
   const router = useRouter();
   const [saveOpen, setSaveOpen] = useState(false);
@@ -486,86 +490,108 @@ export function VacancyFilters({
 
   const showFiltersFooter = !vacancyFiltersResetDisabled;
 
-  const combinedFooter = (
+  const footerResetControl = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size={isSheet ? "icon" : "sm"}
+          className={cn(
+            isSheet
+              ? "size-10 shrink-0 rounded-full"
+              : "h-10 w-1/2 min-w-0 shrink-0 justify-center gap-2 rounded-lg px-3",
+          )}
+          disabled={vacancyFiltersResetDisabled}
+          aria-label={isSheet ? "Сбросить фильтры" : undefined}
+          onClick={() => {
+            onReset();
+            toast.success("Фильтр сброшен");
+          }}
+        >
+          <RotateCcw className="size-4 shrink-0" aria-hidden />
+          {isSheet ? null : "Сбросить"}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">Сбросить фильтры</TooltipContent>
+    </Tooltip>
+  );
+
+  const footerActions = resolvedPresetId ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-10 shrink-0 rounded-full"
+          aria-label="Действия с сохранённым фильтром"
+        >
+          <MoreVertical className="size-4" aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-48">
+        <DropdownMenuItem
+          disabled={createPreset.isPending || !resolvedPresetRow}
+          onSelect={() => {
+            if (!resolvedPresetRow) return;
+            setPresetDialogSourceParams(resolvedPresetRow.params);
+            setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
+            setSaveOpen(true);
+          }}
+        >
+          <Copy className="size-4 shrink-0" aria-hidden />
+          Дублировать
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          disabled={deletePreset.isPending}
+          onSelect={() => {
+            setPresetIdPendingDelete(resolvedPresetId);
+            setDeleteConfirmOpen(true);
+          }}
+        >
+          <Trash2 className="size-4 shrink-0" aria-hidden />
+          Удалить
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : hasVacancyFiltersToSave ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="default"
+          size="icon"
+          className="size-10 shrink-0 rounded-full"
+          onClick={handleSaveFiltersFooterAction}
+          aria-label="Сохранить фильтр"
+        >
+          <Save className="size-4 shrink-0" aria-hidden />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">Сохранить фильтр</TooltipContent>
+    </Tooltip>
+  ) : null;
+
+  const sheetCenterCount =
+    catalogTotal !== undefined ? (
+      <p className="text-muted-foreground w-full min-w-0 text-center text-sm leading-tight text-balance">
+        Найдено {formatVacancyCatalogCountLabel(catalogTotal)}
+      </p>
+    ) : null;
+
+  const combinedFooter = isSheet ? (
+    <div className="grid w-full min-w-0 grid-cols-[auto_1fr_auto] items-center gap-2">
+      <div className="shrink-0">{footerResetControl}</div>
+      <div className="flex min-w-0 items-center justify-center">{sheetCenterCount}</div>
+      <div className="flex shrink-0 justify-end gap-2">{footerActions}</div>
+    </div>
+  ) : (
     <div className="flex w-full min-w-0 items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-10 w-1/2 min-w-0 shrink-0 justify-center gap-2 rounded-lg px-3"
-            disabled={vacancyFiltersResetDisabled}
-            onClick={() => {
-              onReset();
-              toast.success("Фильтр сброшен");
-            }}
-          >
-            <RotateCcw className="size-4 shrink-0" aria-hidden />
-            Сбросить
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">Сбросить фильтры</TooltipContent>
-      </Tooltip>
-      <div className="flex min-w-0 flex-1 justify-end">
-        {resolvedPresetId ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-10 shrink-0 rounded-full"
-              aria-label="Действия с сохранённым фильтром"
-            >
-              <MoreVertical className="size-4" aria-hidden />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-48">
-            <DropdownMenuItem
-              disabled={createPreset.isPending || !resolvedPresetRow}
-              onSelect={() => {
-                if (!resolvedPresetRow) return;
-                setPresetDialogSourceParams(resolvedPresetRow.params);
-                setPresetName(duplicateVacancyPresetDisplayName(resolvedPresetRow.name));
-                setSaveOpen(true);
-              }}
-            >
-              <Copy className="size-4 shrink-0" aria-hidden />
-              Дублировать
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={deletePreset.isPending}
-              onSelect={() => {
-                setPresetIdPendingDelete(resolvedPresetId);
-                setDeleteConfirmOpen(true);
-              }}
-            >
-              <Trash2 className="size-4 shrink-0" aria-hidden />
-              Удалить
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : hasVacancyFiltersToSave ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="default"
-              size="icon"
-              className="size-10 shrink-0 rounded-full"
-              onClick={handleSaveFiltersFooterAction}
-              aria-label="Сохранить фильтр"
-            >
-              <Save className="size-4 shrink-0" aria-hidden />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">Сохранить фильтр</TooltipContent>
-        </Tooltip>
-      ) : null}
-      </div>
+      {footerResetControl}
+      <div className="flex min-w-0 flex-1 items-end justify-end gap-2">{footerActions}</div>
     </div>
   );
 
@@ -639,10 +665,11 @@ export function VacancyFilters({
               className={cn(
                 "bg-card h-9 w-full gap-1.5 rounded-lg",
                 specialtySelectValue === SPECIALTY_SELECT_ANY &&
-                  "relative justify-center pl-2.5 pr-2 [&>svg]:absolute [&>svg]:top-1/2 [&>svg]:right-2 [&>svg]:-translate-y-1/2 [&_[data-slot=select-value]]:absolute [&_[data-slot=select-value]]:left-1/2 [&_[data-slot=select-value]]:top-1/2 [&_[data-slot=select-value]]:-translate-x-1/2 [&_[data-slot=select-value]]:-translate-y-1/2",
+                  "relative justify-center pr-2 pl-2.5 [&_[data-slot=select-value]]:absolute [&_[data-slot=select-value]]:top-1/2 [&_[data-slot=select-value]]:left-1/2 [&_[data-slot=select-value]]:-translate-x-1/2 [&_[data-slot=select-value]]:-translate-y-1/2 [&>svg]:absolute [&>svg]:top-1/2 [&>svg]:right-2 [&>svg]:-translate-y-1/2",
               )}
             >
-              {specialtySelectValue === SPECIALTY_SELECT_ANY ? null : specialtySelectValue === SPECIALTY_SELECT_MULTI ? (
+              {specialtySelectValue === SPECIALTY_SELECT_ANY ? null : specialtySelectValue ===
+                SPECIALTY_SELECT_MULTI ? (
                 <IconStack2 className="text-muted-foreground size-4 shrink-0" aria-hidden />
               ) : (
                 <SpecialtyIcon specialty={specialtySelectValue} />

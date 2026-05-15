@@ -151,7 +151,6 @@ export function VacancyCatalogClient({
 
   useEffect(() => {
     if (activeVacancyPresetId != null && !presets.some((p) => p.id === activeVacancyPresetId)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- синхронизация при исчезновении пресета из списка после refresh
       setActiveVacancyPresetId(undefined);
       lastMatchedVacancyPresetIdRef.current = undefined;
     }
@@ -221,6 +220,13 @@ export function VacancyCatalogClient({
     replaceFromPreset({ page: "1", ...presetParamsFromJson(row.params) });
   }
 
+  const data = listQuery.data;
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 0;
+  const page = listInput.page ?? 1;
+  const items = data?.items ?? [];
+  const listBusy = listQuery.isFetching && !listQuery.isPending;
+
   const vacancyFilterProps = {
     currentParams: params,
     onApplyPatch: applyPatch,
@@ -232,6 +238,7 @@ export function VacancyCatalogClient({
     vacancyPresetSidebarCleared,
     resumeVacancyPresetSave,
     onVacancySearchPresetCreated: handleVacancySearchPresetCreated,
+    catalogTotal: total,
   };
 
   const resolvedSavedPresetId = vacancyPresetSidebarCleared
@@ -250,13 +257,6 @@ export function VacancyCatalogClient({
     if (!row) return;
     replaceFromPreset({ page: "1", ...presetParamsFromJson(row.params) });
   }
-
-  const data = listQuery.data;
-  const total = data?.total ?? 0;
-  const totalPages = data?.totalPages ?? 0;
-  const page = listInput.page ?? 1;
-  const items = data?.items ?? [];
-  const listBusy = listQuery.isFetching && !listQuery.isPending;
 
   return (
     <>
