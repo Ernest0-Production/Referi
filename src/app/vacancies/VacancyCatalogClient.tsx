@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import type { AppRouter } from "@/server/trpc/root";
 import {
   findMatchingVacancySearchPresetId,
-  isVacancyCatalogFlatBaseline,
   mergeVacancyListFlat,
   presetParamsFromJson,
   vacancyCatalogHasPresetSaveFields,
@@ -292,8 +291,6 @@ export function VacancyCatalogClient({
                 presets={presets}
                 value={savedPresetCarouselValue}
                 onValueChange={handleSavedPresetCarouselChange}
-                onReset={resetCatalog}
-                showReset={!isMdUp && !isVacancyCatalogFlatBaseline(params)}
               />
             ) : undefined
           }

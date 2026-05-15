@@ -1,7 +1,6 @@
 "use client";
 
 import { IconCircleDotFilled, IconFilter } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -18,22 +17,22 @@ export function VacancySavedPresetsCarousel({
   presets,
   value,
   onValueChange,
-  onReset,
-  showReset,
 }: {
   presets: VacancySavedPresetRow[];
   value: string;
   onValueChange: (next: string) => void;
-  onReset: () => void;
-  showReset: boolean;
 }) {
   const toggleValue = value === VACANCY_SAVED_PRESET_CLEAR_VALUE ? "" : value;
 
   if (presets.length === 0) return null;
 
   return (
-    <div className="flex w-full min-w-0 items-start gap-2 py-2 pl-2 pr-2 sm:gap-2 sm:py-2.5">
-      <IconFilter className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden stroke={1.75} />
+    <div className="flex w-full min-w-0 items-start gap-2 py-2 pr-2 pl-2 sm:gap-2 sm:py-2.5">
+      <IconFilter
+        className="text-muted-foreground mt-0.5 size-4 shrink-0"
+        aria-hidden
+        stroke={1.75}
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-2 sm:gap-2.5">
         <span
           id="vacancy-saved-presets-label"
@@ -92,22 +91,6 @@ export function VacancySavedPresetsCarousel({
             ? "Сохранённый набор не выбран"
             : `Выбран набор «${presets.find((p) => p.id === value)?.name ?? ""}»`}
         </span>
-        {showReset ? (
-          <div className="flex w-full min-w-0 justify-end">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex shrink-0">
-                  <Button type="button" variant="link" size="sm" className="h-auto px-0 py-0" onClick={onReset}>
-                    Сбросить
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                Сбросить фильтры
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        ) : null}
       </div>
     </div>
   );
