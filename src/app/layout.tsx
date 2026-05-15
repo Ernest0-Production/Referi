@@ -6,6 +6,7 @@ import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,23 +37,28 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="bg-background text-foreground flex min-h-full flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthSessionProvider>
-            <TRPCProvider>
-              <NavBreadcrumbStackProvider>
-                <TooltipProvider delayDuration={200}>
-                  {children}
-                  <Toaster position="top-center" richColors />
-                </TooltipProvider>
-              </NavBreadcrumbStackProvider>
-            </TRPCProvider>
-          </AuthSessionProvider>
-        </ThemeProvider>
+        <div className="flex min-h-full flex-1 flex-col">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthSessionProvider>
+              <TRPCProvider>
+                <NavBreadcrumbStackProvider>
+                  <TooltipProvider delayDuration={200}>
+                    <div className="flex min-h-full flex-1 flex-col">
+                      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                      <SiteFooter />
+                    </div>
+                    <Toaster position="top-center" richColors />
+                  </TooltipProvider>
+                </NavBreadcrumbStackProvider>
+              </TRPCProvider>
+            </AuthSessionProvider>
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );
