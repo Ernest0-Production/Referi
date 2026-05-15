@@ -52,7 +52,7 @@ export function VacancyListChrome({
       className={cn(
         "h-11 w-full min-w-0 md:h-12",
         savedPresetsFooter
-          ? "border-0 rounded-none bg-transparent shadow-none dark:bg-transparent"
+          ? "rounded-none border-0 bg-transparent shadow-none dark:bg-transparent"
           : "border-border bg-card rounded-xl shadow-sm",
       )}
     >

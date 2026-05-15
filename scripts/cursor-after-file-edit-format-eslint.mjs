@@ -70,13 +70,13 @@ const runNpm = (args) => {
 };
 
 console.error(
-  "\n[cursor hook] CI parity: prisma generate → typecheck → format:check → lint → vitest\n",
+  "\n[cursor hook] CI parity: prisma generate → typecheck → format (prettier --write .) → lint → vitest\n",
 );
 
 const ciSteps = [
   ["run", "db:generate"],
   ["run", "typecheck"],
-  ["run", "format:check"],
+  ["run", "format"],
   ["run", "lint"],
   ["test"],
 ];

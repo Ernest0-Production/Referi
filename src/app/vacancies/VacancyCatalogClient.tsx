@@ -150,8 +150,10 @@ export function VacancyCatalogClient({
 
   useEffect(() => {
     if (activeVacancyPresetId != null && !presets.some((p) => p.id === activeVacancyPresetId)) {
-      setActiveVacancyPresetId(undefined);
-      lastMatchedVacancyPresetIdRef.current = undefined;
+      queueMicrotask(() => {
+        setActiveVacancyPresetId(undefined);
+        lastMatchedVacancyPresetIdRef.current = undefined;
+      });
     }
   }, [presets, activeVacancyPresetId]);
 
