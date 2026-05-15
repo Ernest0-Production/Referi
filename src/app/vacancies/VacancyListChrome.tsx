@@ -49,12 +49,7 @@ export function VacancyListChrome({
   const searchInputGroup = (
     <InputGroup
       aria-busy={listBusy || isPending}
-      className={cn(
-        "h-11 w-full min-w-0 md:h-12",
-        savedPresetsFooter
-          ? "rounded-none border-0 bg-transparent shadow-none dark:bg-transparent"
-          : "border-border bg-card rounded-xl shadow-sm",
-      )}
+      className="border-border bg-card h-11 w-full min-w-0 rounded-xl shadow-sm md:h-12"
     >
       <InputGroupInput
         placeholder="Название рефералки или компании"
@@ -86,9 +81,9 @@ export function VacancyListChrome({
   return (
     <div className="flex flex-col gap-3">
       {savedPresetsFooter ? (
-        <div className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
+        <div className="flex flex-col gap-1">
           {searchInputGroup}
-          <div className="border-border border-t">{savedPresetsFooter}</div>
+          {savedPresetsFooter}
         </div>
       ) : (
         searchInputGroup
@@ -96,7 +91,12 @@ export function VacancyListChrome({
 
       <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <Select value={sortValue} onValueChange={(v) => onApplyPatch({ sort: v || undefined })}>
-          <SelectTrigger className="border-border bg-card h-9 w-[min(100%,220px)] rounded-lg">
+          <SelectTrigger
+            className={cn(
+              "text-primary [&_svg]:text-primary/85 h-auto min-h-0 w-fit max-w-[min(100%,20rem)] justify-start gap-1.5 border-0 bg-transparent py-0.5 pr-0 underline-offset-4 shadow-none hover:bg-transparent hover:underline focus-visible:underline data-[size=default]:h-auto dark:bg-transparent dark:hover:bg-transparent",
+              savedPresetsFooter ? "pl-2" : "pl-0",
+            )}
+          >
             <SelectValue placeholder="Сортировка" />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={4} align="start">

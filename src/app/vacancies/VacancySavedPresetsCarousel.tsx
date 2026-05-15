@@ -27,7 +27,7 @@ export function VacancySavedPresetsCarousel({
   if (presets.length === 0) return null;
 
   return (
-    <div className="flex w-full min-w-0 items-start gap-2 py-2 pr-2 pl-2 sm:gap-2 sm:py-2.5">
+    <div className="flex w-full min-w-0 items-start gap-2 py-1 pr-2 pl-2 sm:gap-2 sm:py-1.5">
       <IconFilter
         className="text-muted-foreground mt-0.5 size-4 shrink-0"
         aria-hidden
@@ -38,7 +38,7 @@ export function VacancySavedPresetsCarousel({
           id="vacancy-saved-presets-label"
           className="text-muted-foreground min-w-0 text-xs font-medium sm:text-sm"
         >
-          Ранее сохранённые фильтры:
+          Ранее сохранённые фильтры
         </span>
         <ToggleGroup
           type="single"
