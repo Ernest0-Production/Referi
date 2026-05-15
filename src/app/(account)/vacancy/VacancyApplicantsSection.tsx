@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IconUsers } from "@tabler/icons-react";
 import { formatApplicationCountLabel } from "@/lib/applicationCountLabel";
 import { trpc } from "@/trpc/server";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,12 @@ export async function VacancyApplicantsSection({ vacancyId }: { vacancyId: strin
   const hrefFor = (id: string) => `/vacancies/${vacancyId}?applicationId=${encodeURIComponent(id)}`;
 
   return (
-    <section id="candidates" className="flex scroll-mt-24 flex-col gap-4">
+    <section id="candidates" className="mt-8 flex scroll-mt-24 flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-foreground text-xl font-semibold">Кандидаты</h2>
+        <h2 className="text-foreground flex items-center gap-2 text-xl font-semibold">
+          <IconUsers className="text-muted-foreground size-6 shrink-0" aria-hidden />
+          Кандидаты
+        </h2>
         <p className="text-muted-foreground text-sm">
           {formatApplicationCountLabel(applicants.length)}
         </p>
