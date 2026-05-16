@@ -334,7 +334,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 ```
 GET api.github.com/user → timeout / 5xx
 Auth.js signIn callback должен вернуть false (deny login) + логировать ошибку
-Пользователю показывается '/login/error'
+Пользователю показывается страница [`/login/error`](../src/app/login/error/page.tsx) с повтором входа через оверлей
 Не создаётся неполный User без GitHubProfile
 ```
 

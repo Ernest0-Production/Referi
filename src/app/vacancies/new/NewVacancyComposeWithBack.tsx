@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { CreateVacancyForm } from "@/app/(account)/vacancy/CreateVacancyForm";
+import { CreateVacancyForm } from "@/app/vacancies/CreateVacancyForm";
 import { clearVacancyCreateDraft } from "@/lib/vacancyCreateDraftStorage";
 import { newPublicVacancyTrail } from "@/lib/navBreadcrumbTrail";
 import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";

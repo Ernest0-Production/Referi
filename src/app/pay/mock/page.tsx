@@ -3,6 +3,8 @@ import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { PayMockContent } from "./PayMockContent";
 import { Card, CardContent } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function PayMockPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">

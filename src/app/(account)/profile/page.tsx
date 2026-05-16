@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { UpdateProfileForm } from "./UpdateProfileForm";
@@ -7,8 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default async function ProfilePage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
   const me = await trpc.auth.me();
 
   const staffLabel = me.staffRoles.length > 0 ? me.staffRoles.join(", ") : "—";

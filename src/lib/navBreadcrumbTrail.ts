@@ -1,10 +1,11 @@
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
+
 export type NavBreadcrumbSegment = {
   label: string;
   href?: string;
 };
 
 const PUBLIC_CATALOG_ROOT = "/";
-const ACCOUNT_VACANCY_BASE = "/vacancy";
 
 /**
  * Публичная карточка рефералки: фиксированная иерархия без HTTP Referer
@@ -14,32 +15,18 @@ export function publicVacancyDetailTrail(vacancyTitle: string): NavBreadcrumbSeg
   return [{ label: "Рефералки", href: PUBLIC_CATALOG_ROOT }, { label: vacancyTitle }];
 }
 
-/** Экран «Моя рефералка» / «Создание рефералки» — один текущий сегмент; родители приходят из стека навигации. */
-export function dashboardVacancyTrail(
-  currentTitle: "Моя рефералка" | "Создание рефералки",
-): NavBreadcrumbSegment[] {
-  return [{ label: currentTitle }];
-}
-
 /**
- * Режим правки в кабинете.
- * Публичный контекст — только при **`fromVacancy`** в URL (= id рефералки), см. ссылки с публичной карточки.
- * Иначе: «Моя рефералка» (ссылка на просмотр без правки) → «Редактирование».
+ * Публичное редактирование карточки: каталог → карточка → «Редактирование».
  */
-export function dashboardVacancyEditTrail(
+export function publicVacancyEditTrail(
   vacancyId: string,
   vacancyTitle: string,
-  openedFromPublicVacancyDetail: boolean,
 ): NavBreadcrumbSegment[] {
-  const publicDetailPn = `/vacancies/${vacancyId}`;
-  if (openedFromPublicVacancyDetail) {
-    return [
-      { label: "Рефералки", href: PUBLIC_CATALOG_ROOT },
-      { label: vacancyTitle, href: publicDetailPn },
-      { label: "Редактирование" },
-    ];
-  }
-  return [{ label: "Моя рефералка", href: ACCOUNT_VACANCY_BASE }, { label: "Редактирование" }];
+  return [
+    { label: "Рефералки", href: PUBLIC_CATALOG_ROOT },
+    { label: vacancyTitle, href: `/vacancies/${vacancyId}` },
+    { label: "Редактирование" },
+  ];
 }
 
 export function newPublicVacancyTrail(): NavBreadcrumbSegment[] {
@@ -69,5 +56,5 @@ export function dashboardApplicationDetailTrail(): NavBreadcrumbSegment[] {
 }
 
 export function registrationAgeGateTrail(): NavBreadcrumbSegment[] {
-  return [{ label: "Вход", href: "/login" }, { label: "Платная регистрация" }];
+  return [{ label: "Вход", href: hrefSignInOverlay("/") }, { label: "Платная регистрация" }];
 }

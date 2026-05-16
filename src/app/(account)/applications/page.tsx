@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { ApplicationActionsPanel } from "./ApplicationActionsPanel";
 import { Badge } from "@/components/ui/badge";
@@ -38,9 +36,6 @@ const TERMINAL = new Set([
 ]);
 
 export default async function ApplicationsPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
   const applications = await trpc.applications.myList({});
 
   const active = applications.filter((a) => !TERMINAL.has(a.status));

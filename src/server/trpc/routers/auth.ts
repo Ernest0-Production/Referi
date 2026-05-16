@@ -5,6 +5,7 @@ import { env } from "@/env";
 import { BUSINESS_RULES } from "@/shared/constants/businessRules";
 import { paymentProvider } from "@/server/services/paymentService";
 import { randomUuid } from "@/lib/randomUuid";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
 import { deleteAccountAndAllData } from "@/server/commands/deleteAccount";
 import { BusinessError } from "@/server/commands/submitApplication";
 
@@ -128,7 +129,7 @@ export const authRouter = router({
       }
 
       const idempotencyKey = randomUuid();
-      const returnUrl = `${env.NEXT_PUBLIC_URL}/login?registered=1`;
+      const returnUrl = `${env.NEXT_PUBLIC_URL}${hrefSignInOverlay("/", { registered: "1" })}`;
       const feeKopecks = BUSINESS_RULES.REGISTRATION_FEE_KOP;
 
       const payment = await paymentProvider.createPayment({

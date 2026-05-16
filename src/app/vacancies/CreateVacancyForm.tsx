@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { trpcReact } from "@/trpc/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -47,13 +47,13 @@ import {
   isVacancySalaryCurrency,
 } from "@/lib/vacancySalaryCurrency";
 import { VACANCY_SALARY_AMOUNT_MAX } from "@/lib/vacancySalaryAmount";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
 import {
   GradeIcon,
   SalaryCurrencyIcon,
   SpecialtyIcon,
   WorkFormatIcon,
 } from "@/components/vacancy/VacancyFieldIcons";
-import { useReportVacancyDashboardFormDirty } from "./VacancyDashboardFormDirtyContext";
 import {
   clampMoneyIntegerDigits,
   formatRuMoneyIntegerDisplay,
@@ -282,7 +282,6 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
   const mode = isEditVacancyFormProps(props) ? "edit" : "create";
   const vacancy = isEditVacancyFormProps(props) ? props.vacancy : undefined;
   const onDirtyChange = props.onDirtyChange;
-  const reportDashboardDirty = useReportVacancyDashboardFormDirty();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -314,8 +313,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
       dirty = isVacancyFormDirty(form, createBaseline);
     }
     onDirtyChange?.(dirty);
-    reportDashboardDirty?.(dirty);
-  }, [form, mode, editBaseline, createBaseline, onDirtyChange, reportDashboardDirty]);
+  }, [form, mode, editBaseline, createBaseline, onDirtyChange]);
 
   useEffect(() => {
     if (mode !== "create" || draftRestoredRef.current) return;
@@ -354,10 +352,10 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
   }, [mode]);
 
   const create = trpcReact.vacancies.create.useMutation({
-    onSuccess() {
+    onSuccess(data) {
       clearVacancyCreateDraft();
-      if (pathname === "/vacancies/new") {
-        router.replace("/vacancy");
+      if (pathname === "/vacancies/new" && data?.id) {
+        router.replace(`/vacancies/${data.id}`);
       } else {
         router.refresh();
       }
@@ -369,8 +367,11 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
 
   const update = trpcReact.vacancies.update.useMutation({
     onSuccess() {
-      router.replace("/vacancy");
-      router.refresh();
+      if (mode === "edit" && vacancy?.id) {
+        router.replace(`/vacancies/${vacancy.id}`);
+      } else {
+        router.refresh();
+      }
     },
     onError(err) {
       setSubmitError(err.message);
@@ -452,7 +453,7 @@ export function CreateVacancyForm(props: CreateVacancyFormProps) {
           referrerBonusRubles: form.referrerBonusRubles,
         });
         setAuthRedirectPending(true);
-        void signIn("github", { callbackUrl: "/vacancy" });
+        router.push(hrefSignInOverlay("/vacancies/new"));
         return;
       }
     }

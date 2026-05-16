@@ -95,7 +95,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
         </Field>
 
         <Field data-invalid={contactError ? "true" : undefined}>
-          <FieldLabel htmlFor="profile-contact">Контактная информация</FieldLabel>
+          <FieldLabel htmlFor="profile-contact">Как с тобой связаться</FieldLabel>
           <Input
             id="profile-contact"
             type="text"
@@ -107,7 +107,7 @@ export function UpdateProfileForm({ currentName, currentContactInfo, currentBio 
               setContactError(null);
               setContactInfo(e.target.value);
             }}
-            placeholder="@username / email / ссылка"
+            placeholder="телега / почта / внешняя ссылка"
           />
           <FieldDescription
             id="profile-contact-desc"

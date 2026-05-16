@@ -5,8 +5,15 @@
 
 import "dotenv/config";
 
-import type { Grade, Specialty, VacancyStatus, WorkFormat } from "@prisma/client";
+import type {
+  ApplicationStatus,
+  Grade,
+  Specialty,
+  VacancyStatus,
+  WorkFormat,
+} from "@prisma/client";
 
+import { BUSINESS_RULES } from "../src/shared/constants/businessRules";
 import { prisma } from "../src/lib/prisma";
 
 /** Детерминированный UUID: версия 4, вариант RFC 4122 (`10` после `8`). */
@@ -23,6 +30,51 @@ const ERNEST_ADMIN_ID = uuidFromInt(0x04);
 /** 25 фейковых соискателей — хватает на максимум откликов на одну вакансию без нарушения @@unique([seekerId, vacancyId]). */
 const FAKE_SEEKER_COUNT = 25;
 const fakeSeekerIds = Array.from({ length: FAKE_SEEKER_COUNT }, (_, i) => uuidFromInt(0x200 + i));
+
+/** Контакты сида: по кругу @username, почта, внешняя ссылка. */
+function fakeSeekerContact(fakeNumber: number): string {
+  const r = fakeNumber % 3;
+  if (r === 0) return `@referi_seed_dev_${fakeNumber}`;
+  if (r === 1) return `seed.candidate.${fakeNumber}@example.test`;
+  return `https://t.me/referi_seed_candidate_${fakeNumber}`;
+}
+
+/** Многострочное «О себе» для превью в списке кандидатов. */
+function fakeSeekerBio(fakeNumber: number): string {
+  const years = 2 + (fakeNumber % 4);
+  return (
+    `Сид-кандидат №${fakeNumber}: продуктовая разработка, релизы и сопровождение продакшена.\n\n` +
+    `Стек: TypeScript, React, Node.js, PostgreSQL. Работал(а) в командах ${4 + (fakeNumber % 5)}–${9 + (fakeNumber % 3)} человек.\n\n` +
+    `По зрелости ближе к middle+/senior: code review, ADR, небольшое техлидство — ок.\n\n` +
+    `Формат: удалёнка, часовой пояс MSK±2. Готов(а) к trial week при взаимном интересе.\n\n` +
+    `Из интересов: DX, тесты, наблюдаемость, аккуратные миграции схемы БД (опыт ~${years} лет в коммерческих продуктах).`
+  );
+}
+
+function fakeSeekerNumberFromId(seekerId: string): number | null {
+  const idx = fakeSeekerIds.indexOf(seekerId);
+  return idx >= 0 ? idx + 1 : null;
+}
+
+function applicationContentForSeeker(seekerId: string): { contactInfo: string; bio: string } {
+  const n = fakeSeekerNumberFromId(seekerId);
+  if (n !== null) {
+    return { contactInfo: fakeSeekerContact(n), bio: fakeSeekerBio(n) };
+  }
+  if (seekerId === DEMO_SEEKER_ID) {
+    return {
+      contactInfo: "@maria_seek",
+      bio:
+        "Fullstack-инженер (React, Node.js, PostgreSQL). Последние годы — веб-фичи, интеграции и стабильные релизы.\n\n" +
+        "Важно: прозрачные сроки, понятные критерии приёмки, нормальный code review.\n\n" +
+        "Формат: удалёнка или гибрид MSK; готова обсудить вилку и ожидания по стеку в первой встрече.",
+    };
+  }
+  return {
+    contactInfo: "@seed_dev_misc",
+    bio: "Кандидат из сида (служебный профиль).\n\nСвязь — через контакт в анкете; кратко опишу релевантный опыт по запросу.",
+  };
+}
 
 type VacancySeedRow = {
   intId: number;
@@ -527,6 +579,55 @@ function pickSeekersForVacancy(vacancyIndex: number, count: number, pool: string
   return Array.from({ length: count }, (_, j) => pool[(offset + j) % pool.length]!);
 }
 
+/** Терминальные статусы для «лишних» откликов, когда у соискателя уже лимит активных. */
+const SEED_TERMINAL_ROTATION: ApplicationStatus[] = [
+  "REJECTED_BY_REFERRER",
+  "REJECTED_BY_COMPANY",
+  "CANCELLED",
+  "REFUNDED_BY_SLA",
+];
+
+function pickSeedApplicationStatus(args: {
+  row: VacancySeedRow;
+  seekerActiveCount: number;
+  referrerPipelineUsed: boolean;
+  /** Мутация: инкремент для выбора следующего терминального статуса */
+  terminalCursor: { n: number };
+}): {
+  status: ApplicationStatus;
+  referrerPipelineUsed: boolean;
+  seekerActiveDelta: 0 | 1;
+} {
+  const { row, seekerActiveCount, referrerPipelineUsed, terminalCursor } = args;
+  const freeActiveCap = BUSINESS_RULES.FREE_ACTIVE_APPLICATIONS;
+  const canAddActive = seekerActiveCount < freeActiveCap;
+
+  if (!referrerPipelineUsed && row.status === "ACTIVE" && canAddActive) {
+    const isPaid = row.rewardKopecks > 0n;
+    return {
+      status: isPaid ? "AWAITING_PAYMENT" : "AWAITING_RESUME_HANDOFF",
+      referrerPipelineUsed: true,
+      seekerActiveDelta: 1,
+    };
+  }
+
+  if (canAddActive) {
+    return {
+      status: "SUBMITTED",
+      referrerPipelineUsed,
+      seekerActiveDelta: 1,
+    };
+  }
+
+  const status = SEED_TERMINAL_ROTATION[terminalCursor.n % SEED_TERMINAL_ROTATION.length]!;
+  terminalCursor.n += 1;
+  return {
+    status,
+    referrerPipelineUsed,
+    seekerActiveDelta: 0,
+  };
+}
+
 const ERNEST_GITHUB_LOGIN = "Ernest0-Production";
 
 async function fetchGitHubUserForSeed(login: string): Promise<{
@@ -693,13 +794,16 @@ async function main() {
     const n = i + 1;
     await prisma.user.upsert({
       where: { id },
-      update: {},
+      update: {
+        contactInfo: fakeSeekerContact(n),
+        bio: fakeSeekerBio(n),
+      },
       create: {
         id,
         displayName: `Сид-соискатель ${n}`,
         email: `fake-seeker-${n}@example.test`,
-        contactInfo: `@fake_seeker_${n}`,
-        bio: `Автоматически созданный кандидат №${n} для наполнения откликов в dev-сиде.`,
+        contactInfo: fakeSeekerContact(n),
+        bio: fakeSeekerBio(n),
         githubProfile: {
           create: {
             githubId: 1_001_000 + i,
@@ -767,14 +871,11 @@ async function main() {
 
   const seekerPool = [DEMO_SEEKER_ID, ...fakeSeekerIds];
   let applicationSeq = 0;
-
-  const statuses = [
-    "SUBMITTED",
-    "SUBMITTED",
-    "AWAITING_PAYMENT",
-    "AWAITING_RESUME_HANDOFF",
-    "SUBMITTED",
-  ] as const;
+  /** Активные заявки по соискателю — не больше FREE_ACTIVE_APPLICATIONS (в сиде нет PRO). */
+  const seekerActiveCounts = new Map<string, number>();
+  /** Не больше одной заявки в REFERRER_ACTIVE_REVIEW_STATUSES на реферальщика (все вакансии — его). */
+  let referrerPipelineUsed = false;
+  const terminalCursor = { n: 0 };
 
   for (let vi = 0; vi < VACANCY_ROWS.length; vi++) {
     const row = VACANCY_ROWS[vi]!;
@@ -789,19 +890,44 @@ async function main() {
       const seekerId = seekers[ai]!;
       applicationSeq += 1;
       const appId = uuidFromInt(0x5_000 + applicationSeq);
-      const status = statuses[applicationSeq % statuses.length]!;
+      const seekerActiveCount = seekerActiveCounts.get(seekerId) ?? 0;
+      const picked = pickSeedApplicationStatus({
+        row,
+        seekerActiveCount,
+        referrerPipelineUsed,
+        terminalCursor,
+      });
+      referrerPipelineUsed = picked.referrerPipelineUsed;
+      if (picked.seekerActiveDelta === 1) {
+        seekerActiveCounts.set(seekerId, seekerActiveCount + 1);
+      }
+
+      const createdAt = new Date(firstAt.getTime() + ai * 3_600_000);
+      let paymentDeadline: Date | null = null;
+      let resumeHandoffDeadline: Date | null = null;
+      if (picked.status === "AWAITING_PAYMENT") {
+        paymentDeadline = new Date(createdAt.getTime() + BUSINESS_RULES.SLA_PAYMENT_DEADLINE_MS);
+      } else if (picked.status === "AWAITING_RESUME_HANDOFF") {
+        resumeHandoffDeadline = new Date(
+          createdAt.getTime() + BUSINESS_RULES.SLA_RESUME_HANDOFF_MS,
+        );
+      }
+
+      const { contactInfo, bio } = applicationContentForSeeker(seekerId);
 
       await prisma.application.create({
         data: {
           id: appId,
           seekerId,
           vacancyId,
-          status,
-          createdAt: new Date(firstAt.getTime() + ai * 3_600_000),
+          status: picked.status,
+          paymentDeadline,
+          resumeHandoffDeadline,
+          createdAt,
           content: {
             create: {
-              contactInfo: "@seed_contact",
-              bio: `Короткое резюме для сида: кандидат ${seekerId.slice(0, 8)}…`,
+              contactInfo,
+              bio,
               coverLetter:
                 ai % 2 === 0 ? "Готов обсудить стек и ожидания по срокам в удобное время." : null,
             },

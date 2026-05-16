@@ -31,15 +31,10 @@ test.describe("Vacancy creation flow (requires auth)", () => {
     }
   });
 
-  test("user can view vacancy account page", async ({ page }) => {
-    await page.goto("/vacancy");
+  test("user can open vacancy compose page when logged in", async ({ page }) => {
+    await page.goto("/vacancies/new");
     await expect(page).not.toHaveURL(/login/);
-    const url = page.url();
-    if (url.includes("/vacancies/") && !url.includes("/vacancies/new")) {
-      await expect(page.getByRole("main")).toBeVisible();
-    } else {
-      await expect(page.locator("h1")).toBeVisible();
-    }
+    await expect(page.getByRole("heading", { name: "Разместить рефералку" })).toBeVisible();
   });
 
   test("user can view attempts pool", async ({ page }) => {

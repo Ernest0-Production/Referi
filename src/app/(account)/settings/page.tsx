@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { IconBrandGithub, IconCreditCard, IconUser } from "@tabler/icons-react";
 import { auth } from "@/lib/auth";
@@ -12,7 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function SettingsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) {
+    notFound();
+  }
 
   const userId = session.user.id;
 
@@ -33,17 +35,14 @@ export default async function SettingsPage() {
     }),
   ]);
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/");
 
   const githubLogin = session.user.githubLogin?.trim() ?? "";
 
   return (
     <main className="flex-1">
       <div className={PAGE_COLUMN_CLASS}>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-foreground text-2xl font-bold">Настройки аккаунта</h1>
-          <p className="text-muted-foreground text-sm">Профиль и подписка</p>
-        </div>
+        <h1 className="text-foreground text-2xl font-bold">Настройки аккаунта</h1>
 
         <Card>
           <CardHeader>
@@ -119,23 +118,6 @@ export default async function SettingsPage() {
             )}
           </CardContent>
         </Card>
-
-        {user.staffRoles.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Персонал</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {user.staffRoles.map((role) => (
-                  <Badge key={role} variant="secondary">
-                    {role}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
 
         <DeleteAccountCard allowDelete={user.staffRoles.length === 0} />
       </div>

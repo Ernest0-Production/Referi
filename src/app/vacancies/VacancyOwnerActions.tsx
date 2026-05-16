@@ -33,11 +33,12 @@ type VacancyOwnerActionsProps = {
 
 export function VacancyOwnerActions({
   vacancyId,
-  editHref = "/vacancy?edit=1",
+  editHref,
   redirectAfterDelete,
   className,
 }: VacancyOwnerActionsProps) {
   const router = useRouter();
+  const resolvedEditHref = editHref ?? `/vacancies/${vacancyId}/edit`;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +64,7 @@ export function VacancyOwnerActions({
         className={`flex w-full min-w-0 overflow-hidden rounded-md ${className ?? ""}`}
       >
         <VacancyEditPrimaryButton
-          href={editHref}
+          href={resolvedEditHref}
           className="min-w-0 flex-1 rounded-none rounded-l-md"
         />
         <DropdownMenu>

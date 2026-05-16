@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { TRPCError } from "@trpc/server";
-import { auth } from "@/lib/auth";
 import { firstQueryParam } from "@/lib/searchParams";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationNewTrail } from "@/lib/navBreadcrumbTrail";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
@@ -20,10 +20,20 @@ interface PageProps {
   }>;
 }
 
-export default async function NewApplicationPage({ searchParams }: PageProps) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+function newApplicationSignInHref(sp: Awaited<PageProps["searchParams"]>): string {
+  const u = new URLSearchParams();
+  const vacancyId = firstQueryParam(sp.vacancyId);
+  if (vacancyId) u.set("vacancyId", vacancyId);
+  const paidTokenId = firstQueryParam(sp.paidTokenId);
+  if (paidTokenId) u.set("paidTokenId", paidTokenId);
+  const fromVacancy = firstQueryParam(sp.fromVacancy);
+  if (fromVacancy) u.set("fromVacancy", fromVacancy);
+  const q = u.toString();
+  const base = q ? `/applications/new?${q}` : "/applications/new";
+  return hrefSignInOverlay(base);
+}
 
+export default async function NewApplicationPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const vacancyId = firstQueryParam(raw.vacancyId);
   const paidTokenId = firstQueryParam(raw.paidTokenId);
@@ -35,7 +45,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
     me = await trpc.auth.me();
   } catch (e) {
     if (e instanceof TRPCError && (e.code === "UNAUTHORIZED" || e.code === "NOT_FOUND")) {
-      redirect("/login");
+      redirect(newApplicationSignInHref(raw));
     }
     throw e;
   }
@@ -48,7 +58,7 @@ export default async function NewApplicationPage({ searchParams }: PageProps) {
       notFound();
     }
     if (e instanceof TRPCError && e.code === "UNAUTHORIZED") {
-      redirect("/login");
+      redirect(newApplicationSignInHref(raw));
     }
     throw e;
   }

@@ -478,6 +478,10 @@ export const vacanciesRouter = router({
         include: {
           content: true,
           seeker: { select: { id: true, displayName: true } },
+          auditLogs: {
+            orderBy: { createdAt: "asc" },
+            select: { fromStatus: true, toStatus: true },
+          },
         },
         orderBy: { updatedAt: "desc" },
       });
@@ -486,10 +490,18 @@ export const vacanciesRouter = router({
         id: app.id,
         status: app.status,
         createdAt: app.createdAt,
+        paymentDeadline: app.paymentDeadline,
+        resumeHandoffDeadline: app.resumeHandoffDeadline,
+        cancelAckDeadline: app.cancelAckDeadline,
+        companyDecisionDeadline: app.companyDecisionDeadline,
         seeker: app.seeker,
         contactInfo: app.content?.contactInfo,
         bio: app.content?.bio,
         coverLetter: app.content?.coverLetter,
+        auditLogs: app.auditLogs.map((e) => ({
+          fromStatus: e.fromStatus,
+          toStatus: e.toStatus,
+        })),
       }));
     }),
 });

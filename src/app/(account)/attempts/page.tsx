@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
@@ -13,8 +13,9 @@ function daysUntil(date: Date): number {
 
 export default async function AttemptsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
+  if (!session?.user?.id) {
+    notFound();
+  }
   const userId = session.user.id;
   const now = new Date();
 

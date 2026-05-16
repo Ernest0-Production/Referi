@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,7 +33,7 @@ export function PayMockContent() {
         return;
       }
       if (data.type === "registration") {
-        router.push("/login?registered=1");
+        router.push(hrefSignInOverlay("/", { registered: "1" }));
         return;
       }
       router.push("/applications");

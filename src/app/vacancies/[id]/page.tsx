@@ -6,7 +6,7 @@ import { publicVacancyDetailTrail } from "@/lib/navBreadcrumbTrail";
 import { VacancyPublicBreadcrumbShell } from "../VacancyPublicBreadcrumbShell";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
 import { trpc } from "@/trpc/server";
-import { VacancyOwnerActions } from "@/app/(account)/vacancy/VacancyOwnerActions";
+import { VacancyOwnerActions } from "@/app/vacancies/VacancyOwnerActions";
 import { ReportVacancyForm } from "./ReportVacancyForm";
 import { ReferrerCompensationPanel } from "./ReferrerCompensationPanel";
 import { VacancyDetailMetaBadges } from "./VacancyDetailMetaBadges";
@@ -16,20 +16,17 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { formatVacancySalaryRange } from "@/lib/vacancySalaryCurrency";
 import { formatVacancyReferralRequestFooterHint } from "@/lib/vacancyReferralRequestFooterHint";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
-import { firstQueryParam } from "@/lib/searchParams";
 import { cn } from "@/lib/utils";
 import { VacancyAuthorManageSection } from "./VacancyAuthorManageSection";
 import { VacancyEditPrimaryButton } from "@/components/vacancies/VacancyEditPrimaryButton";
+import { VacancySeekerSignInCta } from "@/app/vacancies/[id]/VacancySeekerSignInCta";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ applicationId?: string | string[] }>;
 }
 
-export default async function VacancyDetailPage({ params, searchParams }: PageProps) {
+export default async function VacancyDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const sp = await searchParams;
-  const applicationIdParam = firstQueryParam(sp.applicationId);
   const session = await auth();
 
   let vacancy: Awaited<ReturnType<typeof trpc.vacancies.getById>>;
@@ -127,16 +124,12 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
             <CardFooter className="flex flex-col items-stretch gap-4 border-t pt-6">
               {session?.user ? (
                 isAuthor ? (
-                  <VacancyOwnerActions
-                    vacancyId={vacancy.id}
-                    editHref={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}
-                    redirectAfterDelete="/"
-                  />
+                  <VacancyOwnerActions vacancyId={vacancy.id} redirectAfterDelete="/" />
                 ) : isStaffAdmin ? (
                   <div className="flex flex-col gap-2">
                     <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
                       <VacancyEditPrimaryButton
-                        href={`/vacancy?edit=1&fromVacancy=${vacancy.id}`}
+                        href={`/vacancies/${vacancy.id}/edit`}
                         className="w-full min-w-0 sm:flex-1"
                       />
                       <Button
@@ -192,11 +185,7 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
                 )
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Button asChild size="lg" className="w-full sm:w-auto">
-                    <Link href={`/login?callbackUrl=/vacancies/${vacancy.id}`}>
-                      Войти, чтобы попросить рефералку
-                    </Link>
-                  </Button>
+                  <VacancySeekerSignInCta vacancyId={vacancy.id} />
                   <p className="text-muted-foreground text-left text-xs leading-snug" role="status">
                     {formatVacancyReferralRequestFooterHint(vacancy.applicationCount)}
                   </p>
@@ -208,11 +197,7 @@ export default async function VacancyDetailPage({ params, searchParams }: PagePr
             <ReportVacancyForm vacancyId={vacancy.id} />
           ) : null}
           {session?.user && (isAuthor || isStaffAdmin) ? (
-            <VacancyAuthorManageSection
-              vacancyId={vacancy.id}
-              applicationId={applicationIdParam}
-              referrerActions={isAuthor}
-            />
+            <VacancyAuthorManageSection vacancyId={vacancy.id} referrerActions={isAuthor} />
           ) : null}
         </div>
       </div>

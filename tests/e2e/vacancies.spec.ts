@@ -30,20 +30,21 @@ test.describe("Vacancies catalog", () => {
 });
 
 test.describe("Authentication flow", () => {
-  test("/login page renders GitHub sign-in button", async ({ page }) => {
+  test("sign-in overlay opens from /login redirect with GitHub button", async ({ page }) => {
     await page.goto("/login");
+    await expect(page).toHaveURL(/signIn=1/);
     const githubButton = page.getByRole("button", { name: /github/i });
     await expect(githubButton).toBeVisible();
   });
 
-  test("protected account route redirects unauthenticated users to /login", async ({ page }) => {
+  test("protected account route adds signIn for unauthenticated users", async ({ page }) => {
     await page.goto("/settings");
-    await expect(page).toHaveURL(/login/);
+    await expect(page).toHaveURL(/signIn=1/);
   });
 
-  test("protected /admin redirects unauthenticated users", async ({ page }) => {
+  test("protected /admin adds signIn for unauthenticated users", async ({ page }) => {
     await page.goto("/admin");
-    await expect(page).toHaveURL(/login/);
+    await expect(page).toHaveURL(/signIn=1/);
   });
 });
 

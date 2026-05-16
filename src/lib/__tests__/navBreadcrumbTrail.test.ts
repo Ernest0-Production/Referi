@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   dashboardApplicationDetailTrail,
   dashboardApplicationNewTrail,
-  dashboardVacancyEditTrail,
-  dashboardVacancyTrail,
   newPublicVacancyTrail,
   publicVacancyDetailTrail,
+  publicVacancyEditTrail,
   registrationAgeGateTrail,
 } from "@/lib/navBreadcrumbTrail";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
 
 describe("navBreadcrumbTrail", () => {
   describe("publicVacancyDetailTrail", () => {
@@ -19,29 +19,13 @@ describe("navBreadcrumbTrail", () => {
     });
   });
 
-  describe("dashboardVacancyTrail", () => {
-    it.each([
-      ["Моя рефералка" as const, [{ label: "Моя рефералка" }]],
-      ["Создание рефералки" as const, [{ label: "Создание рефералки" }]],
-    ])("%s", (title, expected) => {
-      expect(dashboardVacancyTrail(title)).toEqual(expected);
-    });
-  });
-
-  describe("dashboardVacancyEditTrail", () => {
+  describe("publicVacancyEditTrail", () => {
     const id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
-    it("from public detail: Рефералки → title → Редактирование", () => {
-      expect(dashboardVacancyEditTrail(id, "ACME", true)).toEqual([
+    it("catalog → vacancy → Редактирование", () => {
+      expect(publicVacancyEditTrail(id, "ACME")).toEqual([
         { label: "Рефералки", href: "/" },
         { label: "ACME", href: `/vacancies/${id}` },
-        { label: "Редактирование" },
-      ]);
-    });
-
-    it("from cabinet: Моя рефералка → Редактирование", () => {
-      expect(dashboardVacancyEditTrail(id, "ACME", false)).toEqual([
-        { label: "Моя рефералка", href: "/vacancy" },
         { label: "Редактирование" },
       ]);
     });
@@ -87,7 +71,7 @@ describe("navBreadcrumbTrail", () => {
   describe("registrationAgeGateTrail", () => {
     it("login then age gate label", () => {
       expect(registrationAgeGateTrail()).toEqual([
-        { label: "Вход", href: "/login" },
+        { label: "Вход", href: hrefSignInOverlay("/") },
         { label: "Платная регистрация" },
       ]);
     });

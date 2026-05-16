@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { TRPCProvider } from "@/trpc/provider";
 import { NavBreadcrumbStackProvider } from "@/components/navigation/NavBreadcrumbStack";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
+import { SignInOverlayHost } from "@/components/auth/SignInOverlayHost";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -53,6 +55,9 @@ export default function RootLayout({
                       <SiteFooter />
                     </div>
                     <Toaster position="top-center" richColors />
+                    <Suspense fallback={null}>
+                      <SignInOverlayHost />
+                    </Suspense>
                   </TooltipProvider>
                 </NavBreadcrumbStackProvider>
               </TRPCProvider>

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { redirect, notFound } from "next/navigation";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { trpc } from "@/trpc/server";
 import { PublicHeaderNav } from "@/components/PublicHeaderNav";
@@ -12,12 +13,27 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 
 interface PageProps {
   params: Promise<{ applicationId: string }>;
+  searchParams: Promise<{ signIn?: string | string[] }>;
 }
 
-export default async function PayPage({ params }: PageProps) {
+export default async function PayPage({ params, searchParams }: PageProps) {
   const { applicationId } = await params;
+  const sp = await searchParams;
+  const signIn = Array.isArray(sp.signIn) ? sp.signIn[0] : sp.signIn;
   const session = await auth();
-  if (!session?.user?.id) redirect(`/login?callbackUrl=/pay/${applicationId}`);
+  if (!session?.user?.id) {
+    if (signIn !== "1") {
+      redirect(hrefSignInOverlay(`/pay/${applicationId}`));
+    }
+    return (
+      <div className="flex min-h-screen flex-col bg-[var(--app-page-surface)]">
+        <PublicHeaderNav session={null} />
+        <main className="text-muted-foreground flex flex-1 items-center justify-center p-6 text-center text-sm">
+          Войдите через GitHub, чтобы перейти к оплате.
+        </main>
+      </div>
+    );
+  }
 
   let application;
   try {

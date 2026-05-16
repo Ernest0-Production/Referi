@@ -152,7 +152,6 @@ export function AccountDefaultBreadcrumbSeed() {
   const { replaceTrailWithSeed } = useNavBreadcrumbStack();
 
   React.useLayoutEffect(() => {
-    if (pathname.startsWith("/vacancy")) return;
     if (pathname.startsWith("/applications/new")) return;
     if (/^\/applications\/[^/]+$/.test(pathname)) return;
 

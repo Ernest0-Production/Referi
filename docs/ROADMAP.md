@@ -68,12 +68,12 @@ flowchart LR
 | GitHub OAuth провайдер             | `[CORE]` | Auth.js + реальный GitHub OAuth App                                 |
 | Age-check в signIn callback        | `[CORE]` | `GET /user` → `created_at` → проверка 365 дней                      |
 | Полная Prisma schema               | `[CORE]` | Все модели из `spec-schema-database.md`; миграции                   |
-| Страница `/login`                  | `[CORE]` | Кнопка «Войди через GitHub», обработка ошибок                       |
+| Страница `/login`                  | `[CORE]` | Редирект на путь с `?signIn=1` и оверлей карточки GitHub; `/login/error` — ошибка OAuth |
 | Страница `/registration/age-gate`  | `[CORE]` | Объяснение + кнопка оплаты сбора                                    |
 | `auth.initiateRegistrationPayment` | `[PAY]`  | tRPC **public** mutation `{ userId }`; ЮКасса / MockPaymentProvider |
 | Обработка webhook регистрации      | `[PAY]`  | `payment.succeeded` → `paidRegistration = true`                     |
 | Профиль пользователя               | `[CORE]` | Страница `/profile`; `auth.updateProfile` mutation        |
-| Middleware защита роутов           | `[CORE]` | Редирект на `/login` для неавторизованных                           |
+| Middleware защита роутов           | `[CORE]` | Редирект на тот же путь с `signIn=1` и `callbackUrl` для неавторизованных |
 | `auth.me` query                    | `[CORE]` | Данные текущего пользователя + staff-флаги + попытки                |
 
 
@@ -104,7 +104,8 @@ flowchart LR
 | `vacancies.myActive` query      | `[CORE]` | Текущая рефералка реферальщика                                                                             |
 | Страница `/` — лента рефералок   | `[CORE]` | Карточки, сайдбар фильтров, поиск и сортировка, пресеты для авторизованных                                |
 | Страница `/vacancies/[id]`      | `[CORE]` | Детальная страница рефералки + кнопка «Попросить рефералку»                                                       |
-| Страница `/vacancy`   | `[CORE]` | Реферальщик: создание рефералки; при активной — экран со ссылкой на `/vacancies/[id]` и на редактирование (`?edit=1`); редактирование полей в кабинете |
+| Страница `/vacancies/new` | `[CORE]` | Публичное размещение рефералки (форма); после публикации — переход на `/vacancies/[id]` |
+| Страница `/vacancies/[id]/edit` | `[CORE]` | Реферальщик или админ: редактирование полей активной рефералки в публичной оболочке |
 | Страница `/vacancies/new`       | `[CORE]` | Оформление новой рефералки без входа; OAuth GitHub при публикации, черновик формы в `sessionStorage` до авторизации                                                      |
 | Форма создания рефералки         | `[CORE]` | Все поля из spec; валидация Zod                                                                           |
 | `ReferrerAttemptLedger` базовый | `[CORE]` | `getAvailableAttempts()` возвращает корректное значение                                                   |
@@ -144,7 +145,7 @@ flowchart LR
 | `AuditLog` запись при каждом переходе     | `[CORE]` | Все поля: from, to, actor, actorId, metadata         |
 | `applications.myList` query               | `[CORE]` | Список заявок соискателя с текущими статусами        |
 | `vacancies.update` mutation               | `[CORE]` | Реферальщик: обновление полей своей рефералки (ACTIVE / FROZEN)               |
-| `vacancies.applicants` query              | `[CORE]` | Список соискателей, отправивших запрос, для реферальщика (UI: блок на `/vacancies/[id]` для автора)               |
+| `vacancies.applicants` query              | `[CORE]` | Заявки по вакансии для реферальщика/админа; UI на `/vacancies/[id]`: при активном рассмотрении — блок «Текущий Кандидат» с этапами заявки (пройдено / сейчас / ожидается), иначе список с числом откликов               |
 | Страница `/applications`        | `[CORE]` | Соискатель: мои заявки + действия                    |
 | Правила видимости контактов               | `[CORE]` | contactInfo только в активных статусах               |
 | Property-based тесты state machine        | `[CORE]` | fast-check, инварианты INV-001..007                  |

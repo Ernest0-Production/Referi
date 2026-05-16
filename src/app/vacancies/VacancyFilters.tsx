@@ -21,6 +21,7 @@ import {
   VACANCY_LIST_SPECIALTY_VALUES,
   VACANCY_LIST_WORK_FORMAT_VALUES,
 } from "@/lib/vacancyListQuery";
+import { hrefSignInOverlay } from "@/lib/signInOverlayParams";
 import {
   isVacancySalaryCurrency,
   VACANCY_SALARY_CURRENCY_VALUES,
@@ -464,7 +465,7 @@ export function VacancyFilters({
     if (!isLoggedIn) {
       onApplyFilters?.();
       const returnPath = buildVacancyCatalogLoginReturnHref(currentParams);
-      router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
+      router.push(hrefSignInOverlay(returnPath));
       return;
     }
     setPresetDialogSourceParams(null);

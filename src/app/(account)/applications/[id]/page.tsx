@@ -1,11 +1,11 @@
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { trpc } from "@/trpc/server";
 import { dashboardApplicationDetailTrail } from "@/lib/navBreadcrumbTrail";
 import { PAGE_COLUMN_CLASS } from "@/lib/pageContentShell";
 import { BreadcrumbSeedPort } from "@/components/navigation/NavBreadcrumbStack";
 import { AppNavBreadcrumb } from "@/components/navigation/AppNavBreadcrumb";
 import { ApplicationDetailActions } from "./ApplicationDetailActions";
+import { ApplicantContactDisplay } from "@/components/vacancies/ApplicantContactDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -40,9 +40,6 @@ const ACTOR_LABELS: Record<string, string> = {
 
 export default async function ApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
   let application;
   try {
     application = await trpc.applications.getById({ applicationId: id });
@@ -94,7 +91,10 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             {application.content?.contactInfo ? (
               <div className="border-border bg-muted/50 rounded-xl border p-3">
                 <p className="text-muted-foreground text-xs font-medium">Контакты соискателя</p>
-                <p className="text-foreground mt-0.5 text-sm">{application.content.contactInfo}</p>
+                <ApplicantContactDisplay
+                  contactInfo={application.content.contactInfo}
+                  className="mt-0.5"
+                />
               </div>
             ) : null}
 

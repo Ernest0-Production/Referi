@@ -48,7 +48,7 @@ export function EmployerHomeVacancySection({
     return (
       <section className="flex flex-col gap-3" aria-labelledby="employer-vacancy-heading">
         <h2 id="employer-vacancy-heading" className="text-foreground text-lg font-semibold">
-          Твоя рефералка
+          Моя рефералка
         </h2>
         <VacancyCard
           vacancy={vacancy}
@@ -59,5 +59,5 @@ export function EmployerHomeVacancySection({
     );
   }
 
-  return <CreateVacancyHomeCta href="/vacancy" />;
+  return <CreateVacancyHomeCta href="/vacancies/new" />;
 }

@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { userAvatarImageUrl } from "@/lib/userAvatarUrl";
 import { SignOutMenuItem } from "@/components/auth/SignOutMenuItem";
+import { SignInNavLink } from "@/components/auth/SignInNavLink";
 import { ModerationContactMenuItem } from "@/components/ModerationContactMenuItem";
 
 function sessionDisplayLabel(user: NonNullable<Session["user"]>): string {
@@ -96,7 +97,7 @@ export function PublicHeaderNav({ session }: { session: Session | null }) {
           </DropdownMenu>
         ) : (
           <Button asChild variant="default" size="sm" className="h-9">
-            <Link href="/login">Войти</Link>
+            <SignInNavLink>Войти</SignInNavLink>
           </Button>
         )}
       </div>
